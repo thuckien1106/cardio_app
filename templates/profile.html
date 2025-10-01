@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5 pt-5">
+  <h2 class="fw-bold text-primary">Hồ sơ cá nhân</h2>
+  <div class="card p-4 shadow">
+    <p><strong>Vai trò:</strong> {{ user_info.role }}</p>
+    <p><strong>Tên:</strong> {{ user_info.name }}</p>
+    <p><strong>Email:</strong> {{ user_info.email }}</p>
+    <p><strong>Số điện thoại:</strong> {{ user_info.phone }}</p>
+
+    <button class="btn btn-outline-primary">Cập nhật thông tin</button>
+  </div>
+</div>
+{% endblock %}
