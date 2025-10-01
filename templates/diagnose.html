@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5 pt-4">
+    <h2 class="fw-bold text-gradient text-center mb-4">Chẩn đoán bệnh tim mạch</h2>
+
+    <div class="row">
+        <!-- Form nhập liệu -->
+        <div class="col-md-6">
+            <div class="card shadow p-4">
+                <h4 class="text-primary mb-3">Nhập dữ liệu bệnh nhân</h4>
+                <form method="post">
+                    <input type="hidden" name="predict_form" value="1">
+
+                    <div class="mb-3">
+                        <label>Tuổi</label>
+                        <input type="number" name="age" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Giới tính</label>
+                        <select name="gender" class="form-select" required>
+                            <option value="male">Nam</option>
+                            <option value="female">Nữ</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label>Cân nặng (kg)</label>
+                            <input type="number" step="0.1" name="weight" class="form-control" required>
+                        </div>
+                        <div class="col mb-3">
+                            <label>Chiều cao (cm)</label>
+                            <input type="number" step="0.1" name="height" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label>Huyết áp tâm thu</label>
+                            <input type="number" name="systolic" class="form-control" required>
+                        </div>
+                        <div class="col mb-3">
+                            <label>Huyết áp tâm trương</label>
+                            <input type="number" name="diastolic" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Cholesterol</label>
+                        <select name="cholesterol" class="form-select" required>
+                            <option value="normal">Bình thường</option>
+                            <option value="above_normal">Cao hơn bình thường</option>
+                            <option value="high">Cao</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Đường huyết</label>
+                        <select name="glucose" class="form-select" required>
+                            <option value="normal">Bình thường</option>
+                            <option value="above_normal">Cao hơn bình thường</option>
+                            <option value="high">Cao</option>
+                        </select>
+                    </div>
+
+
+                    <div class="row">
+                        <div class="col mb-3">
+                            <label>Hút thuốc</label>
+                            <select name="smoking" class="form-select">
+                                <option value="no">Không</option>
+                                <option value="yes">Có</option>
+                            </select>
+                        </div>
+                        <div class="col mb-3">
+                            <label>Uống cồn</label>
+                            <select name="alcohol" class="form-select">
+                                <option value="no">Không</option>
+                                <option value="yes">Có</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Tập thể dục</label>
+                        <select name="exercise" class="form-select">
+                            <option value="yes">Có</option>
+                            <option value="no">Không</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 mt-2">Dự đoán</button>
+                </form>
+
+                {% if result %}
+                <div class="alert alert-info mt-3 shadow">
+                    <strong>Kết quả:</strong> {{ result }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Upload file -->
+        <div class="col-md-6">
+            <div class="card shadow p-4">
+                <h4 class="text-primary mb-3">Upload file CSV / Excel</h4>
+                <form method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <input type="file" name="data_file" class="form-control" accept=".csv, .xlsx">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Tải lên & Dự đoán</button>
+                </form>
+
+                {% if file_result %}
+                <div class="mt-4">
+                    <h5>Kết quả dự đoán từ file:</h5>
+                    {{ file_result | safe }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
