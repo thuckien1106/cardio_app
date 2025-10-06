@@ -6,7 +6,9 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = "secret-key-demo"
 
+# ---------------------------------
 # Thư mục upload
+# ---------------------------------
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -25,11 +27,11 @@ def login():
         if user == 'doctor' and pw == '123':
             session['user'] = user
             session['role'] = 'doctor'
-            return redirect(url_for('home'))           # ➡️ Vào trang Home
+            return redirect(url_for('home'))         # Đăng nhập → Trang chủ
         elif user == 'patient' and pw == '123':
             session['user'] = user
             session['role'] = 'patient'
-            return redirect(url_for('home'))           # ➡️ Vào trang Home
+            return redirect(url_for('home'))
         else:
             return render_template('login.html', error="Sai tài khoản hoặc mật khẩu")
 
@@ -47,22 +49,17 @@ def home():
 
 
 # =====================================
-# Trang chẩn đoán (chỉ cho bác sĩ)
+# Trang chẩn đoán (cho cả bác sĩ và bệnh nhân)
 # =====================================
 @app.route('/diagnose', methods=['GET', 'POST'])
 def diagnose():
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    # Ngăn bệnh nhân vào trang chẩn đoán
-    if session.get('role') == 'patient':
-        flash("Bạn không có quyền truy cập trang này.")
-        return redirect(url_for('history'))
-
     result = None
     file_result = None
 
-    # ----- Xử lý nhập form -----
+    # ===== Xử lý nhập form =====
     if request.method == 'POST' and 'predict_form' in request.form:
         age = int(request.form.get('age'))
         gender = request.form.get('gender')
@@ -70,7 +67,7 @@ def diagnose():
         height = float(request.form.get('height'))
         systolic = float(request.form.get('systolic'))
         diastolic = float(request.form.get('diastolic'))
-        chol = request.form.get('cholesterol')     # mức độ
+        chol = request.form.get('cholesterol')      # mức độ
         glucose = request.form.get('glucose')      # mức độ
         smoking = request.form.get('smoking')
         alcohol = request.form.get('alcohol')
@@ -79,20 +76,20 @@ def diagnose():
         # Tính BMI
         bmi = round(weight / ((height / 100) ** 2), 2)
 
-        # ----- Logic dự đoán demo -----
+        # ===== Logic dự đoán demo =====
         risk_score = 0
 
         # Huyết áp
         if systolic > 140 or diastolic > 90:
             risk_score += 1
 
-        # Cholesterol (3 mức)
+        # Cholesterol
         if chol == 'above_normal':
             risk_score += 1
         elif chol == 'high':
             risk_score += 2
 
-        # Đường huyết (3 mức)
+        # Đường huyết
         if glucose == 'above_normal':
             risk_score += 1
         elif glucose == 'high':
@@ -108,9 +105,10 @@ def diagnose():
         if alcohol == 'yes':
             risk_score += 1
 
+        # Kết quả
         result = f"Nguy cơ cao (BMI: {bmi})" if risk_score >= 3 else f"Nguy cơ thấp (BMI: {bmi})"
 
-    # ----- Xử lý upload file -----
+    # ===== Xử lý upload file =====
     if request.method == 'POST' and 'data_file' in request.files:
         file = request.files['data_file']
         if file.filename != '':
@@ -138,12 +136,12 @@ def diagnose():
 def history():
     if 'user' not in session:
         return redirect(url_for('login'))
-    # Ở đây có thể load lịch sử từ DB theo session['user']
+    # Có thể thêm logic load lịch sử từ DB theo session['user']
     return render_template('history.html')
 
 
 # =====================================
-# Trang bệnh án (chỉ bác sĩ)
+# Trang bệnh án (chỉ cho bác sĩ)
 # =====================================
 @app.route('/records')
 def records():
@@ -195,5 +193,8 @@ def logout():
     return redirect(url_for('login'))
 
 
+# =====================================
+# Main
+# =====================================
 if __name__ == '__main__':
     app.run(debug=True)

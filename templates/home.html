@@ -22,17 +22,10 @@
         cung cấp thông tin y tế đáng tin cậy và hỗ trợ bác sĩ chẩn đoán.
       </p>
 
-      {% if session.get('role') == 'doctor' %}
-      <!-- Nếu là bác sĩ -->
+      <!-- Nút chẩn đoán cho cả hai -->
       <a href="{{ url_for('diagnose') }}" class="btn btn-primary mt-3 px-4">
         🩺 Bắt đầu chẩn đoán
       </a>
-      {% else %}
-      <!-- Nếu là bệnh nhân -->
-      <a href="{{ url_for('history') }}" class="btn btn-success mt-3 px-4">
-        📜 Xem lịch sử chẩn đoán
-      </a>
-      {% endif %}
     </div>
   </div>
 
