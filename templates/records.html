@@ -1,7 +1,69 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-5 pt-5">
-  <h2 class="fw-bold text-primary">Quản lý bệnh án</h2>
-  <p class="text-muted">Quản lý hồ sơ bệnh án của bệnh nhân...</p>
+<div class="container mt-5">
+  <h2 class="fw-bold text-gradient mb-4">📁 Bệnh án</h2>
+  <p class="text-muted">Danh sách bệnh án đã được ghi nhận từ các lần chẩn đoán.</p>
+
+  {% if records and records|length > 0 %}
+  <div class="table-responsive mt-4">
+    <table class="table table-bordered table-striped table-hover align-middle">
+      <thead class="table-light">
+        <tr class="text-center">
+          <th>Bệnh nhân</th>
+          <th>Bác sĩ</th>
+          <th>Ngày chẩn đoán</th>
+          <th>BMI</th>
+          <th>HATT</th>
+          <th>HATTr</th>
+          <th>Nguy cơ</th>
+          <th>Lời khuyên</th>
+          <th>Ghi chú</th>
+          <th>Ngày cập nhật</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <!-- Bệnh nhân & bác sĩ -->
+          <td>{{ r.TenBenhNhan }}</td>
+          <td>{{ r.TenBacSi if r.TenBacSi else '—' }}</td>
+
+          <!-- Ngày chẩn đoán -->
+          <td class="text-center">
+            {{ r.NgayChanDoan.strftime('%d/%m/%Y') if r.NgayChanDoan else '—' }}
+          </td>
+
+          <!-- Kết quả chẩn đoán -->
+          <td class="text-center">{{ r.BMI }}</td>
+          <td class="text-center">{{ r.HuyetApTamThu }}</td>
+          <td class="text-center">{{ r.HuyetApTamTruong }}</td>
+          <td class="text-center">
+            {% if r.NguyCo == 'Cao' %}
+              <span class="badge bg-danger px-3 py-1">Cao</span>
+            {% elif r.NguyCo == 'Trung bình' %}
+              <span class="badge bg-warning text-dark px-3 py-1">Trung bình</span>
+            {% else %}
+              <span class="badge bg-success px-3 py-1">Thấp</span>
+            {% endif %}
+          </td>
+
+          <!-- Lời khuyên & ghi chú -->
+          <td>{{ r.LoiKhuyen if r.LoiKhuyen else '—' }}</td>
+          <td>{{ r.GhiChu if r.GhiChu else '—' }}</td>
+
+          <!-- Ngày cập nhật bệnh án -->
+          <td class="text-center">
+            {{ r.NgayCapNhat.strftime('%d/%m/%Y') if r.NgayCapNhat else '—' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info mt-4">
+    Chưa có dữ liệu bệnh án.
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

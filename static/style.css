@@ -1,7 +1,8 @@
 /* ===============================
    Reset & Layout chung
 ================================== */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
 }
@@ -12,15 +13,14 @@ body {
   color: #333;
   display: flex;
   flex-direction: column;
-  margin-top: 60px;            /* tránh navbar che nội dung */
+  margin-top: 60px; /* tránh navbar che nội dung */
   line-height: 1.6;
 }
 
 /* Nội dung chính chiếm khoảng trống còn lại */
 .main-content {
   flex: 1 0 auto;
-           /* tránh đè navbar */
-  padding-bottom: 40px;        /* tránh footer đè nội dung */
+  padding-bottom: 40px; /* tránh footer đè nội dung */
 }
 
 /* ===============================
@@ -28,7 +28,7 @@ body {
 ================================== */
 .navbar {
   background: linear-gradient(90deg, #1976d2, #6a5acd, #9b59b6);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .navbar-brand {
@@ -48,11 +48,13 @@ body {
    Trang Login
 ================================== */
 .login-wrapper {
-  background: linear-gradient(135deg,
-                rgba(25,118,210,0.08),
-                rgba(106,90,205,0.08),
-                rgba(155,89,182,0.1));
-  min-height: calc(100vh - 60px); /* trừ navbar */
+  background: linear-gradient(
+      135deg,
+      rgba(25, 118, 210, 0.08),
+      rgba(106, 90, 205, 0.08),
+      rgba(155, 89, 182, 0.1)
+  );
+  min-height: calc(100vh - 60px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -65,9 +67,14 @@ body {
   background: #fff;
   border-radius: 20px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   padding: 2.5rem 2rem;
   text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
 }
 
 .login-card h2 {
@@ -81,9 +88,108 @@ body {
   margin-bottom: 1.5rem;
 }
 
-.login-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
+/* Logo tròn */
+.logo-circle {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #fe7070, #f5a2a2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+}
+
+.logo-circle i {
+  font-size: 2rem;
+}
+
+
+/* Nhóm nhập liệu */
+.input-group {
+  display: flex;
+  align-items: center;       /* Căn giữa icon & input theo chiều dọc */
+  height: 48px;              /* Chiều cao đồng nhất */
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 30px;
+  overflow: hidden;
+  margin-bottom: 1.2rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.input-group:focus-within {
+  border-color: #6a5acd;
+  box-shadow: 0 0 6px rgba(106, 90, 205, 0.4);
+}
+
+/* Ô chứa icon */
+.input-group-text {
+  width: 48px;                /* Bằng chiều cao group để icon nằm giữa */
+  height: 48px;               /* Quan trọng để cân giữa */
+  display: flex;
+  align-items:center;        /* Căn giữa icon theo trục dọc */
+  justify-content: center;    /* Căn giữa icon theo trục ngang */
+  background: transparent;
+  border: none;
+  padding: 0;                
+}
+
+/* Icon */
+.input-group-text i {
+  font-size: 1.3rem;          /* Kích cỡ vừa phải */
+  color: #6a5acd;
+  line-height: 1;             /* Đảm bảo không bị đẩy lệch bởi line-height */
+}
+
+/* Input */
+.input-group .form-control {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0 16px;
+  font-size: 0.95rem;
+  box-shadow: none;
+}
+
+.input-group .form-control:focus {
+  outline: none;
+  background: #fff;
+  box-shadow: none;
+}
+
+
+/* ===============================
+   Nút đăng nhập
+================================== */
+.btn-login {
+  background: linear-gradient(45deg, #1976d2, #6a5acd);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  padding: 0.7rem 1.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+}
+
+.btn-login:hover {
+  background: linear-gradient(45deg, #1565c0, #5b4ec0);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(25, 118, 210, 0.4);
+}
+
+/* ===============================
+   Footer đăng nhập
+================================== */
+.login-footer {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 1.5rem;
 }
 
 /* ===============================
@@ -103,7 +209,7 @@ body {
 }
 
 /* ===============================
-   Footer cố định dưới
+   Footer cố định
 ================================== */
 .footer {
   flex-shrink: 0;
@@ -140,7 +246,7 @@ body {
 .btn-primary:hover {
   background: linear-gradient(45deg, #1565c0, #5b4ec0);
   transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(21,101,192,0.4);
+  box-shadow: 0 6px 14px rgba(21, 101, 192, 0.4);
 }
 
 .btn-success {
@@ -156,30 +262,36 @@ body {
 .btn-success:hover {
   background: linear-gradient(45deg, #3d8b40, #277a4e);
   transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(46,139,87,0.4);
+  box-shadow: 0 6px 14px rgba(46, 139, 87, 0.4);
 }
 
 /* ===============================
-   Input form
+   Input & Select form chung
 ================================== */
-.form-control {
-  padding: 12px 18px;
+.form-control,
+.form-select {
+  height: 46px;
+  padding: 10px 16px;
   border: 1px solid #ddd;
-  border-radius: 25px;
-  font-size: 1rem;
+  border-radius: 20px;
+  font-size: 0.95rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1rem;
 }
 
-.form-control:focus {
+.form-control:focus,
+.form-select:focus {
   border-color: #6a5acd;
   box-shadow: 0 0 8px rgba(106, 90, 205, 0.5);
 }
 
 /* ===============================
-   Tiện ích căn chỉnh văn bản
+   Tiện ích văn bản
 ================================== */
-h2, h3, h4 {
+h2,
+h3,
+h4 {
   margin-bottom: 1.2rem;
   font-weight: 600;
 }
@@ -188,4 +300,18 @@ p {
   margin-bottom: 0.8rem;
   font-size: 1rem;
   color: #555;
+}
+
+/* ===============================
+   Table & Badge
+================================== */
+.table thead th {
+  background: #f0f3ff;
+  font-weight: 600;
+}
+
+.badge {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  border-radius: 12px;
 }

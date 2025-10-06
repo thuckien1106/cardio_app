@@ -1,14 +1,82 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-5 pt-5">
-  <h2 class="fw-bold text-primary">Hồ sơ cá nhân</h2>
-  <div class="card p-4 shadow">
-    <p><strong>Vai trò:</strong> {{ user_info.role }}</p>
-    <p><strong>Tên:</strong> {{ user_info.name }}</p>
-    <p><strong>Email:</strong> {{ user_info.email }}</p>
-    <p><strong>Số điện thoại:</strong> {{ user_info.phone }}</p>
+<div class="container py-5 mt-4">
 
-    <button class="btn btn-outline-primary">Cập nhật thông tin</button>
+  <div class="text-center mb-4">
+    <h2 class="fw-bold text-gradient">👤 Hồ sơ cá nhân</h2>
+    <p class="text-muted">
+      Cập nhật thông tin cá nhân để đảm bảo hồ sơ chính xác và thuận tiện cho việc quản lý sức khỏe.
+    </p>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="alert alert-{{ category }} text-center rounded-pill">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <!-- 🔴 Bổ sung form -->
+      <form method="post" class="card shadow-lg border-0 rounded-4 p-4">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Họ tên</label>
+          <input type="text" name="ho_ten" class="form-control rounded-pill shadow-sm"
+                 value="{{ user_info[0] }}" required>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Email</label>
+            <input type="email" class="form-control rounded-pill shadow-sm"
+                   value="{{ user_info[1] }}" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Vai trò</label>
+            <input type="text" class="form-control rounded-pill shadow-sm"
+                   value="{{ user_info[2] }}" readonly>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-2">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Số điện thoại</label>
+            <input type="text" name="dien_thoai" class="form-control rounded-pill shadow-sm"
+                   value="{{ user_info[3] or '' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Ngày sinh</label>
+            <input type="date" name="ngay_sinh" class="form-control rounded-pill shadow-sm"
+                   value="{{ user_info[4]|default('', true) }}">
+          </div>
+        </div>
+
+        <div class="row g-3 mt-2">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Giới tính</label>
+            <select name="gioi_tinh" class="form-select rounded-pill shadow-sm">
+              <option value="Nam" {% if user_info[5]=='Nam' %}selected{% endif %}>Nam</option>
+              <option value="Nữ" {% if user_info[5]=='Nữ' %}selected{% endif %}>Nữ</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Địa chỉ</label>
+            <input type="text" name="dia_chi" class="form-control rounded-pill shadow-sm"
+                   value="{{ user_info[6] or '' }}">
+          </div>
+        </div>
+
+        <div class="text-center mt-4">
+          <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill shadow-sm">
+            💾 Lưu thông tin
+          </button>
+        </div>
+      </form>
+      <!-- 🔴 Đóng form -->
+    </div>
   </div>
 </div>
 {% endblock %}
