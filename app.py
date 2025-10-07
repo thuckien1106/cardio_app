@@ -7,7 +7,6 @@ import datetime
 from dotenv import load_dotenv
 import google.generativeai as genai
 from functools import lru_cache
-import joblib
 import numpy as np
 
 # ==========================================
@@ -47,14 +46,19 @@ def get_ai_advice_cached(prompt: str) -> str:
 # ==========================================
 # Load mô hình XGBoost
 # ==========================================
-MODEL_PATH = "xgb_T11_Final.json"
+xgb_model = None
 try:
     import xgboost as xgb
-    xgb_model = xgb.XGBClassifier()
-    xgb_model.load_model(MODEL_PATH)
+    MODEL_PATH = "xgb_T11_Final.json"
+    if os.path.exists(MODEL_PATH):
+        xgb_model = xgb.XGBClassifier()
+        xgb_model.load_model(MODEL_PATH)
+        print("✅ Mô hình XGBoost đã load thành công.")
+    else:
+        print("⚠️ Không tìm thấy file mô hình, sẽ dùng heuristic.")
 except Exception as e:
-    xgb_model = None
     print(f"⚠️ Không thể load mô hình XGBoost: {e}")
+    xgb_model = None
 
 # ==========================================
 # Cấu hình upload
@@ -81,7 +85,7 @@ def register():
         conn = get_connection()
         cur = conn.cursor()
 
-        # Kiểm tra email
+        # Kiểm tra email trùng
         cur.execute("SELECT ID FROM NguoiDung WHERE Email=?", (email,))
         if cur.fetchone():
             conn.close()
@@ -156,17 +160,8 @@ def diagnose():
     benhnhans = []
     if session.get('role') == 'doctor':
         cur.execute("SELECT ID, HoTen, GioiTinh, NgaySinh FROM NguoiDung WHERE Role='patient'")
-        rows = cur.fetchall()
-        for r in rows:
-            if r.NgaySinh:
-                # Sửa lỗi strftime
-                if hasattr(r.NgaySinh, 'strftime'):
-                    ns_fmt = r.NgaySinh.strftime("%d/%m/%Y")
-                else:
-                    ns_fmt = str(r.NgaySinh)
-            else:
-                ns_fmt = "Chưa khai báo"
-
+        for r in cur.fetchall():
+            ns_fmt = r.NgaySinh.strftime("%d/%m/%Y") if hasattr(r.NgaySinh, 'strftime') else str(r.NgaySinh)
             benhnhans.append({
                 "ID": r.ID,
                 "HoTen": r.HoTen,
@@ -177,16 +172,23 @@ def diagnose():
     result = None
     ai_advice = None
     file_result = None
+    risk_percent = None
+    risk_level = None
 
-    # Nhập liệu từ form
+    chol_map = {'normal': 1, 'above_normal': 2, 'high': 3}
+    gluc_map = {'normal': 1, 'above_normal': 2, 'high': 3}
+
+    # ===== Nhập liệu tay =====
     if request.method == 'POST' and 'predict_form' in request.form:
         try:
             benhnhan_id = int(request.form.get('benhnhan_id')) if session.get('role') == 'doctor' else session['user_id']
 
             age = int(request.form.get('age'))
-            gender = 1 if request.form.get('gender') == 'Nam' else 0
+            gender_raw = request.form.get('gender')
+            gender = 1 if gender_raw == 'Nam' else 0
             weight = float(request.form.get('weight'))
             height = float(request.form.get('height'))
+            bmi = round(weight / ((height / 100) ** 2), 2)
             systolic = float(request.form.get('systolic'))
             diastolic = float(request.form.get('diastolic'))
             chol = request.form.get('cholesterol')
@@ -196,64 +198,112 @@ def diagnose():
             alcohol = 1 if request.form.get('alcohol') == 'yes' else 0
             exercise = 1 if request.form.get('exercise') == 'yes' else 0
 
-            bmi = round(weight / ((height / 100) ** 2), 2)
-
-            # Chuyển Cholesterol & Glucose thành số
-            chol_map = {'normal': 1, 'above_normal': 2, 'high': 3}
-            gluc_map = {'normal': 1, 'above_normal': 2, 'high': 3}
-
-            X_input = np.array([[age, gender, systolic, diastolic,
-                                 chol_map.get(chol, 1), gluc_map.get(glucose, 1),
-                                 smoking, alcohol, exercise, bmi]])
-
+            # Dự đoán bằng mô hình
             if xgb_model:
-                pred = xgb_model.predict(X_input)[0]
-                nguy_co = "Nguy cơ cao" if pred == 1 else "Nguy cơ thấp"
+                X = np.array([[age, gender, systolic, diastolic,
+                               chol_map.get(chol, 1), gluc_map.get(glucose, 1),
+                               smoking, alcohol, exercise, bmi]])
+                prob = float(xgb_model.predict_proba(X)[0, 1])
+                risk_percent = round(prob * 100, 1)
+                risk_level = 'high' if prob >= 0.5 else 'low'
             else:
-                # fallback demo
-                nguy_co = "Nguy cơ cao" if systolic > 140 or bmi > 30 else "Nguy cơ thấp"
+                # fallback heuristic
+                score = 0
+                if systolic > 140 or diastolic > 90: score += 1
+                if chol == 'above_normal': score += 1
+                elif chol == 'high': score += 2
+                if glucose == 'above_normal': score += 1
+                elif glucose == 'high': score += 2
+                if bmi > 30: score += 1
+                if smoking: score += 1
+                if alcohol: score += 1
+                risk_percent = round(score / 8 * 100, 1)
+                risk_level = 'high' if score >= 3 else 'low'
 
-            result = f"{nguy_co} (BMI: {bmi})"
+            nguy_co_text = "Nguy cơ cao" if risk_level == 'high' else "Nguy cơ thấp"
+            result = f"{nguy_co_text} - {risk_percent}%"
 
-            # Gọi AI
+            # Lời khuyên từ AI
             prompt = f"""
             Bạn là bác sĩ tim mạch.
-            Dữ liệu: Tuổi {age}, Giới tính {'Nam' if gender==1 else 'Nữ'}, BMI {bmi},
+            Dữ liệu: Tuổi {age}, Giới tính {gender_raw}, BMI {bmi},
             Huyết áp {systolic}/{diastolic}, Chol {chol}, Đường huyết {glucose},
             Hút thuốc {'Có' if smoking else 'Không'}, Rượu {'Có' if alcohol else 'Không'},
             Tập thể dục {'Có' if exercise else 'Không'}.
-            Hãy đưa ra lời khuyên phòng tránh bệnh tim mạch.
+            Hãy đưa ra lời khuyên ngắn gọn cho bệnh nhân.
             """
             ai_advice = get_ai_advice_cached(prompt)
 
-            # Lưu DB
+            # Lưu kết quả vào DB
             bacsi_id = session['user_id'] if session.get('role') == 'doctor' else None
             cur.execute("""
                 INSERT INTO ChanDoan
                 (BenhNhanID, BacSiID, BMI, HuyetApTamThu, HuyetApTamTruong,
                  Cholesterol, DuongHuyet, HutThuoc, UongCon, TapTheDuc, NguyCo, NgayChanDoan)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())
-            """, (benhnhan_id, bacsi_id, bmi, systolic, diastolic, chol, glucose, smoking, alcohol, exercise, nguy_co))
+            """, (benhnhan_id, bacsi_id, bmi, systolic, diastolic,
+                  chol, glucose, smoking, alcohol, exercise, nguy_co_text))
             conn.commit()
 
         except Exception as e:
             flash(f"Lỗi nhập liệu: {e}", "danger")
 
-    # Upload file
+    # ===== Upload file =====
     if request.method == 'POST' and 'data_file' in request.files:
         f = request.files['data_file']
         if f.filename != '':
             path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(f.filename))
             f.save(path)
-            df = pd.read_csv(path) if f.filename.endswith('.csv') else pd.read_excel(path)
-            df['Prediction'] = ['Cao' if i % 2 == 0 else 'Thấp' for i in range(len(df))]
-            file_result = df.to_html(classes='table table-bordered', index=False)
+
+            if f.filename.endswith('.csv'):
+                df = pd.read_csv(path)
+            else:
+                df = pd.read_excel(path)
+
+            df.columns = [c.strip().lower() for c in df.columns]
+
+            required = ['age','gender','ap_hi','ap_lo','cholesterol','gluc','smoke','alco','active','weight','height']
+            missing = [c for c in required if c not in df.columns]
+
+            if missing:
+                file_result = f"<p class='text-danger'>Thiếu các cột: {', '.join(missing)}</p>"
+            else:
+                # Tính BMI
+                df['bmi'] = df['weight'] / ((df['height']/100) ** 2)
+
+                # Chuyển đổi dữ liệu
+                df['gender'] = df['gender'].map({'Nam':1, 'Nữ':0}).fillna(df['gender'])
+                df['smoke'] = df['smoke'].map({'yes':1, 'no':0}).fillna(df['smoke'])
+                df['alco'] = df['alco'].map({'yes':1, 'no':0}).fillna(df['alco'])
+                df['active'] = df['active'].map({'yes':1, 'no':0}).fillna(df['active'])
+                df['cholesterol'] = df['cholesterol'].map(chol_map).fillna(df['cholesterol'])
+                df['gluc'] = df['gluc'].map(gluc_map).fillna(df['gluc'])
+
+                # Dự đoán
+                if xgb_model:
+                    X = df[['age','gender','ap_hi','ap_lo','cholesterol','gluc','smoke','alco','active','bmi']]
+                    proba = xgb_model.predict_proba(X)[:,1] * 100
+                    pred = (proba >= 50).astype(int)
+                    df['Nguy_cơ_%'] = proba.round(1)
+                    df['Kết_quả'] = ['Cao' if p==1 else 'Thấp' for p in pred]
+                else:
+                    df['Nguy_cơ_%'] = 0
+                    df['Kết_quả'] = 'Chưa có mô hình'
+
+                file_result = df[['age','gender','ap_hi','ap_lo','cholesterol','gluc','smoke','alco','active','bmi','Nguy_cơ_%','Kết_quả']] \
+                    .to_html(classes='table table-bordered table-striped', index=False)
 
     conn.close()
-    return render_template('diagnose.html', benhnhans=benhnhans, result=result, ai_advice=ai_advice, file_result=file_result)
+    return render_template('diagnose.html',
+                           benhnhans=benhnhans,
+                           result=result,
+                           risk_percent=risk_percent,
+                           risk_level=risk_level,
+                           ai_advice=ai_advice,
+                           file_result=file_result)
 
 # ==========================================
-# Lịch sử chẩn đoán
+# Lịch sử
 # ==========================================
 @app.route('/history')
 def history():
@@ -262,7 +312,6 @@ def history():
 
     conn = get_connection()
     cur = conn.cursor()
-
     if session.get('role') == 'doctor':
         cur.execute("SELECT * FROM V_LichSuChanDoan ORDER BY NgayChanDoan DESC")
     else:
@@ -273,7 +322,6 @@ def history():
             )
             ORDER BY NgayChanDoan DESC
         """, (session['user_id'],))
-
     records = cur.fetchall()
     conn.close()
     return render_template('history.html', records=records)
@@ -288,10 +336,9 @@ def delete_history(id):
 
     conn = get_connection()
     cur = conn.cursor()
-
     try:
-        cur.execute("DELETE FROM BenhAn WHERE ChanDoanID = ?", (id,))
-        cur.execute("DELETE FROM ChanDoan WHERE ID = ?", (id,))
+        cur.execute("DELETE FROM BenhAn WHERE ChanDoanID=?", (id,))
+        cur.execute("DELETE FROM ChanDoan WHERE ID=?", (id,))
         conn.commit()
     except Exception as e:
         conn.rollback()
@@ -320,7 +367,7 @@ def records():
     return render_template('records.html', records=records)
 
 # ==========================================
-# Hồ sơ
+# Hồ sơ cá nhân
 # ==========================================
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
@@ -329,20 +376,17 @@ def profile():
 
     conn = get_connection()
     cur = conn.cursor()
-
     if request.method == 'POST':
         cur.execute("""
             UPDATE NguoiDung
             SET HoTen=?, DienThoai=?, NgaySinh=?, GioiTinh=?, DiaChi=?
             WHERE ID=?
-        """, (
-            request.form.get('ho_ten'),
-            request.form.get('dien_thoai'),
-            request.form.get('ngay_sinh'),
-            request.form.get('gioi_tinh'),
-            request.form.get('dia_chi'),
-            session['user_id']
-        ))
+        """, (request.form.get('ho_ten'),
+              request.form.get('dien_thoai'),
+              request.form.get('ngay_sinh'),
+              request.form.get('gioi_tinh'),
+              request.form.get('dia_chi'),
+              session['user_id']))
         conn.commit()
 
     cur.execute("""
