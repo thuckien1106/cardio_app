@@ -1,67 +1,112 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-5 pt-4">
-  <h2 class="fw-bold text-gradient text-center mb-4">
-    Thông tin về bệnh tim mạch
+
+  <!-- Tiêu đề -->
+  <h2 class="fw-bold text-center mb-4" style="
+      background: linear-gradient(45deg, #d6336c, #6f42c1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;">
+    🫀 Ứng dụng hỗ trợ chẩn đoán bệnh tim mạch
   </h2>
 
   <!-- Phần giới thiệu -->
-  <div class="row mb-5">
-    <div class="col-md-6">
+  <div class="row align-items-center mb-5 p-4 bg-light rounded-4 shadow-sm">
+    <!-- Ảnh minh họa -->
+    <div class="col-lg-6 mb-3 mb-lg-0">
       <img src="{{ url_for('static', filename='images/heart-health.webp') }}" 
-           alt="Heart Health" class="img-fluid rounded shadow">
+           alt="Heart Health" class="img-fluid rounded-4 shadow-lg"
+           style="transition: transform 0.3s ease-in-out;"
+           onmouseover="this.style.transform='scale(1.03)';"
+           onmouseout="this.style.transform='scale(1)';">
     </div>
-    <div class="col-md-6 d-flex flex-column justify-content-center">
-      <p>
-        Bệnh tim mạch là một trong những nguyên nhân gây tử vong hàng đầu trên thế giới.
-        Việc nhận diện sớm các yếu tố nguy cơ như huyết áp cao, cholesterol cao, thừa cân,
-        hút thuốc và lối sống ít vận động có vai trò quan trọng trong phòng ngừa.
+
+    <!-- Nội dung giới thiệu -->
+    <div class="col-lg-6">
+      <h3 class="fw-semibold text-primary mb-3">💡 Vì sao nên theo dõi sức khỏe tim mạch?</h3>
+      <p class="text-secondary" style="font-size:1rem;">
+        Bệnh tim mạch là nguyên nhân tử vong hàng đầu trên thế giới.  
+        Việc nhận diện sớm các yếu tố nguy cơ như:
+        <strong>huyết áp cao</strong>, <strong>cholesterol</strong>,
+        <strong>thừa cân</strong>, <strong>hút thuốc</strong> và
+        <strong>lối sống ít vận động</strong> đóng vai trò quan trọng trong phòng ngừa.
       </p>
-      <p>
-        Ứng dụng của chúng tôi giúp bạn dễ dàng theo dõi và đánh giá nguy cơ bệnh tim mạch,
+      <p class="text-secondary" style="font-size:1rem;">
+        Ứng dụng CVD-App giúp bạn dễ dàng theo dõi và đánh giá nguy cơ bệnh tim mạch,
         cung cấp thông tin y tế đáng tin cậy và hỗ trợ bác sĩ chẩn đoán.
       </p>
 
-      <!-- Nút chẩn đoán cho cả bác sĩ & bệnh nhân -->
-      <a href="{{ url_for('diagnose') }}" class="btn btn-primary mt-3 px-4">
+      <!-- Nút chẩn đoán -->
+      <a href="{{ url_for('diagnose') }}" 
+         class="btn btn-gradient px-4 py-2 mt-2 shadow">
         🩺 Bắt đầu chẩn đoán
       </a>
     </div>
   </div>
 
-  <!-- Tin tức -->
-  <h3 class="fw-bold text-primary text-center mb-4">Có thể bạn đã biết</h3>
+  <!-- Tin tức nổi bật -->
+  <h3 class="fw-bold text-primary text-center mt-5 mb-4">
+    📰 Kiến thức nổi bật về tim mạch
+  </h3>
+
   <div class="row g-4">
+    <!-- Tin 1 -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm">
-        <img src="{{ url_for('static', filename='images/news1.jpg') }}" class="card-img-top" alt="Tin 1">
+      <div class="card h-100 border-0 shadow-lg rounded-4 news-card">
+        <div class="overflow-hidden rounded-top-4">
+          <img src="{{ url_for('static', filename='images/news1.jpg') }}" 
+               class="card-img-top" alt="Tin 1"
+               style="transition: transform 0.3s ease;"
+               onmouseover="this.style.transform='scale(1.1)';"
+               onmouseout="this.style.transform='scale(1)';">
+        </div>
         <div class="card-body">
-          <h5 class="card-title">Lối sống lành mạnh giúp giảm nguy cơ tim mạch</h5>
-          <p class="card-text">
+          <h5 class="card-title fw-semibold text-primary">
+            Lối sống lành mạnh giúp giảm nguy cơ tim mạch
+          </h5>
+          <p class="card-text text-muted">
             Duy trì cân nặng hợp lý và tập thể dục đều đặn giúp giảm nguy cơ mắc bệnh tim mạch đáng kể.
           </p>
         </div>
       </div>
     </div>
 
+    <!-- Tin 2 -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm">
-        <img src="{{ url_for('static', filename='images/news2.webp') }}" class="card-img-top" alt="Tin 2">
+      <div class="card h-100 border-0 shadow-lg rounded-4 news-card">
+        <div class="overflow-hidden rounded-top-4">
+          <img src="{{ url_for('static', filename='images/news2.webp') }}" 
+               class="card-img-top" alt="Tin 2"
+               style="transition: transform 0.3s ease;"
+               onmouseover="this.style.transform='scale(1.1)';"
+               onmouseout="this.style.transform='scale(1)';">
+        </div>
         <div class="card-body">
-          <h5 class="card-title">Chế độ ăn uống khoa học</h5>
-          <p class="card-text">
+          <h5 class="card-title fw-semibold text-success">
+            Chế độ ăn uống khoa học
+          </h5>
+          <p class="card-text text-muted">
             Ăn nhiều rau xanh, trái cây, giảm muối và đường giúp kiểm soát huyết áp và cholesterol.
           </p>
         </div>
       </div>
     </div>
 
+    <!-- Tin 3 -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-sm">
-        <img src="{{ url_for('static', filename='images/news3.png') }}" class="card-img-top" alt="Tin 3">
+      <div class="card h-100 border-0 shadow-lg rounded-4 news-card">
+        <div class="overflow-hidden rounded-top-4">
+          <img src="{{ url_for('static', filename='images/news3.png') }}" 
+               class="card-img-top" alt="Tin 3"
+               style="transition: transform 0.3s ease;"
+               onmouseover="this.style.transform='scale(1.1)';"
+               onmouseout="this.style.transform='scale(1)';">
+        </div>
         <div class="card-body">
-          <h5 class="card-title">Khám sức khỏe định kỳ</h5>
-          <p class="card-text">
+          <h5 class="card-title fw-semibold text-danger">
+            Khám sức khỏe định kỳ
+          </h5>
+          <p class="card-text text-muted">
             Phát hiện sớm các yếu tố nguy cơ như tăng huyết áp và rối loạn lipid máu giúp phòng tránh biến chứng tim mạch.
           </p>
         </div>
@@ -69,4 +114,30 @@
     </div>
   </div>
 </div>
+
+<!-- CSS tùy chỉnh -->
+<style>
+  .btn-gradient {
+    background: linear-gradient(45deg, #ff6b6b, #d6336c);
+    border: none;
+    color: #fff;
+    font-weight: 500;
+    transition: all 0.3s ease-in-out;
+    border-radius: 30px;
+  }
+  .btn-gradient:hover {
+    background: linear-gradient(45deg, #d6336c, #6f42c1);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(214, 51, 108, 0.3);
+  }
+
+  .news-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 12px;
+  }
+  .news-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+  }
+</style>
 {% endblock %}

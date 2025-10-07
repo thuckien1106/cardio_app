@@ -7,7 +7,7 @@
         <h2 class="fw-bold text-gradient">🩺 Chẩn đoán bệnh tim mạch</h2>
         <p class="text-muted small">
             {% if session['role'] == 'doctor' %}
-            Chọn bệnh nhân cần chẩn đoán, sau đó nhập dữ liệu cần thiết.
+            Chọn bệnh nhân cần chẩn đoán, sau đó nhập dữ liệu cần thiết và chọn ngưỡng chẩn đoán phù hợp.
             {% else %}
             Nhập dữ liệu hoặc tải file CSV/Excel để hệ thống dự đoán nguy cơ mắc bệnh tim mạch.
             {% endif %}
@@ -31,8 +31,7 @@
                         <select name="benhnhan_id" class="form-select">
                             <option value="">-- Chọn bệnh nhân --</option>
                             {% for bn in benhnhans %}
-                            <option value="{{ bn.ID }}" {% if request.form.get('benhnhan_id')==bn.ID|string %}selected{%
-                                endif %}>
+                            <option value="{{ bn.ID }}" {% if request.form.get('benhnhan_id')==bn.ID|string %}selected{% endif %}>
                                 {{ bn.HoTen }} | {{ bn.GioiTinh }} | {{ bn.NgaySinh }}
                             </option>
                             {% endfor %}
@@ -40,29 +39,38 @@
                     </div>
                     {% endif %}
 
+                    <!-- Chọn ngưỡng chẩn đoán -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ngưỡng chẩn đoán (Threshold)</label>
+                        <select name="threshold" id="threshold" class="form-select">
+                            <option value="0.25" {% if request.form.get('threshold','0.5')=='0.25' %}selected{% endif %}>0.25 - Nhạy cao (ít bỏ sót ca bệnh)</option>
+                            <option value="0.5" {% if request.form.get('threshold','0.5')=='0.5' %}selected{% endif %}>0.5 - ⭐ Khuyến nghị (cân bằng)</option>
+                            <option value="0.75" {% if request.form.get('threshold','0.5')=='0.75' %}selected{% endif %}>0.75 - Đặc hiệu cao (ít báo động giả)</option>
+                        </select>
+                        <small class="text-muted">
+                            Gợi ý: Ngưỡng khuyến nghị theo y tế là <strong>0.5</strong> – cân bằng giữa phát hiện bệnh và hạn chế báo động giả.
+                        </small>
+                    </div>
+
                     <!-- Tuổi / Giới tính / Tập thể dục -->
                     <div class="row g-2">
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Tuổi</label>
                             <input type="number" name="age" id="age" class="form-control" required placeholder="VD: 45"
-                                value="{{ request.form.get('age','') }}">
+                                   value="{{ request.form.get('age','') }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Giới tính</label>
                             <select name="gender" id="gender" class="form-select" required>
-                                <option value="Nam" {% if request.form.get('gender')=='Nam' %}selected{% endif %}>Nam
-                                </option>
-                                <option value="Nữ" {% if request.form.get('gender')=='Nữ' %}selected{% endif %}>Nữ
-                                </option>
+                                <option value="Nam" {% if request.form.get('gender')=='Nam' %}selected{% endif %}>Nam</option>
+                                <option value="Nữ" {% if request.form.get('gender')=='Nữ' %}selected{% endif %}>Nữ</option>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Tập thể dục</label>
                             <select name="exercise" id="exercise" class="form-select">
-                                <option value="yes" {% if request.form.get('exercise')=='yes' %}selected{% endif %}>Có
-                                </option>
-                                <option value="no" {% if request.form.get('exercise')=='no' %}selected{% endif %}>Không
-                                </option>
+                                <option value="yes" {% if request.form.get('exercise')=='yes' %}selected{% endif %}>Có</option>
+                                <option value="no" {% if request.form.get('exercise')=='no' %}selected{% endif %}>Không</option>
                             </select>
                         </div>
                     </div>
@@ -71,13 +79,13 @@
                     <div class="row g-2 mt-2">
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Cân nặng (kg)</label>
-                            <input type="number" step="0.1" name="weight" id="weight" class="form-control" required
-                                value="{{ request.form.get('weight','') }}">
+                            <input type="number" step="0.1" name="weight" id="weight" class="form-control"
+                                   required value="{{ request.form.get('weight','') }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Chiều cao (cm)</label>
-                            <input type="number" step="0.1" name="height" id="height" class="form-control" required
-                                value="{{ request.form.get('height','') }}">
+                            <input type="number" step="0.1" name="height" id="height" class="form-control"
+                                   required value="{{ request.form.get('height','') }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">BMI</label>
@@ -90,12 +98,12 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Huyết áp tâm thu (HATT)</label>
                             <input type="number" name="systolic" id="systolic" class="form-control" required
-                                placeholder="VD: 130" value="{{ request.form.get('systolic','') }}">
+                                   placeholder="VD: 130" value="{{ request.form.get('systolic','') }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Huyết áp tâm trương (HATTr)</label>
                             <input type="number" name="diastolic" id="diastolic" class="form-control" required
-                                placeholder="VD: 85" value="{{ request.form.get('diastolic','') }}">
+                                   placeholder="VD: 85" value="{{ request.form.get('diastolic','') }}">
                         </div>
                     </div>
 
@@ -104,23 +112,17 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Cholesterol</label>
                             <select name="cholesterol" id="cholesterol" class="form-select">
-                                <option value="normal" {% if request.form.get('cholesterol')=='normal' %}selected{%
-                                    endif %}>Bình thường</option>
-                                <option value="above_normal" {% if request.form.get('cholesterol')=='above_normal'
-                                    %}selected{% endif %}>Cao hơn bình thường</option>
-                                <option value="high" {% if request.form.get('cholesterol')=='high' %}selected{% endif
-                                    %}>Cao</option>
+                                <option value="normal" {% if request.form.get('cholesterol')=='normal' %}selected{% endif %}>Bình thường</option>
+                                <option value="above_normal" {% if request.form.get('cholesterol')=='above_normal' %}selected{% endif %}>Cao hơn bình thường</option>
+                                <option value="high" {% if request.form.get('cholesterol')=='high' %}selected{% endif %}>Cao</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Đường huyết</label>
                             <select name="glucose" id="glucose" class="form-select">
-                                <option value="normal" {% if request.form.get('glucose')=='normal' %}selected{% endif
-                                    %}>Bình thường</option>
-                                <option value="above_normal" {% if request.form.get('glucose')=='above_normal'
-                                    %}selected{% endif %}>Cao hơn bình thường</option>
-                                <option value="high" {% if request.form.get('glucose')=='high' %}selected{% endif %}>Cao
-                                </option>
+                                <option value="normal" {% if request.form.get('glucose')=='normal' %}selected{% endif %}>Bình thường</option>
+                                <option value="above_normal" {% if request.form.get('glucose')=='above_normal' %}selected{% endif %}>Cao hơn bình thường</option>
+                                <option value="high" {% if request.form.get('glucose')=='high' %}selected{% endif %}>Cao</option>
                             </select>
                         </div>
                     </div>
@@ -130,19 +132,15 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Hút thuốc</label>
                             <select name="smoking" id="smoking" class="form-select">
-                                <option value="no" {% if request.form.get('smoking')=='no' %}selected{% endif %}>Không
-                                </option>
-                                <option value="yes" {% if request.form.get('smoking')=='yes' %}selected{% endif %}>Có
-                                </option>
+                                <option value="no" {% if request.form.get('smoking')=='no' %}selected{% endif %}>Không</option>
+                                <option value="yes" {% if request.form.get('smoking')=='yes' %}selected{% endif %}>Có</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Uống rượu/bia</label>
                             <select name="alcohol" id="alcohol" class="form-select">
-                                <option value="no" {% if request.form.get('alcohol')=='no' %}selected{% endif %}>Không
-                                </option>
-                                <option value="yes" {% if request.form.get('alcohol')=='yes' %}selected{% endif %}>Có
-                                </option>
+                                <option value="no" {% if request.form.get('alcohol')=='no' %}selected{% endif %}>Không</option>
+                                <option value="yes" {% if request.form.get('alcohol')=='yes' %}selected{% endif %}>Có</option>
                             </select>
                         </div>
                     </div>
@@ -156,16 +154,15 @@
                 <!-- Kết quả dự đoán -->
                 <div id="resultBox">
                     {% if result %}
-                    <div
-                        class="alert {% if risk_level == 'high' %}alert-danger{% else %}alert-success{% endif %} mt-3 rounded-3">
+                    <div class="alert {% if risk_level == 'high' %}alert-danger{% else %}alert-success{% endif %} mt-3 rounded-3">
                         <strong>Kết quả:</strong>
                         {% if risk_level == 'high' %}
                         Nguy cơ cao - {{ risk_percent }}%
                         {% else %}
                         Nguy cơ thấp - {{ risk_percent }}%
                         {% endif %}
+                        <br><small class="text-muted">Ngưỡng đang dùng: {{ threshold }}</small>
                     </div>
-
                     {% endif %}
 
                     {% if ai_advice %}
@@ -203,33 +200,33 @@
 
 <!-- Script tính BMI & ẩn kết quả khi thay đổi -->
 <script>
-    const weight = document.getElementById('weight');
-    const height = document.getElementById('height');
-    const resultBox = document.getElementById('resultBox');
-    const inputs = document.querySelectorAll('#predictForm input, #predictForm select');
+const weight = document.getElementById('weight');
+const height = document.getElementById('height');
+const resultBox = document.getElementById('resultBox');
+const inputs = document.querySelectorAll('#predictForm input, #predictForm select');
 
-    function calcBMI() {
-        const w = parseFloat(weight.value);
-        const h = parseFloat(height.value);
-        if (w > 0 && h > 0) {
-            const bmi = (w / ((h / 100) ** 2)).toFixed(2);
-            document.getElementById('bmi').value = bmi;
-        } else {
-            document.getElementById('bmi').value = '';
-        }
+function calcBMI() {
+    const w = parseFloat(weight.value);
+    const h = parseFloat(height.value);
+    if (w > 0 && h > 0) {
+        const bmi = (w / ((h / 100) ** 2)).toFixed(2);
+        document.getElementById('bmi').value = bmi;
+    } else {
+        document.getElementById('bmi').value = '';
     }
+}
 
-    function clearResult() {
-        if (resultBox) resultBox.innerHTML = '';
-    }
+function clearResult() {
+    if (resultBox) resultBox.innerHTML = '';
+}
 
-    inputs.forEach(input => {
-        input.addEventListener('input', () => {
-            calcBMI();
-            clearResult();
-        });
+inputs.forEach(input => {
+    input.addEventListener('input', () => {
+        calcBMI();
+        clearResult();
     });
+});
 
-    calcBMI(); // Tính lại BMI khi tải trang
+calcBMI(); // Tính lại BMI khi tải trang
 </script>
 {% endblock %}
