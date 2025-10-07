@@ -98,7 +98,6 @@ def register():
             """, (ho_ten, gioi_tinh, ngay_sinh, email, mat_khau, role))
             conn.commit()
             conn.close()
-
             return render_template('register.html', success=True, today=today)
         except Exception as e:
             conn.rollback()
@@ -156,7 +155,7 @@ def diagnose():
     conn = get_connection()
     cur = conn.cursor()
 
-    # Lấy danh sách bệnh nhân cho bác sĩ
+    # Lấy danh sách bệnh nhân
     benhnhans = []
     if session.get('role') == 'doctor':
         cur.execute("SELECT ID, HoTen, GioiTinh, NgaySinh FROM NguoiDung WHERE Role='patient'")
@@ -174,6 +173,7 @@ def diagnose():
     file_result = None
     risk_percent = None
     risk_level = None
+    threshold = float(request.form.get('threshold', 0.5))  # Mặc định 0.5
 
     chol_map = {'normal': 1, 'above_normal': 2, 'high': 3}
     gluc_map = {'normal': 1, 'above_normal': 2, 'high': 3}
@@ -205,9 +205,9 @@ def diagnose():
                                smoking, alcohol, exercise, bmi]])
                 prob = float(xgb_model.predict_proba(X)[0, 1])
                 risk_percent = round(prob * 100, 1)
-                risk_level = 'high' if prob >= 0.5 else 'low'
+                risk_level = 'high' if prob >= threshold else 'low'
             else:
-                # fallback heuristic
+                # Fallback heuristic
                 score = 0
                 if systolic > 140 or diastolic > 90: score += 1
                 if chol == 'above_normal': score += 1
@@ -217,8 +217,9 @@ def diagnose():
                 if bmi > 30: score += 1
                 if smoking: score += 1
                 if alcohol: score += 1
-                risk_percent = round(score / 8 * 100, 1)
-                risk_level = 'high' if score >= 3 else 'low'
+                prob = score / 8
+                risk_percent = round(prob * 100, 1)
+                risk_level = 'high' if prob >= threshold else 'low'
 
             nguy_co_text = "Nguy cơ cao" if risk_level == 'high' else "Nguy cơ thấp"
             result = f"{nguy_co_text} - {risk_percent}%"
@@ -230,11 +231,12 @@ def diagnose():
             Huyết áp {systolic}/{diastolic}, Chol {chol}, Đường huyết {glucose},
             Hút thuốc {'Có' if smoking else 'Không'}, Rượu {'Có' if alcohol else 'Không'},
             Tập thể dục {'Có' if exercise else 'Không'}.
+            Ngưỡng dự đoán: {threshold}.
             Hãy đưa ra lời khuyên ngắn gọn cho bệnh nhân.
             """
             ai_advice = get_ai_advice_cached(prompt)
 
-            # Lưu kết quả vào DB
+            # Lưu vào DB
             bacsi_id = session['user_id'] if session.get('role') == 'doctor' else None
             cur.execute("""
                 INSERT INTO ChanDoan
@@ -271,7 +273,7 @@ def diagnose():
                 # Tính BMI
                 df['bmi'] = df['weight'] / ((df['height']/100) ** 2)
 
-                # Chuyển đổi dữ liệu
+                # Chuyển đổi
                 df['gender'] = df['gender'].map({'Nam':1, 'Nữ':0}).fillna(df['gender'])
                 df['smoke'] = df['smoke'].map({'yes':1, 'no':0}).fillna(df['smoke'])
                 df['alco'] = df['alco'].map({'yes':1, 'no':0}).fillna(df['alco'])
@@ -279,13 +281,11 @@ def diagnose():
                 df['cholesterol'] = df['cholesterol'].map(chol_map).fillna(df['cholesterol'])
                 df['gluc'] = df['gluc'].map(gluc_map).fillna(df['gluc'])
 
-                # Dự đoán
                 if xgb_model:
                     X = df[['age','gender','ap_hi','ap_lo','cholesterol','gluc','smoke','alco','active','bmi']]
-                    proba = xgb_model.predict_proba(X)[:,1] * 100
-                    pred = (proba >= 50).astype(int)
-                    df['Nguy_cơ_%'] = proba.round(1)
-                    df['Kết_quả'] = ['Cao' if p==1 else 'Thấp' for p in pred]
+                    proba = xgb_model.predict_proba(X)[:,1]
+                    df['Nguy_cơ_%'] = (proba * 100).round(1)
+                    df['Kết_quả'] = ['Nguy cơ cao' if p >= threshold else 'Nguy cơ thấp' for p in proba]
                 else:
                     df['Nguy_cơ_%'] = 0
                     df['Kết_quả'] = 'Chưa có mô hình'
@@ -299,6 +299,7 @@ def diagnose():
                            result=result,
                            risk_percent=risk_percent,
                            risk_level=risk_level,
+                           threshold=threshold,
                            ai_advice=ai_advice,
                            file_result=file_result)
 

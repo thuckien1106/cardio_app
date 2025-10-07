@@ -9,15 +9,15 @@ body {
 
 body {
   font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, #eef3ff, #fdfdff);
+  background: linear-gradient(135deg, #f3f5fc, #ffffff); /* Nền sáng nhẹ, không chói */
   color: #333;
   display: flex;
   flex-direction: column;
-  margin-top: 60px; /* tránh navbar che nội dung */
+  margin-top: 10px; /* tránh navbar che nội dung */
   line-height: 1.6;
 }
 
-/* Nội dung chính chiếm khoảng trống còn lại */
+/* Nội dung chính */
 .main-content {
   flex: 1 0 auto;
   padding-bottom: 40px; /* tránh footer đè nội dung */
@@ -27,32 +27,32 @@ body {
    Navbar
 ================================== */
 .navbar {
-  background: linear-gradient(90deg, #1976d2, #6a5acd, #9b59b6);
+  background: linear-gradient(90deg, #1e63c6, #5a4fcf); /* Tông xanh dương + tím nhẹ */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .navbar-brand {
   font-size: 1.4rem;
   font-weight: 600;
+  color: #fff !important;
 }
 
 /* Gradient chữ nổi bật */
 .text-gradient {
-  background: linear-gradient(45deg, #1976d2, #6a5acd, #9b59b6);
+  background: linear-gradient(45deg, #1e63c6, #5a4fcf);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 600;
 }
 
 /* ===============================
-   Trang Login
+   Trang Login / Register
 ================================== */
 .login-wrapper {
   background: linear-gradient(
       135deg,
-      rgba(25, 118, 210, 0.08),
-      rgba(106, 90, 205, 0.08),
-      rgba(155, 89, 182, 0.1)
+      rgba(30, 99, 198, 0.08),
+      rgba(90, 79, 207, 0.08)
   );
   min-height: calc(100vh - 60px);
   display: flex;
@@ -92,26 +92,25 @@ body {
 .logo-circle {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #fe7070, #f5a2a2);
+  background: linear-gradient(135deg, #ff6f61, #f28b82); /* Đỏ nhẹ hơn */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 1rem;
   color: #fff;
-  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+  box-shadow: 0 6px 16px rgba(242, 139, 130, 0.4);
 }
 
 .logo-circle i {
   font-size: 2rem;
 }
 
-
 /* Nhóm nhập liệu */
 .input-group {
   display: flex;
-  align-items: center;       /* Căn giữa icon & input theo chiều dọc */
-  height: 48px;              /* Chiều cao đồng nhất */
+  align-items: center;
+  height: 48px;
   background: #f8f9fa;
   border: 1px solid #ddd;
   border-radius: 30px;
@@ -121,30 +120,27 @@ body {
 }
 
 .input-group:focus-within {
-  border-color: #6a5acd;
-  box-shadow: 0 0 6px rgba(106, 90, 205, 0.4);
+  border-color: #5a4fcf;
+  box-shadow: 0 0 6px rgba(90, 79, 207, 0.4);
 }
 
-/* Ô chứa icon */
 .input-group-text {
-  width: 48px;                /* Bằng chiều cao group để icon nằm giữa */
-  height: 48px;               /* Quan trọng để cân giữa */
+  width: 48px;
+  height: 48px;
   display: flex;
-  align-items:center;        /* Căn giữa icon theo trục dọc */
-  justify-content: center;    /* Căn giữa icon theo trục ngang */
+  align-items:center;
+  justify-content: center;
   background: transparent;
   border: none;
-  padding: 0;                
+  padding: 0;
 }
 
-/* Icon */
 .input-group-text i {
-  font-size: 1.3rem;          /* Kích cỡ vừa phải */
-  color: #6a5acd;
-  line-height: 1;             /* Đảm bảo không bị đẩy lệch bởi line-height */
+  font-size: 1.3rem;
+  color: #5a4fcf;
+  line-height: 1;
 }
 
-/* Input */
 .input-group .form-control {
   flex: 1;
   height: 100%;
@@ -161,12 +157,11 @@ body {
   box-shadow: none;
 }
 
-
 /* ===============================
    Nút đăng nhập
 ================================== */
 .btn-login {
-  background: linear-gradient(45deg, #1976d2, #6a5acd);
+  background: linear-gradient(45deg, #1e63c6, #5a4fcf);
   color: #fff;
   border: none;
   border-radius: 30px;
@@ -174,13 +169,13 @@ body {
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+  box-shadow: 0 4px 12px rgba(30, 99, 198, 0.3);
 }
 
 .btn-login:hover {
-  background: linear-gradient(45deg, #1565c0, #5b4ec0);
+  background: linear-gradient(45deg, #1957af, #5145c0);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(25, 118, 210, 0.4);
+  box-shadow: 0 6px 16px rgba(30, 99, 198, 0.4);
 }
 
 /* ===============================
@@ -213,7 +208,7 @@ body {
 ================================== */
 .footer {
   flex-shrink: 0;
-  background: linear-gradient(90deg, #1976d2, #6a5acd, #9b59b6);
+  background: linear-gradient(90deg, #1e63c6, #5a4fcf);
   color: #fff;
   text-align: center;
   padding: 15px 10px;
@@ -227,14 +222,14 @@ body {
 }
 
 .footer a:hover {
-  color: #ffe082;
+  color: #ffd54f; /* vàng nhạt khi hover */
 }
 
 /* ===============================
    Nút bấm nâng cấp
 ================================== */
 .btn-primary {
-  background: linear-gradient(45deg, #1976d2, #6a5acd);
+  background: linear-gradient(45deg, #1e63c6, #5a4fcf);
   border: none;
   color: #fff;
   border-radius: 25px;
@@ -244,9 +239,9 @@ body {
 }
 
 .btn-primary:hover {
-  background: linear-gradient(45deg, #1565c0, #5b4ec0);
+  background: linear-gradient(45deg, #1957af, #5145c0);
   transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(21, 101, 192, 0.4);
+  box-shadow: 0 6px 14px rgba(30, 99, 198, 0.4);
 }
 
 .btn-success {
@@ -282,8 +277,8 @@ body {
 
 .form-control:focus,
 .form-select:focus {
-  border-color: #6a5acd;
-  box-shadow: 0 0 8px rgba(106, 90, 205, 0.5);
+  border-color: #5a4fcf;
+  box-shadow: 0 0 8px rgba(90, 79, 207, 0.5);
 }
 
 /* ===============================
