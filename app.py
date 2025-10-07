@@ -4,36 +4,55 @@ import os
 from werkzeug.utils import secure_filename
 import pyodbc
 import datetime
+from dotenv import load_dotenv
+import google.generativeai as genai
+from functools import lru_cache
 
-# ==============================
-# Khởi tạo Flask
-# ==============================
+# ==========================================
+# Cấu hình app
+# ==========================================
+load_dotenv()
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "cvdapp-fixed-secret-key-2025")
+app.secret_key = os.getenv("SECRET_KEY", "cvdapp-secret-key")
 
-# ==============================
+# ==========================================
 # Kết nối SQL Server
-# ==============================
+# ==========================================
 def get_connection():
-    conn = pyodbc.connect(
+    return pyodbc.connect(
         "DRIVER={SQL Server};"
-        "SERVER=HKT;"              # 👉 thay bằng tên server SQL của bạn
+        "SERVER=HKT;"
         "DATABASE=CVD_App;"
         "UID=sa;"
-        "PWD=123"                  # 👉 thay bằng mật khẩu phù hợp
+        "PWD=123"
     )
-    return conn
 
-# ==============================
+# ==========================================
+# Cấu hình Gemini
+# ==========================================
+MODEL_NAME = "models/gemini-2.5-flash-lite"
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+@lru_cache(maxsize=128)
+def get_ai_advice_cached(prompt: str) -> str:
+    """Gọi Gemini để sinh lời khuyên"""
+    try:
+        model = genai.GenerativeModel(MODEL_NAME)
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"⚠️ Không thể lấy lời khuyên AI: {e}"
+
+# ==========================================
 # Cấu hình upload
-# ==============================
+# ==========================================
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# ==============================
+# ==========================================
 # Đăng nhập
-# ==============================
+# ==========================================
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -60,18 +79,18 @@ def login():
 
     return render_template('login.html')
 
-# ==============================
+# ==========================================
 # Trang chủ
-# ==============================
+# ==========================================
 @app.route('/home')
 def home():
     if 'user' not in session:
         return redirect(url_for('login'))
     return render_template('home.html')
 
-# ==============================
+# ==========================================
 # Trang chẩn đoán
-# ==============================
+# ==========================================
 @app.route('/diagnose', methods=['GET', 'POST'])
 def diagnose():
     if 'user' not in session:
@@ -86,7 +105,6 @@ def diagnose():
         cursor.execute("SELECT ID, HoTen, GioiTinh, NgaySinh FROM NguoiDung WHERE Role='patient'")
         rows = cursor.fetchall()
 
-        # Chuyển đổi NgaySinh sang chuỗi dd/mm/yyyy hoặc “Chưa khai báo”
         for r in rows:
             if r.NgaySinh:
                 if isinstance(r.NgaySinh, str):
@@ -108,6 +126,7 @@ def diagnose():
             })
 
     result = None
+    ai_advice = None
     file_result = None
 
     # -------- Xử lý nhập liệu --------
@@ -157,6 +176,26 @@ def diagnose():
             nguy_co = "Nguy cơ cao" if risk_score >= 3 else "Nguy cơ thấp"
             result = f"{nguy_co} (BMI: {bmi})"
 
+            # ===== Gọi AI Gemini để lấy lời khuyên =====
+            prompt = f"""
+            Bạn là chuyên gia tim mạch.
+            Dữ liệu bệnh nhân:
+            - Tuổi: {age}
+            - Giới tính: {gender}
+            - BMI: {bmi}
+            - Huyết áp: {systolic}/{diastolic}
+            - Cholesterol: {chol}
+            - Đường huyết: {glucose}
+            - Hút thuốc: {'Có' if smoking else 'Không'}
+            - Uống rượu: {'Có' if alcohol else 'Không'}
+            - Tập thể dục: {'Có' if exercise else 'Không'}
+
+            Hãy:
+            1. Nhận xét nguy cơ tim mạch.
+            2. Đưa ra lời khuyên về lối sống và chế độ dinh dưỡng phù hợp.
+            """
+            ai_advice = get_ai_advice_cached(prompt)
+
             # ===== Lưu vào DB =====
             bacsi_id = session['user_id'] if session.get('role') == 'doctor' else None
             cursor.execute("""
@@ -195,11 +234,17 @@ def diagnose():
             file_result = df.to_html(classes='table table-striped table-bordered', index=False)
 
     conn.close()
-    return render_template('diagnose.html', result=result, file_result=file_result, benhnhans=benhnhans)
+    return render_template(
+        'diagnose.html',
+        result=result,
+        ai_advice=ai_advice,
+        file_result=file_result,
+        benhnhans=benhnhans
+    )
 
-# ==============================
-# Trang lịch sử chẩn đoán
-# ==============================
+# ==========================================
+# Lịch sử chẩn đoán
+# ==========================================
 @app.route('/history')
 def history():
     if 'user' not in session:
@@ -224,29 +269,58 @@ def history():
 
     return render_template('history.html', records=records)
 
-# ==============================
-# Trang bệnh án
-# ==============================
-@app.route('/records')
-def records():
+@app.route('/delete_history/<int:id>', methods=['POST'])
+def delete_history(id):
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    if session.get('role') == 'patient':
-        flash("Bạn không có quyền truy cập trang này.", "warning")
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        if session.get('role') == 'doctor':
+            # Bác sĩ xóa bất kỳ chẩn đoán nào
+            cur.execute("DELETE FROM BenhAn WHERE ChanDoanID=?", (id,))
+            cur.execute("DELETE FROM ChanDoan WHERE ID=?", (id,))
+        else:
+            # Bệnh nhân chỉ được xóa của mình
+            cur.execute("DELETE FROM BenhAn WHERE ChanDoanID=? AND ChanDoanID IN (SELECT ID FROM ChanDoan WHERE BenhNhanID=?)", (id, session['user_id']))
+            cur.execute("DELETE FROM ChanDoan WHERE ID=? AND BenhNhanID=?", (id, session['user_id']))
+
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+    finally:
+        conn.close()
+
+    return redirect(url_for('history'))
+
+# ==========================================
+# Bệnh án
+# ==========================================
+@app.route('/records')
+def records():
+    # Bắt buộc đăng nhập
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    # Chỉ cho bác sĩ truy cập
+    if session.get('role') != 'doctor':
+        flash("Chỉ bác sĩ mới được xem bệnh án.", "warning")
         return redirect(url_for('history'))
 
+    # Lấy dữ liệu bệnh án
     conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM V_BenhAnChiTiet ORDER BY NgayCapNhat DESC")
-    records = cursor.fetchall()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM V_BenhAnChiTiet ORDER BY NgayCapNhat DESC")
+    records = cur.fetchall()
     conn.close()
 
     return render_template('records.html', records=records)
 
-# ==============================
-# Trang hồ sơ cá nhân
-# ==============================
+# ==========================================
+# Hồ sơ
+# ==========================================
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if 'user' not in session:
@@ -279,16 +353,16 @@ def profile():
 
     return render_template('profile.html', user_info=user_info)
 
-# ==============================
+# ==========================================
 # Đăng xuất
-# ==============================
+# ==========================================
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# ==============================
+# ==========================================
 # Main
-# ==============================
+# ==========================================
 if __name__ == '__main__':
     app.run(debug=True)

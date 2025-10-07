@@ -30,6 +30,7 @@
           <th>Tập thể dục</th>
           <th>Nguy cơ</th>
           <th>Ngày chẩn đoán</th>
+          <th class="text-center">Xóa</th>
         </tr>
       </thead>
       <tbody>
@@ -56,6 +57,16 @@
             {% endif %}
           </td>
           <td>{{ r.NgayChanDoan.strftime('%d/%m/%Y') }}</td>
+
+          <!-- Nút Xóa -->
+          <td class="text-center">
+            <form method="post" action="{{ url_for('delete_history', id=r.ChanDoanID) }}"
+                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa chẩn đoán này không?');">
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                🗑 Xóa
+              </button>
+            </form>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
