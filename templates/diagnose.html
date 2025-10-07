@@ -7,9 +7,9 @@
         <h2 class="fw-bold text-gradient">🩺 Chẩn đoán bệnh tim mạch</h2>
         <p class="text-muted small">
             {% if session['role'] == 'doctor' %}
-                Chọn bệnh nhân cần chẩn đoán, sau đó nhập dữ liệu cần thiết.
+                Chọn bệnh nhân và nhập dữ liệu cần thiết để chẩn đoán.
             {% else %}
-                Nhập dữ liệu hoặc tải file CSV/Excel để hệ thống dự đoán nguy cơ mắc bệnh tim mạch.
+                Nhập dữ liệu hoặc tải file CSV/Excel để dự đoán nguy cơ mắc bệnh tim mạch.
             {% endif %}
         </p>
     </div>
@@ -24,7 +24,7 @@
                 <form method="post">
                     <input type="hidden" name="predict_form" value="1">
 
-                    <!-- Nếu là bác sĩ → chọn bệnh nhân -->
+                    <!-- Chọn bệnh nhân (chỉ hiển thị cho bác sĩ) -->
                     {% if session['role'] == 'doctor' %}
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Chọn bệnh nhân</label>
@@ -107,7 +107,7 @@
                         </div>
                     </div>
 
-                    <!-- Hút thuốc / Uống cồn -->
+                    <!-- Hút thuốc / Uống rượu -->
                     <div class="row g-2 mt-2">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Hút thuốc</label>
@@ -125,7 +125,7 @@
                         </div>
                     </div>
 
-                    <!-- Nút Dự đoán -->
+                    <!-- Nút dự đoán -->
                     <button type="submit" class="btn btn-success w-100 rounded-pill mt-3">
                         🔍 Dự đoán
                     </button>
@@ -138,7 +138,7 @@
                 </div>
                 {% endif %}
 
-                <!-- Lời khuyên từ AI -->
+                <!-- Lời khuyên AI -->
                 {% if ai_advice %}
                 <div class="alert alert-success mt-3 rounded-3">
                     <h6 class="fw-bold text-success">🤖 Lời khuyên từ AI:</h6>
@@ -167,7 +167,6 @@
                 {% endif %}
             </div>
         </div>
-
     </div>
 </div>
 {% endblock %}

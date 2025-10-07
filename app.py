@@ -7,6 +7,8 @@ import datetime
 from dotenv import load_dotenv
 import google.generativeai as genai
 from functools import lru_cache
+import joblib
+import numpy as np
 
 # ==========================================
 # Cấu hình Flask
@@ -43,12 +45,23 @@ def get_ai_advice_cached(prompt: str) -> str:
         return f"⚠️ Không thể lấy lời khuyên AI: {e}"
 
 # ==========================================
+# Load mô hình XGBoost
+# ==========================================
+MODEL_PATH = "xgb_T11_Final.json"
+try:
+    import xgboost as xgb
+    xgb_model = xgb.XGBClassifier()
+    xgb_model.load_model(MODEL_PATH)
+except Exception as e:
+    xgb_model = None
+    print(f"⚠️ Không thể load mô hình XGBoost: {e}")
+
+# ==========================================
 # Cấu hình upload
 # ==========================================
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
 
 # ==========================================
 # Đăng ký
@@ -68,7 +81,7 @@ def register():
         conn = get_connection()
         cur = conn.cursor()
 
-        # Kiểm tra email đã tồn tại
+        # Kiểm tra email
         cur.execute("SELECT ID FROM NguoiDung WHERE Email=?", (email,))
         if cur.fetchone():
             conn.close()
@@ -82,13 +95,7 @@ def register():
             conn.commit()
             conn.close()
 
-            # Thông báo qua JavaScript alert
-            return render_template(
-                'register.html',
-                success=True,      # báo hiệu đăng ký thành công
-                today=today
-            )
-
+            return render_template('register.html', success=True, today=today)
         except Exception as e:
             conn.rollback()
             conn.close()
@@ -125,7 +132,6 @@ def login():
 
     return render_template('login.html')
 
-
 # ==========================================
 # Trang chủ
 # ==========================================
@@ -134,7 +140,6 @@ def home():
     if 'user' not in session:
         return redirect(url_for('login'))
     return render_template('home.html')
-
 
 # ==========================================
 # Chẩn đoán
@@ -147,16 +152,21 @@ def diagnose():
     conn = get_connection()
     cur = conn.cursor()
 
-    # Danh sách bệnh nhân cho bác sĩ
+    # Lấy danh sách bệnh nhân cho bác sĩ
     benhnhans = []
     if session.get('role') == 'doctor':
         cur.execute("SELECT ID, HoTen, GioiTinh, NgaySinh FROM NguoiDung WHERE Role='patient'")
         rows = cur.fetchall()
         for r in rows:
             if r.NgaySinh:
-                ns_fmt = r.NgaySinh.strftime("%d/%m/%Y") if not isinstance(r.NgaySinh, str) else r.NgaySinh
+                # Sửa lỗi strftime
+                if hasattr(r.NgaySinh, 'strftime'):
+                    ns_fmt = r.NgaySinh.strftime("%d/%m/%Y")
+                else:
+                    ns_fmt = str(r.NgaySinh)
             else:
                 ns_fmt = "Chưa khai báo"
+
             benhnhans.append({
                 "ID": r.ID,
                 "HoTen": r.HoTen,
@@ -168,13 +178,13 @@ def diagnose():
     ai_advice = None
     file_result = None
 
-    # -------- Nhập liệu từ form --------
+    # Nhập liệu từ form
     if request.method == 'POST' and 'predict_form' in request.form:
         try:
             benhnhan_id = int(request.form.get('benhnhan_id')) if session.get('role') == 'doctor' else session['user_id']
 
             age = int(request.form.get('age'))
-            gender = request.form.get('gender')
+            gender = 1 if request.form.get('gender') == 'Nam' else 0
             weight = float(request.form.get('weight'))
             height = float(request.form.get('height'))
             systolic = float(request.form.get('systolic'))
@@ -186,35 +196,37 @@ def diagnose():
             alcohol = 1 if request.form.get('alcohol') == 'yes' else 0
             exercise = 1 if request.form.get('exercise') == 'yes' else 0
 
-            # Tính BMI
             bmi = round(weight / ((height / 100) ** 2), 2)
 
-            # Dự đoán nguy cơ (demo)
-            risk = 0
-            if systolic > 140 or diastolic > 90: risk += 1
-            if chol == 'above_normal': risk += 1
-            elif chol == 'high': risk += 2
-            if glucose == 'above_normal': risk += 1
-            elif glucose == 'high': risk += 2
-            if bmi > 30: risk += 1
-            if smoking: risk += 1
-            if alcohol: risk += 1
+            # Chuyển Cholesterol & Glucose thành số
+            chol_map = {'normal': 1, 'above_normal': 2, 'high': 3}
+            gluc_map = {'normal': 1, 'above_normal': 2, 'high': 3}
 
-            nguy_co = "Nguy cơ cao" if risk >= 3 else "Nguy cơ thấp"
+            X_input = np.array([[age, gender, systolic, diastolic,
+                                 chol_map.get(chol, 1), gluc_map.get(glucose, 1),
+                                 smoking, alcohol, exercise, bmi]])
+
+            if xgb_model:
+                pred = xgb_model.predict(X_input)[0]
+                nguy_co = "Nguy cơ cao" if pred == 1 else "Nguy cơ thấp"
+            else:
+                # fallback demo
+                nguy_co = "Nguy cơ cao" if systolic > 140 or bmi > 30 else "Nguy cơ thấp"
+
             result = f"{nguy_co} (BMI: {bmi})"
 
             # Gọi AI
             prompt = f"""
             Bạn là bác sĩ tim mạch.
-            Dữ liệu: Tuổi {age}, Giới tính {gender}, BMI {bmi},
+            Dữ liệu: Tuổi {age}, Giới tính {'Nam' if gender==1 else 'Nữ'}, BMI {bmi},
             Huyết áp {systolic}/{diastolic}, Chol {chol}, Đường huyết {glucose},
             Hút thuốc {'Có' if smoking else 'Không'}, Rượu {'Có' if alcohol else 'Không'},
             Tập thể dục {'Có' if exercise else 'Không'}.
-            Hãy đưa ra lời khuyên về lối sống và phòng tránh bệnh tim mạch.
+            Hãy đưa ra lời khuyên phòng tránh bệnh tim mạch.
             """
             ai_advice = get_ai_advice_cached(prompt)
 
-            # Lưu vào DB
+            # Lưu DB
             bacsi_id = session['user_id'] if session.get('role') == 'doctor' else None
             cur.execute("""
                 INSERT INTO ChanDoan
@@ -227,7 +239,7 @@ def diagnose():
         except Exception as e:
             flash(f"Lỗi nhập liệu: {e}", "danger")
 
-    # -------- Upload file --------
+    # Upload file
     if request.method == 'POST' and 'data_file' in request.files:
         f = request.files['data_file']
         if f.filename != '':
@@ -239,7 +251,6 @@ def diagnose():
 
     conn.close()
     return render_template('diagnose.html', benhnhans=benhnhans, result=result, ai_advice=ai_advice, file_result=file_result)
-
 
 # ==========================================
 # Lịch sử chẩn đoán
@@ -272,7 +283,6 @@ def delete_history(id):
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    # Chỉ cho bác sĩ được xóa
     if session.get('role') != 'doctor':
         return redirect(url_for('history'))
 
@@ -280,9 +290,7 @@ def delete_history(id):
     cur = conn.cursor()
 
     try:
-        # Xóa bệnh án liên quan trước
         cur.execute("DELETE FROM BenhAn WHERE ChanDoanID = ?", (id,))
-        # Xóa chẩn đoán
         cur.execute("DELETE FROM ChanDoan WHERE ID = ?", (id,))
         conn.commit()
     except Exception as e:
@@ -293,7 +301,6 @@ def delete_history(id):
 
     return redirect(url_for('history'))
 
-
 # ==========================================
 # Bệnh án
 # ==========================================
@@ -303,7 +310,6 @@ def records():
         return redirect(url_for('login'))
 
     if session.get('role') != 'doctor':
-        flash("Chỉ bác sĩ mới được xem bệnh án.", "warning")
         return redirect(url_for('history'))
 
     conn = get_connection()
@@ -313,9 +319,8 @@ def records():
     conn.close()
     return render_template('records.html', records=records)
 
-
 # ==========================================
-# Hồ sơ cá nhân
+# Hồ sơ
 # ==========================================
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
@@ -339,7 +344,6 @@ def profile():
             session['user_id']
         ))
         conn.commit()
-        flash("Cập nhật hồ sơ thành công!", "success")
 
     cur.execute("""
         SELECT HoTen, Email, Role, DienThoai, NgaySinh, GioiTinh, DiaChi
@@ -349,7 +353,6 @@ def profile():
     conn.close()
     return render_template('profile.html', user_info=user_info)
 
-
 # ==========================================
 # Đăng xuất
 # ==========================================
@@ -357,7 +360,6 @@ def profile():
 def logout():
     session.clear()
     return redirect(url_for('login'))
-
 
 # ==========================================
 # Main
