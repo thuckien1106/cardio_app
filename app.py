@@ -418,18 +418,23 @@ def edit_advice(id):
 # ==========================================
 @app.route('/manage_accounts', methods=['GET', 'POST'])
 def manage_accounts():
+    # ✅ Chỉ cho phép bác sĩ truy cập
     if 'user' not in session or session.get('role') != 'doctor':
         return redirect(url_for('login'))
 
     conn = get_connection()
     cur = conn.cursor()
 
-    # XÓA tài khoản bệnh nhân
+    # ================================
+    # 🗑 XÓA tài khoản bệnh nhân
+    # ================================
     if request.method == 'POST' and 'delete_patient' in request.form:
         patient_id = request.form.get('id')
 
         try:
+            # Xóa toàn bộ lịch sử chẩn đoán trước
             cur.execute("DELETE FROM ChanDoan WHERE BenhNhanID=?", (patient_id,))
+            # Xóa tài khoản bệnh nhân
             cur.execute("DELETE FROM NguoiDung WHERE ID=?", (patient_id,))
             conn.commit()
             flash("✅ Đã xóa tài khoản và toàn bộ lịch sử chẩn đoán của bệnh nhân.", "success")
@@ -437,14 +442,17 @@ def manage_accounts():
             conn.rollback()
             flash(f"❌ Lỗi khi xóa: {e}", "danger")
 
-    # CẬP NHẬT thông tin bệnh nhân
+    # ================================
+    # ✏️ CẬP NHẬT thông tin bệnh nhân
+    # ================================
     if request.method == 'POST' and 'update_patient' in request.form:
         patient_id = request.form.get('id')
+
         try:
             cur.execute("""
                 UPDATE NguoiDung
-                SET HoTen=?, GioiTinh=?, NgaySinh=?, DienThoai=?, DiaChi=?
-                WHERE ID=?
+                SET HoTen = ?, GioiTinh = ?, NgaySinh = ?, DienThoai = ?, DiaChi = ?
+                WHERE ID = ?
             """, (
                 request.form.get('ho_ten'),
                 request.form.get('gioi_tinh'),
@@ -459,15 +467,31 @@ def manage_accounts():
             conn.rollback()
             flash(f"❌ Lỗi khi cập nhật: {e}", "danger")
 
-    # LẤY danh sách bệnh nhân
-    cur.execute("""
-        SELECT ID, HoTen, Email, GioiTinh, NgaySinh, DienThoai, DiaChi
-        FROM NguoiDung
-        WHERE Role = 'patient'
-        ORDER BY HoTen
-    """)
+    # ================================
+    # 🔎 TÌM KIẾM bệnh nhân
+    # ================================
+    search = request.args.get('search', '').strip()  # Lấy từ khóa tìm kiếm từ URL (?search=...)
+
+    if search:
+        cur.execute("""
+            SELECT ID, HoTen, Email, GioiTinh, NgaySinh, DienThoai, DiaChi
+            FROM NguoiDung
+            WHERE Role = 'patient' AND (HoTen LIKE ? OR Email LIKE ?)
+            ORDER BY HoTen
+        """, (f"%{search}%", f"%{search}%"))
+    else:
+        cur.execute("""
+            SELECT ID, HoTen, Email, GioiTinh, NgaySinh, DienThoai, DiaChi
+            FROM NguoiDung
+            WHERE Role = 'patient'
+            ORDER BY HoTen
+        """)
+
     raw_patients = cur.fetchall()
 
+    # ================================
+    # XỬ LÝ dữ liệu trả về
+    # ================================
     patients = []
     for p in raw_patients:
         if p.NgaySinh and hasattr(p.NgaySinh, "strftime"):
@@ -489,7 +513,9 @@ def manage_accounts():
         })
 
     conn.close()
-    return render_template('manage_accounts.html', patients=patients)
+
+    # ✅ Truyền cả patients và từ khóa tìm kiếm vào template
+    return render_template('manage_accounts.html', patients=patients, search=search)
 
 # ==========================================
 # Hồ sơ cá nhân
