@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5 pt-4">
+
+  <h2 class="fw-bold text-gradient mb-4 text-center">📊 Thống kê Hệ thống</h2>
+
+  <!-- Thống kê tổng quan -->
+  <div class="row text-center mb-5">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="text-primary">👨‍⚕️ Tổng số bác sĩ</h5>
+          <h2 class="fw-bold">{{ num_doctors }}</h2>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="text-success">🧑‍🤝‍🧑 Tổng số bệnh nhân</h5>
+          <h2 class="fw-bold">{{ num_patients }}</h2>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="text-warning">🩺 Tổng số lượt chẩn đoán</h5>
+          <h2 class="fw-bold">{{ num_diagnoses }}</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vùng chứa biểu đồ với data-* -->
+  <div id="chartData"
+       data-doctors="{{ num_doctors }}"
+       data-patients="{{ num_patients }}"
+       data-labels="{{ month_labels | join(',') }}"
+       data-counts="{{ month_counts | join(',') }}">
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+          <h5 class="card-title text-center">Tỷ lệ Bác sĩ / Bệnh nhân</h5>
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+          <h5 class="card-title text-center">Lượt chẩn đoán theo tháng</h5>
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Lấy dữ liệu từ thẻ div
+  const chartDiv = document.getElementById('chartData');
+  const numDoctors = parseInt(chartDiv.dataset.doctors);
+  const numPatients = parseInt(chartDiv.dataset.patients);
+  const monthLabels = chartDiv.dataset.labels.split(',');
+  const monthCounts = chartDiv.dataset.counts.split(',').map(Number);
+
+  // ======================
+  // Biểu đồ tròn
+  // ======================
+  new Chart(document.getElementById('pieChart').getContext('2d'), {
+    type: 'pie',
+    data: {
+      labels: ['Bác sĩ', 'Bệnh nhân'],
+      datasets: [{
+        data: [numDoctors, numPatients],
+        backgroundColor: ['#36A2EB', '#4CAF50']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // ======================
+  // Biểu đồ cột
+  // ======================
+  new Chart(document.getElementById('barChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: monthLabels,
+      datasets: [{
+        label: 'Số lượt chẩn đoán',
+        data: monthCounts,
+        backgroundColor: '#FF6384'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: 'Số lượt' } },
+        x: { title: { display: true, text: 'Tháng' } }
+      }
+    }
+  });
+</script>
+{% endblock %}
