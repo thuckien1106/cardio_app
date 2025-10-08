@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-5">
+  <h2 class="fw-bold text-gradient mb-4">👩‍⚕️ Quản lý tài khoản & hồ sơ bệnh nhân</h2>
+  <p class="text-muted">Bác sĩ có thể xem, sửa hoặc xóa thông tin bệnh nhân tại đây.</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="alert alert-{{ 'success' if category=='success' else 'danger' }} alert-dismissible fade show">
+          {{ msg }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% if patients and patients|length > 0 %}
+  <div class="table-responsive mt-4">
+    <table class="table table-bordered table-striped table-hover align-middle">
+      <thead class="table-light">
+        <tr class="text-center">
+          <th>Họ tên</th>
+          <th>Email</th>
+          <th>Giới tính</th>
+          <th>Ngày sinh</th>
+          <th>Điện thoại</th>
+          <th>Địa chỉ</th>
+          <th>Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in patients %}
+        <tr>
+          <td>{{ p.HoTen }}</td>
+          <td>{{ p.Email }}</td>
+          <td>{{ p.GioiTinh }}</td>
+          <td>{{ p.NgaySinh_str }}</td>
+          <td>{{ p.DienThoai if p.DienThoai else '—' }}</td>
+          <td>{{ p.DiaChi if p.DiaChi else '—' }}</td>
+          <td class="text-center">
+            <!-- Nút sửa -->
+            <button class="btn btn-sm btn-primary me-1"
+                    data-bs-toggle="modal" data-bs-target="#editModal{{ p.ID }}">
+              Sửa
+            </button>
+
+            <!-- Nút xóa -->
+            <form method="post" class="d-inline">
+              <input type="hidden" name="id" value="{{ p.ID }}">
+              <button type="submit" name="delete_patient" class="btn btn-sm btn-danger"
+                      onclick="return confirm('Bạn chắc chắn muốn xóa tài khoản này?')">
+                Xóa
+              </button>
+            </form>
+          </td>
+        </tr>
+
+        <!-- Modal sửa -->
+        <div class="modal fade" id="editModal{{ p.ID }}" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <form method="post">
+                <input type="hidden" name="id" value="{{ p.ID }}">
+                <input type="hidden" name="update_patient" value="1">
+                <div class="modal-header">
+                  <h5 class="modal-title">Cập nhật thông tin bệnh nhân</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Họ tên</label>
+                    <input type="text" class="form-control" name="ho_ten" value="{{ p.HoTen }}" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Giới tính</label>
+                    <select class="form-select" name="gioi_tinh">
+                      <option value="Nam" {% if p.GioiTinh == 'Nam' %}selected{% endif %}>Nam</option>
+                      <option value="Nữ" {% if p.GioiTinh == 'Nữ' %}selected{% endif %}>Nữ</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Ngày sinh</label>
+                    <input type="date" class="form-control" name="ngay_sinh"
+                           value="{{ p.NgaySinh_val }}">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Số điện thoại</label>
+                    <input type="text" class="form-control" name="dien_thoai" value="{{ p.DienThoai or '' }}">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Địa chỉ</label>
+                    <input type="text" class="form-control" name="dia_chi" value="{{ p.DiaChi or '' }}">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                  <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info mt-4">Chưa có bệnh nhân nào.</div>
+  {% endif %}
+</div>
+
+{% endblock %}

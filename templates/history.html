@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-5 pt-4">
+
+  <!-- Tiêu đề -->
   <h2 class="fw-bold text-gradient mb-4">📜 Lịch sử chẩn đoán</h2>
   <p class="text-muted">
     {% if session['role'] == 'doctor' %}
@@ -11,9 +13,9 @@
   </p>
 
   {% if records and records|length > 0 %}
-  <div class="table-responsive mt-4">
-    <table class="table table-striped table-bordered align-middle">
-      <thead class="table-light">
+  <div class="table-responsive shadow-sm rounded-3 mt-4">
+    <table class="table table-hover table-bordered align-middle mb-0">
+      <thead class="table-light text-center">
         <tr>
           {% if session['role'] == 'doctor' %}
             <th>Bệnh nhân</th>
@@ -29,40 +31,142 @@
           <th>Uống cồn</th>
           <th>Tập thể dục</th>
           <th>Nguy cơ</th>
+          <th>Lời khuyên</th>
           <th>Ngày chẩn đoán</th>
           <th class="text-center">Xóa</th>
         </tr>
       </thead>
+
       <tbody>
         {% for r in records %}
         <tr>
           {% if session['role'] == 'doctor' %}
-            <td>{{ r.TenBenhNhan }}</td>
+            <td class="fw-semibold">{{ r.TenBenhNhan }}</td>
           {% endif %}
-          <td>{{ r.Tuoi if r.Tuoi is not none else '-' }}</td>
-          <td>{{ r.GioiTinh if r.GioiTinh else '-' }}</td>
-          <td>{{ r.BMI }}</td>
-          <td>{{ r.HuyetApTamThu }}</td>
-          <td>{{ r.HuyetApTamTruong }}</td>
-          <td>{{ r.Cholesterol }}</td>
-          <td>{{ r.DuongHuyet }}</td>
-          <td>{{ 'Có' if r.HutThuoc else 'Không' }}</td>
-          <td>{{ 'Có' if r.UongCon else 'Không' }}</td>
-          <td>{{ 'Có' if r.TapTheDuc else 'Không' }}</td>
-          <td>
+
+          <td class="text-center">{{ r.Tuoi if r.Tuoi is not none else '-' }}</td>
+          <td class="text-center">{{ r.GioiTinh if r.GioiTinh else '-' }}</td>
+          <td class="text-center">{{ r.BMI }}</td>
+          <td class="text-center">{{ r.HuyetApTamThu }}</td>
+          <td class="text-center">{{ r.HuyetApTamTruong }}</td>
+          <td class="text-center">{{ r.Cholesterol }}</td>
+          <td class="text-center">{{ r.DuongHuyet }}</td>
+          <td class="text-center">{{ 'Có' if r.HutThuoc else 'Không' }}</td>
+          <td class="text-center">{{ 'Có' if r.UongCon else 'Không' }}</td>
+          <td class="text-center">{{ 'Có' if r.TapTheDuc else 'Không' }}</td>
+
+          <!-- Cột Nguy cơ -->
+          <td class="text-center">
             {% if 'cao' in r.NguyCo|lower %}
               <span class="badge bg-danger">{{ r.NguyCo }}</span>
             {% else %}
               <span class="badge bg-success">{{ r.NguyCo }}</span>
             {% endif %}
           </td>
-          <td>{{ r.NgayChanDoan.strftime('%d/%m/%Y') }}</td>
+
+          <!-- Cột Lời khuyên -->
+          <td class="text-center">
+            {% if r.LoiKhuyen %}
+              <span class="text-truncate d-inline-block" style="max-width: 120px;">
+                {{ r.LoiKhuyen[:30] }}{% if r.LoiKhuyen|length > 30 %}...{% endif %}
+              </span>
+              <button class="btn btn-link p-0 ms-1 text-primary small"
+                      data-bs-toggle="modal"
+                      data-bs-target="#adviceModal{{ r.ChanDoanID }}">
+                Xem
+              </button>
+
+              {% if session['role'] == 'doctor' %}
+              <button class="btn btn-link p-0 ms-1 text-warning small"
+                      data-bs-toggle="modal"
+                      data-bs-target="#editAdviceModal{{ r.ChanDoanID }}">
+                ✏️ Sửa
+              </button>
+              {% endif %}
+
+              <!-- Modal xem lời khuyên -->
+              <div class="modal fade" id="adviceModal{{ r.ChanDoanID }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                  <div class="modal-content rounded-3 shadow">
+                    <div class="modal-header bg-primary text-white">
+                      <h5 class="modal-title">🩺 Lời khuyên từ AI</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" style="white-space: pre-wrap;">
+                      {{ r.LoiKhuyen }}
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {% if session['role'] == 'doctor' %}
+              <!-- Modal chỉnh sửa lời khuyên -->
+              <div class="modal fade" id="editAdviceModal{{ r.ChanDoanID }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                  <div class="modal-content rounded-3 shadow">
+                    <form method="post" action="{{ url_for('edit_advice', id=r.ChanDoanID) }}">
+                      <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title">✏️ Chỉnh sửa lời khuyên</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <textarea name="loi_khuyen" class="form-control" rows="6">{{ r.LoiKhuyen }}</textarea>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-success">Lưu</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+
+            {% else %}
+              {% if session['role'] == 'doctor' %}
+                <button class="btn btn-link p-0 text-success small"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editAdviceModal{{ r.ChanDoanID }}">
+                  ➕ Thêm
+                </button>
+
+                <!-- Modal thêm lời khuyên -->
+                <div class="modal fade" id="editAdviceModal{{ r.ChanDoanID }}" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content rounded-3 shadow">
+                      <form method="post" action="{{ url_for('edit_advice', id=r.ChanDoanID) }}">
+                        <div class="modal-header bg-success text-white">
+                          <h5 class="modal-title">➕ Thêm lời khuyên</h5>
+                          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          <textarea name="loi_khuyen" class="form-control" rows="6"></textarea>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                          <button type="submit" class="btn btn-success">Lưu</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            {% endif %}
+          </td>
+
+          <!-- Ngày chẩn đoán -->
+          <td class="text-center">{{ r.NgayChanDoan.strftime('%d/%m/%Y') }}</td>
 
           <!-- Nút Xóa -->
           <td class="text-center">
             <form method="post" action="{{ url_for('delete_history', id=r.ChanDoanID) }}"
                   onsubmit="return confirm('Bạn có chắc chắn muốn xóa chẩn đoán này không?');">
-              <button type="submit" class="btn btn-sm btn-outline-danger">
+              <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
                 🗑 Xóa
               </button>
             </form>
@@ -72,8 +176,11 @@
       </tbody>
     </table>
   </div>
+
   {% else %}
-    <div class="alert alert-info mt-4">Chưa có dữ liệu.</div>
+    <div class="alert alert-info mt-4 text-center rounded-3 shadow-sm">
+      Chưa có dữ liệu chẩn đoán.
+    </div>
   {% endif %}
 </div>
 {% endblock %}

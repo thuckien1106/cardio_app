@@ -50,21 +50,14 @@
       </div>
 
       <!-- Mật khẩu -->
-      <div class="mb-3 input-group rounded-pill shadow-sm">
+      <div class="mb-4 input-group rounded-pill shadow-sm">
         <span class="input-group-text"><i class="bi bi-lock-fill text-primary"></i></span>
         <input type="password" name="mat_khau" class="form-control border-0 rounded-end rounded-pill"
                placeholder="Mật khẩu" required>
       </div>
 
-      <!-- Vai trò -->
-      <div class="mb-4 input-group rounded-pill shadow-sm">
-        <span class="input-group-text"><i class="bi bi-people-fill text-primary"></i></span>
-        <select name="role" class="form-select border-0 rounded-end rounded-pill" required>
-          <option value="">-- Chọn vai trò --</option>
-          <option value="patient">Bệnh nhân</option>
-          <option value="doctor">Bác sĩ</option>
-        </select>
-      </div>
+      <!-- Vai trò: bỏ chọn, mặc định patient -->
+      <input type="hidden" name="role" value="patient">
 
       <!-- Nút đăng ký -->
       <button type="submit" class="btn btn-success w-100 py-2 rounded-pill fw-semibold shadow-sm">
@@ -82,7 +75,7 @@
 
 {% if success %}
 <script>
-  alert("Đăng ký thành công! Vui lòng đăng nhập.");
+  alert("🎉 Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.");
   window.location.href = "{{ url_for('login') }}";
 </script>
 {% endif %}

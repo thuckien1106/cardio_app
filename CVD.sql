@@ -37,22 +37,10 @@ CREATE TABLE ChanDoan (
     HutThuoc BIT,
     UongCon BIT,
     TapTheDuc BIT,
-    NguyCo NVARCHAR(50),                    -- Kết quả dự đoán (VD: Nguy cơ cao/thấp)
+    NguyCo NVARCHAR(50), -- Kết quả dự đoán (VD: Nguy cơ cao/thấp)
+	LoiKhuyen NVARCHAR(MAX)
     FOREIGN KEY (BenhNhanID) REFERENCES NguoiDung(ID),
     FOREIGN KEY (BacSiID) REFERENCES NguoiDung(ID)
-);
-GO
-
-/* ==========================
-   Bảng Bệnh án
-   ========================== */
-CREATE TABLE BenhAn (
-    ID INT IDENTITY(1,1) PRIMARY KEY,
-    ChanDoanID INT NOT NULL,
-    LoiKhuyen NVARCHAR(500),                 -- Lời khuyên điều trị, lối sống
-    GhiChu NVARCHAR(500),
-    NgayCapNhat DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (ChanDoanID) REFERENCES ChanDoan(ID)
 );
 GO
 
@@ -82,13 +70,13 @@ GO
 
 
 /* View hiển thị lịch sử chẩn đoán chi tiết */
-CREATE VIEW V_LichSuChanDoan AS
+CREATE OR ALTER VIEW V_LichSuChanDoan AS
 SELECT
     cd.ID AS ChanDoanID,
-    bn.HoTen AS TenBenhNhan,
-    bn.GioiTinh, 
-    DATEDIFF(YEAR, bn.NgaySinh, GETDATE()) AS Tuoi,  -- Tính tuổi từ ngày sinh
-    bs.HoTen AS TenBacSi,
+    bn.HoTen       AS TenBenhNhan,
+    bn.GioiTinh,
+    DATEDIFF(YEAR, bn.NgaySinh, GETDATE()) AS Tuoi,
+    bs.HoTen       AS TenBacSi,
     cd.NgayChanDoan,
     cd.BMI,
     cd.HuyetApTamThu,
@@ -98,29 +86,11 @@ SELECT
     cd.HutThuoc,
     cd.UongCon,
     cd.TapTheDuc,
-    cd.NguyCo
+    cd.NguyCo,
+    cd.LoiKhuyen      -- Lời khuyên từ AI hoặc do bác sĩ nhập sau này
 FROM ChanDoan cd
 JOIN NguoiDung bn ON cd.BenhNhanID = bn.ID
 LEFT JOIN NguoiDung bs ON cd.BacSiID = bs.ID;
 GO
 
 
-/* View hiển thị bệnh án kèm thông tin bệnh nhân & bác sĩ */
-CREATE VIEW V_BenhAnChiTiet AS
-SELECT
-    ba.ID AS BenhAnID,
-    cd.ID AS ChanDoanID,
-    bn.HoTen AS TenBenhNhan,
-    bs.HoTen AS TenBacSi,
-    cd.NgayChanDoan,
-    cd.BMI,
-    cd.HuyetApTamThu,
-    cd.HuyetApTamTruong,
-    cd.NguyCo,
-    ba.LoiKhuyen,
-    ba.GhiChu,
-    ba.NgayCapNhat
-FROM BenhAn ba
-JOIN ChanDoan cd ON ba.ChanDoanID = cd.ID
-JOIN NguoiDung bn ON cd.BenhNhanID = bn.ID
-LEFT JOIN NguoiDung bs ON cd.BacSiID = bs.ID;
