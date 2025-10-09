@@ -593,6 +593,136 @@ def stats():
         month_labels=month_labels,
         month_counts=month_counts
     )
+# ==========================================
+# Xuất file Excel thống kê hệ thống
+# ==========================================
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from io import BytesIO
+from flask import send_file
+from datetime import datetime
+
+@app.route('/export_stats')
+def export_stats():
+    if 'user' not in session or session.get('role') != 'doctor':
+        return redirect(url_for('login'))
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # === Lấy thống kê tổng quan ===
+    cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='doctor'")
+    num_doctors = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='patient'")
+    num_patients = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM ChanDoan")
+    num_diagnoses = cur.fetchone()[0]
+
+    # === Thống kê theo tháng (SQL Server) ===
+    cur.execute("""
+        SELECT 
+            RIGHT('0' + CAST(MONTH(NgayChanDoan) AS VARCHAR(2)), 2) AS Thang,
+            COUNT(*) AS SoLuong
+        FROM ChanDoan
+        GROUP BY MONTH(NgayChanDoan)
+        ORDER BY Thang
+    """)
+    month_data = cur.fetchall()
+    conn.close()
+
+    # === Tạo workbook Excel ===
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Thống kê hệ thống"
+
+    # 🎨 Định nghĩa style
+    title_font = Font(size=16, bold=True, color="1F4E78")
+    header_font = Font(size=12, bold=True, color="FFFFFF")
+    normal_font = Font(size=11)
+    center_align = Alignment(horizontal="center", vertical="center")
+    border = Border(
+        left=Side(style="thin", color="000000"),
+        right=Side(style="thin", color="000000"),
+        top=Side(style="thin", color="000000"),
+        bottom=Side(style="thin", color="000000")
+    )
+    fill_blue = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+    fill_gray = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")
+
+    # === Tiêu đề chính ===
+    ws.merge_cells("A1:D1")
+    ws["A1"] = "BÁO CÁO THỐNG KÊ HỆ THỐNG CHẨN ĐOÁN TIM MẠCH"
+    ws["A1"].font = title_font
+    ws["A1"].alignment = center_align
+
+    ws.append([])
+
+    # === Thông tin chung ===
+    ws["A3"] = "👨‍⚕️ Người lập báo cáo:"
+    ws["B3"] = session.get('user')
+    ws["A4"] = "📅 Ngày xuất báo cáo:"
+    ws["B4"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+    ws.append([])
+
+    # === Phần 1: Thống kê tổng quan ===
+    ws.append(["HẠNG MỤC", "SỐ LƯỢNG"])
+    for cell in ws[6]:
+        cell.font = header_font
+        cell.fill = fill_blue
+        cell.alignment = center_align
+        cell.border = border
+
+    ws.append(["Tổng số bác sĩ", num_doctors])
+    ws.append(["Tổng số bệnh nhân", num_patients])
+    ws.append(["Tổng số lượt chẩn đoán", num_diagnoses])
+
+    for row in ws.iter_rows(min_row=7, max_row=9, min_col=1, max_col=2):
+        for cell in row:
+            cell.font = normal_font
+            cell.border = border
+            if cell.col_idx == 2:
+                cell.alignment = center_align
+
+    ws.append([])
+    ws.append([])
+
+    # === Phần 2: Thống kê lượt chẩn đoán theo tháng ===
+    ws.append(["THÁNG", "SỐ LƯỢT CHẨN ĐOÁN"])
+    for cell in ws[12]:
+        cell.font = header_font
+        cell.fill = fill_blue
+        cell.alignment = center_align
+        cell.border = border
+
+    start_row = 13
+    for thang, soluong in month_data:
+        ws.append([thang, soluong])
+
+    for row in ws.iter_rows(min_row=start_row, max_row=start_row + len(month_data) - 1, min_col=1, max_col=2):
+        for cell in row:
+            cell.font = normal_font
+            cell.border = border
+            cell.alignment = center_align
+
+    # === Căn chỉnh độ rộng cột ===
+    ws.column_dimensions["A"].width = 35
+    ws.column_dimensions["B"].width = 22
+    ws.column_dimensions["C"].width = 15
+    ws.column_dimensions["D"].width = 15
+
+    # === Xuất file Excel ===
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="BaoCao_ThongKe_HeThong.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # ==========================================
 # Đăng xuất

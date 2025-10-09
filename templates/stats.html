@@ -4,6 +4,13 @@
 
   <h2 class="fw-bold text-gradient mb-4 text-center">📊 Thống kê Hệ thống</h2>
 
+  <!-- Nút Xuất Excel -->
+  <div class="text-center mb-4">
+    <a href="{{ url_for('export_stats') }}" class="btn btn-success rounded-pill shadow-sm px-4 py-2">
+      📁 Xuất báo cáo Excel
+    </a>
+  </div>
+
   <!-- Thống kê tổng quan -->
   <div class="row text-center mb-5">
     <div class="col-md-4">
@@ -34,7 +41,7 @@
     </div>
   </div>
 
-  <!-- Vùng chứa biểu đồ với data-* -->
+  <!-- Vùng chứa dữ liệu cho Chart.js -->
   <div id="chartData"
        data-doctors="{{ num_doctors }}"
        data-patients="{{ num_patients }}"
@@ -67,43 +74,28 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Lấy dữ liệu từ thẻ div
   const chartDiv = document.getElementById('chartData');
   const numDoctors = parseInt(chartDiv.dataset.doctors);
   const numPatients = parseInt(chartDiv.dataset.patients);
   const monthLabels = chartDiv.dataset.labels.split(',');
   const monthCounts = chartDiv.dataset.counts.split(',').map(Number);
 
-  // ======================
   // Biểu đồ tròn
-  // ======================
-  new Chart(document.getElementById('pieChart').getContext('2d'), {
+  new Chart(document.getElementById('pieChart'), {
     type: 'pie',
     data: {
       labels: ['Bác sĩ', 'Bệnh nhân'],
-      datasets: [{
-        data: [numDoctors, numPatients],
-        backgroundColor: ['#36A2EB', '#4CAF50']
-      }]
+      datasets: [{ data: [numDoctors, numPatients], backgroundColor: ['#36A2EB', '#4CAF50'] }]
     },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'bottom' } }
-    }
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
   });
 
-  // ======================
   // Biểu đồ cột
-  // ======================
-  new Chart(document.getElementById('barChart').getContext('2d'), {
+  new Chart(document.getElementById('barChart'), {
     type: 'bar',
     data: {
       labels: monthLabels,
-      datasets: [{
-        label: 'Số lượt chẩn đoán',
-        data: monthCounts,
-        backgroundColor: '#FF6384'
-      }]
+      datasets: [{ label: 'Số lượt chẩn đoán', data: monthCounts, backgroundColor: '#FF6384' }]
     },
     options: {
       responsive: true,
