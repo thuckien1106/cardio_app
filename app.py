@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 from functools import lru_cache
 import numpy as np
+from datetime import date
 
 # ==========================================
 # Cấu hình Flask
@@ -72,7 +73,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # ==========================================
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    today = datetime.date.today().strftime('%Y-%m-%d')
+    today = date.today().strftime('%Y-%m-%d')
+
 
     if request.method == 'POST':
         ho_ten = request.form.get('ho_ten')
