@@ -1,0 +1,21 @@
+# Ignore Python virtual environment
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore environment and IDE files
+.env
+*.sqlite3
+*.db
+.DS_Store
+.idea/
+.vscode/
+
+# Ignore large model and data files
+*.json
+*.csv
+*.pkl
+*.h5
+*.keras
