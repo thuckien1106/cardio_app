@@ -9,6 +9,11 @@ import google.generativeai as genai
 from functools import lru_cache
 import numpy as np
 from datetime import date
+import shap
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 
 # ==========================================
 # Cấu hình Flask
@@ -148,7 +153,7 @@ def home():
     return render_template('home.html')
 
 # ==========================================
-# Chẩn đoán
+# Chẩn đoán bệnh tim mạch + Giải thích SHAP
 # ==========================================
 @app.route('/diagnose', methods=['GET', 'POST'])
 def diagnose():
@@ -158,7 +163,7 @@ def diagnose():
     conn = get_connection()
     cur = conn.cursor()
 
-    # Lấy danh sách bệnh nhân (nếu là bác sĩ)
+    # Danh sách bệnh nhân (nếu là bác sĩ)
     benhnhans = []
     if session.get('role') == 'doctor':
         cur.execute("SELECT ID, HoTen, GioiTinh, NgaySinh FROM NguoiDung WHERE Role='patient'")
@@ -171,11 +176,13 @@ def diagnose():
                 "NgaySinh": ns_fmt
             })
 
+    # Biến khởi tạo
     result = None
     ai_advice = None
     file_result = None
     risk_percent = None
     risk_level = None
+    shap_file = None
     threshold = float(request.form.get('threshold', 0.5))  # Mặc định 0.5
 
     chol_map = {'normal': 1, 'above_normal': 2, 'high': 3}
@@ -186,6 +193,7 @@ def diagnose():
         try:
             benhnhan_id = int(request.form.get('benhnhan_id')) if session.get('role') == 'doctor' else session['user_id']
 
+            # Lấy dữ liệu form
             age = int(request.form.get('age'))
             gender_raw = request.form.get('gender')
             gender = 1 if gender_raw == 'Nam' else 0
@@ -196,12 +204,11 @@ def diagnose():
             diastolic = float(request.form.get('diastolic'))
             chol = request.form.get('cholesterol')
             glucose = request.form.get('glucose')
-
             smoking = 1 if request.form.get('smoking') == 'yes' else 0
             alcohol = 1 if request.form.get('alcohol') == 'yes' else 0
             exercise = 1 if request.form.get('exercise') == 'yes' else 0
 
-            # Dự đoán
+            # ===== Dự đoán bằng mô hình =====
             if xgb_model:
                 X = np.array([[age, gender, systolic, diastolic,
                                chol_map.get(chol, 1), gluc_map.get(glucose, 1),
@@ -210,6 +217,7 @@ def diagnose():
                 risk_percent = round(prob * 100, 1)
                 risk_level = 'high' if prob >= threshold else 'low'
             else:
+                # Heuristic fallback
                 score = 0
                 if systolic > 140 or diastolic > 90: score += 1
                 if chol == 'above_normal': score += 1
@@ -226,19 +234,46 @@ def diagnose():
             nguy_co_text = "Nguy cơ cao" if risk_level == 'high' else "Nguy cơ thấp"
             result = f"{nguy_co_text} - {risk_percent}%"
 
-            # Lời khuyên từ AI
+            # ===== Lời khuyên từ AI =====
             prompt = f"""
             Bạn là bác sĩ tim mạch.
             Dữ liệu: Tuổi {age}, Giới tính {gender_raw}, BMI {bmi},
-            Huyết áp {systolic}/{diastolic}, Chol {chol}, Đường huyết {glucose},
+            Huyết áp {systolic}/{diastolic}, Cholesterol {chol}, Đường huyết {glucose},
             Hút thuốc {'Có' if smoking else 'Không'}, Rượu {'Có' if alcohol else 'Không'},
             Tập thể dục {'Có' if exercise else 'Không'}.
             Ngưỡng dự đoán: {threshold}.
-            Hãy đưa ra lời khuyên ngắn gọn cho bệnh nhân.
+            Hãy đưa ra lời khuyên ngắn gọn, dễ hiểu cho bệnh nhân.
             """
             ai_advice = get_ai_advice_cached(prompt)
 
-            # Lưu vào DB
+            # ===== Giải thích kết quả bằng SHAP =====
+            if xgb_model:
+                try:
+                    explainer = shap.TreeExplainer(xgb_model)
+                    shap_values = explainer.shap_values(X)
+                    shap.summary_plot(
+                        shap_values, X,
+                        feature_names=['Tuổi', 'Giới tính', 'HATT', 'HATTr',
+                                       'Cholesterol', 'Đường huyết', 'Hút thuốc',
+                                       'Rượu bia', 'Tập thể dục', 'BMI'],
+                        show=False
+                    )
+
+                    # Lưu hình vào static/images/
+                    shap_dir = os.path.join(app.root_path, 'static', 'images')
+                    os.makedirs(shap_dir, exist_ok=True)
+                    file_name = f"shap_{benhnhan_id}.png"
+                    shap_path = os.path.join(shap_dir, file_name)
+
+                    plt.tight_layout()
+                    plt.savefig(shap_path, bbox_inches='tight')
+                    plt.close()
+
+                    shap_file = file_name  # chỉ tên file để render
+                except Exception as e:
+                    print(f"⚠️ Lỗi khi tạo biểu đồ SHAP: {e}")
+
+            # ===== Lưu kết quả vào DB =====
             bacsi_id = session['user_id'] if session.get('role') == 'doctor' else None
             cur.execute("""
                 INSERT INTO ChanDoan
@@ -254,7 +289,7 @@ def diagnose():
         except Exception as e:
             flash(f"Lỗi nhập liệu: {e}", "danger")
 
-    # ===== Upload file =====
+    # ===== Upload file CSV/Excel =====
     if request.method == 'POST' and 'data_file' in request.files:
         f = request.files['data_file']
         if f.filename != '':
@@ -267,32 +302,34 @@ def diagnose():
                 df = pd.read_excel(path)
 
             df.columns = [c.strip().lower() for c in df.columns]
-
-            required = ['age','gender','ap_hi','ap_lo','cholesterol','gluc','smoke','alco','active','weight','height']
+            required = ['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol', 'gluc',
+                        'smoke', 'alco', 'active', 'weight', 'height']
             missing = [c for c in required if c not in df.columns]
 
             if missing:
                 file_result = f"<p class='text-danger'>Thiếu các cột: {', '.join(missing)}</p>"
             else:
-                df['bmi'] = df['weight'] / ((df['height']/100) ** 2)
-
-                df['gender'] = df['gender'].map({'Nam':1, 'Nữ':0}).fillna(df['gender'])
-                df['smoke'] = df['smoke'].map({'yes':1, 'no':0}).fillna(df['smoke'])
-                df['alco'] = df['alco'].map({'yes':1, 'no':0}).fillna(df['alco'])
-                df['active'] = df['active'].map({'yes':1, 'no':0}).fillna(df['active'])
+                df['bmi'] = df['weight'] / ((df['height'] / 100) ** 2)
+                df['gender'] = df['gender'].map({'Nam': 1, 'Nữ': 0}).fillna(df['gender'])
+                df['smoke'] = df['smoke'].map({'yes': 1, 'no': 0}).fillna(df['smoke'])
+                df['alco'] = df['alco'].map({'yes': 1, 'no': 0}).fillna(df['alco'])
+                df['active'] = df['active'].map({'yes': 1, 'no': 0}).fillna(df['active'])
                 df['cholesterol'] = df['cholesterol'].map(chol_map).fillna(df['cholesterol'])
                 df['gluc'] = df['gluc'].map(gluc_map).fillna(df['gluc'])
 
                 if xgb_model:
-                    X = df[['age','gender','ap_hi','ap_lo','cholesterol','gluc','smoke','alco','active','bmi']]
-                    proba = xgb_model.predict_proba(X)[:,1]
+                    X = df[['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol',
+                            'gluc', 'smoke', 'alco', 'active', 'bmi']]
+                    proba = xgb_model.predict_proba(X)[:, 1]
                     df['Nguy_cơ_%'] = (proba * 100).round(1)
                     df['Kết_quả'] = ['Nguy cơ cao' if p >= threshold else 'Nguy cơ thấp' for p in proba]
                 else:
                     df['Nguy_cơ_%'] = 0
                     df['Kết_quả'] = 'Chưa có mô hình'
 
-                file_result = df[['age','gender','ap_hi','ap_lo','cholesterol','gluc','smoke','alco','active','bmi','Nguy_cơ_%','Kết_quả']] \
+                file_result = df[['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol',
+                                  'gluc', 'smoke', 'alco', 'active', 'bmi',
+                                  'Nguy_cơ_%', 'Kết_quả']] \
                     .to_html(classes='table table-bordered table-striped', index=False)
 
     conn.close()
@@ -303,7 +340,8 @@ def diagnose():
                            risk_level=risk_level,
                            threshold=threshold,
                            ai_advice=ai_advice,
-                           file_result=file_result)
+                           file_result=file_result,
+                           shap_file=shap_file)
 
 # ==========================================
 # Lịch sử chẩn đoán
