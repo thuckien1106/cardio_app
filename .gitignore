@@ -1,19 +1,25 @@
-# Ignore Python virtual environment
+# Ignore virtual environment
 venv/
+ENV/
+env/
+.venv/
+
+# Ignore Python cache and compiled files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Ignore environment and IDE files
+# Ignore config and environment files
 .env
 *.sqlite3
 *.db
-.DS_Store
-.idea/
-.vscode/
 
-# Ignore large model and data files
+# Ignore IDE/project settings
+.vscode/
+.idea/
+
+# Ignore large model/data files
 *.json
 *.csv
 *.pkl
