@@ -344,7 +344,7 @@ def diagnose():
 
 
 # ==========================================
-# Lịch sử chẩn đoán
+# Lịch sử chẩn đoán (có lọc & sắp xếp)
 # ==========================================
 @app.route('/history')
 def history():
@@ -354,42 +354,78 @@ def history():
     conn = get_connection()
     cur = conn.cursor()
 
-    try:
-        if session.get('role') == 'doctor':
-            # Bác sĩ xem tất cả
-            cur.execute("""
-                SELECT ChanDoanID, TenBenhNhan, GioiTinh, Tuoi,
-                       NgayChanDoan, BMI, HuyetApTamThu, HuyetApTamTruong,
-                       Cholesterol, DuongHuyet, HutThuoc, UongCon, TapTheDuc,
-                       NguyCo, LoiKhuyen
-                FROM V_LichSuChanDoan
-                ORDER BY NgayChanDoan DESC
-            """)
-        else:
-            # Bệnh nhân chỉ xem lịch sử của mình
-            cur.execute("""
-                SELECT ChanDoanID, TenBenhNhan, GioiTinh, Tuoi,
-                       NgayChanDoan, BMI, HuyetApTamThu, HuyetApTamTruong,
-                       Cholesterol, DuongHuyet, HutThuoc, UongCon, TapTheDuc,
-                       NguyCo, LoiKhuyen
-                FROM V_LichSuChanDoan
-                WHERE ChanDoanID IN (
-                    SELECT ID FROM ChanDoan WHERE BenhNhanID = ?
-                )
-                ORDER BY NgayChanDoan DESC
-            """, (session['user_id'],))
+    # ===== Lấy các tham số lọc từ URL =====
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    doctor_id = request.args.get('doctor_id')
+    risk_filter = request.args.get('risk_filter')
+    sort_order = request.args.get('sort', 'desc')
 
-        records = cur.fetchall()
+    # ===== Điều kiện mặc định =====
+    where_clause = "WHERE 1=1"
+    params = []
 
-    except Exception as e:
-        flash(f"❌ Lỗi khi tải lịch sử: {e}", "danger")
-        records = []
+    # Nếu là bệnh nhân → chỉ xem của họ
+    if session.get('role') != 'doctor':
+        where_clause += " AND BenhNhanID = ?"
+        params.append(session['user_id'])
 
-    finally:
-        conn.close()
+    # ===== Lọc theo ngày =====
+    # SQL Server so sánh DATETIME nên dùng CONVERT tránh lỗi format
+    if start_date:
+        where_clause += " AND NgayChanDoan >= CONVERT(DATE, ?)"
+        params.append(start_date)
+    if end_date:
+        where_clause += " AND NgayChanDoan <= CONVERT(DATE, ?)"
+        params.append(end_date)
 
-    return render_template('history.html', records=records)
+    # ===== Lọc theo bác sĩ =====
+    if doctor_id:
+        where_clause += " AND BacSiID = ?"
+        params.append(doctor_id)
 
+    # ===== Lọc theo nguy cơ =====
+    if risk_filter == 'high':
+        where_clause += " AND LOWER(NguyCo) LIKE '%cao%'"
+    elif risk_filter == 'low':
+        # ⚠️ Nhiều SQL Server lưu chữ "thấp" có dấu nên cần COLLATE để không bị lỗi
+        where_clause += " AND LOWER(NguyCo COLLATE SQL_Latin1_General_Cp1253_CI_AI) LIKE '%thap%'"
+
+    # ===== Câu truy vấn chính =====
+    query = f"""
+        SELECT ChanDoanID, TenBenhNhan, GioiTinh, Tuoi, NgayChanDoan,
+               BMI, HuyetApTamThu, HuyetApTamTruong, Cholesterol,
+               DuongHuyet, HutThuoc, UongCon, TapTheDuc, NguyCo,
+               LoiKhuyen, TenBacSi
+        FROM V_LichSuChanDoan
+        {where_clause}
+        ORDER BY NgayChanDoan {'DESC' if sort_order == 'desc' else 'ASC'}
+    """
+
+    cur.execute(query, params)
+    records = cur.fetchall()
+    conn.close()
+
+    # ===== Lấy danh sách bác sĩ (nếu là bác sĩ đăng nhập) =====
+    doctors = []
+    if session.get('role') == 'doctor':
+        conn2 = get_connection()
+        cur2 = conn2.cursor()
+        cur2.execute("SELECT ID, HoTen FROM NguoiDung WHERE Role='doctor'")
+        doctors = cur2.fetchall()
+        conn2.close()
+
+    # ===== Render =====
+    return render_template(
+        'history.html',
+        records=records,
+        doctors=doctors,
+        start_date=start_date,
+        end_date=end_date,
+        doctor_id=doctor_id,
+        risk_filter=risk_filter,
+        sort_order=sort_order
+    )
 
 # ==========================================
 # Xóa chẩn đoán
