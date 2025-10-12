@@ -163,7 +163,7 @@ def diagnose():
     conn = get_connection()
     cur = conn.cursor()
 
-    # Danh sách bệnh nhân (nếu là bác sĩ)
+    # Danh sách bệnh nhân (chỉ dành cho bác sĩ)
     benhnhans = []
     if session.get('role') == 'doctor':
         cur.execute("SELECT ID, HoTen, GioiTinh, NgaySinh FROM NguoiDung WHERE Role='patient'")
@@ -188,12 +188,12 @@ def diagnose():
     chol_map = {'normal': 1, 'above_normal': 2, 'high': 3}
     gluc_map = {'normal': 1, 'above_normal': 2, 'high': 3}
 
-    # ===== Xử lý nhập liệu tay =====
+    # ======== XỬ LÝ NHẬP LIỆU THỦ CÔNG ========
     if request.method == 'POST' and 'predict_form' in request.form:
         try:
             benhnhan_id = int(request.form.get('benhnhan_id')) if session.get('role') == 'doctor' else session['user_id']
 
-            # Lấy dữ liệu form
+            # Lấy dữ liệu nhập tay
             age = int(request.form.get('age'))
             gender_raw = request.form.get('gender')
             gender = 1 if gender_raw == 'Nam' else 0
@@ -217,7 +217,7 @@ def diagnose():
                 risk_percent = round(prob * 100, 1)
                 risk_level = 'high' if prob >= threshold else 'low'
             else:
-                # Heuristic fallback
+                # Fallback khi không có mô hình
                 score = 0
                 if systolic > 140 or diastolic > 90: score += 1
                 if chol == 'above_normal': score += 1
@@ -234,7 +234,7 @@ def diagnose():
             nguy_co_text = "Nguy cơ cao" if risk_level == 'high' else "Nguy cơ thấp"
             result = f"{nguy_co_text} - {risk_percent}%"
 
-            # ===== Lời khuyên từ AI =====
+            # ===== Sinh lời khuyên AI =====
             prompt = f"""
             Bạn là bác sĩ tim mạch.
             Dữ liệu: Tuổi {age}, Giới tính {gender_raw}, BMI {bmi},
@@ -246,7 +246,7 @@ def diagnose():
             """
             ai_advice = get_ai_advice_cached(prompt)
 
-            # ===== Giải thích kết quả bằng SHAP =====
+            # ===== Tạo biểu đồ SHAP =====
             if xgb_model:
                 try:
                     explainer = shap.TreeExplainer(xgb_model)
@@ -259,21 +259,18 @@ def diagnose():
                         show=False
                     )
 
-                    # Lưu hình vào static/images/
                     shap_dir = os.path.join(app.root_path, 'static', 'images')
                     os.makedirs(shap_dir, exist_ok=True)
-                    file_name = f"shap_{benhnhan_id}.png"
-                    shap_path = os.path.join(shap_dir, file_name)
+                    shap_file = f"shap_{benhnhan_id}.png"
+                    shap_path = os.path.join(shap_dir, shap_file)
 
                     plt.tight_layout()
                     plt.savefig(shap_path, bbox_inches='tight')
                     plt.close()
-
-                    shap_file = file_name  # chỉ tên file để render
                 except Exception as e:
                     print(f"⚠️ Lỗi khi tạo biểu đồ SHAP: {e}")
 
-            # ===== Lưu kết quả vào DB =====
+            # ===== Lưu kết quả vào CSDL =====
             bacsi_id = session['user_id'] if session.get('role') == 'doctor' else None
             cur.execute("""
                 INSERT INTO ChanDoan
@@ -289,19 +286,17 @@ def diagnose():
         except Exception as e:
             flash(f"Lỗi nhập liệu: {e}", "danger")
 
-    # ===== Upload file CSV/Excel =====
-    if request.method == 'POST' and 'data_file' in request.files:
+    # ======== UPLOAD FILE (CHỈ CHO BÁC SĨ) ========
+    if session.get('role') == 'doctor' and request.method == 'POST' and 'data_file' in request.files:
         f = request.files['data_file']
         if f.filename != '':
             path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(f.filename))
             f.save(path)
 
-            if f.filename.endswith('.csv'):
-                df = pd.read_csv(path)
-            else:
-                df = pd.read_excel(path)
-
+            # Đọc file
+            df = pd.read_csv(path) if f.filename.endswith('.csv') else pd.read_excel(path)
             df.columns = [c.strip().lower() for c in df.columns]
+
             required = ['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol', 'gluc',
                         'smoke', 'alco', 'active', 'weight', 'height']
             missing = [c for c in required if c not in df.columns]
@@ -309,6 +304,7 @@ def diagnose():
             if missing:
                 file_result = f"<p class='text-danger'>Thiếu các cột: {', '.join(missing)}</p>"
             else:
+                # Tiền xử lý
                 df['bmi'] = df['weight'] / ((df['height'] / 100) ** 2)
                 df['gender'] = df['gender'].map({'Nam': 1, 'Nữ': 0}).fillna(df['gender'])
                 df['smoke'] = df['smoke'].map({'yes': 1, 'no': 0}).fillna(df['smoke'])
@@ -317,6 +313,7 @@ def diagnose():
                 df['cholesterol'] = df['cholesterol'].map(chol_map).fillna(df['cholesterol'])
                 df['gluc'] = df['gluc'].map(gluc_map).fillna(df['gluc'])
 
+                # Dự đoán hàng loạt
                 if xgb_model:
                     X = df[['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol',
                             'gluc', 'smoke', 'alco', 'active', 'bmi']]
@@ -329,19 +326,22 @@ def diagnose():
 
                 file_result = df[['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol',
                                   'gluc', 'smoke', 'alco', 'active', 'bmi',
-                                  'Nguy_cơ_%', 'Kết_quả']] \
-                    .to_html(classes='table table-bordered table-striped', index=False)
+                                  'Nguy_cơ_%', 'Kết_quả']].to_html(
+                                      classes='table table-bordered table-striped', index=False)
 
     conn.close()
-    return render_template('diagnose.html',
-                           benhnhans=benhnhans,
-                           result=result,
-                           risk_percent=risk_percent,
-                           risk_level=risk_level,
-                           threshold=threshold,
-                           ai_advice=ai_advice,
-                           file_result=file_result,
-                           shap_file=shap_file)
+    return render_template(
+        'diagnose.html',
+        benhnhans=benhnhans,
+        result=result,
+        risk_percent=risk_percent,
+        risk_level=risk_level,
+        threshold=threshold,
+        ai_advice=ai_advice,
+        file_result=file_result,
+        shap_file=shap_file
+    )
+
 
 # ==========================================
 # Lịch sử chẩn đoán
