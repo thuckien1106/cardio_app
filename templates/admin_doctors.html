@@ -1,54 +1,81 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %}
+{% block content %}
 <div class="container mt-5">
   <h2 class="fw-bold text-gradient mb-4">👩‍⚕️ Quản lý bác sĩ</h2>
+  <p class="text-muted mb-3">Admin có thể thêm, xem, sửa hoặc xóa thông tin bác sĩ.</p>
 
-  <div class="card p-4 shadow-sm border-0 rounded-4 mb-4">
-    <h5 class="fw-semibold text-primary mb-3">➕ Thêm bác sĩ mới</h5>
-    <form method="post">
-      <input type="hidden" name="add_doctor" value="1" />
-      <div class="row g-2">
-        <div class="col-md-3">
-          <input
-            type="text"
-            name="ho_ten"
-            class="form-control"
-            placeholder="Họ tên"
-            required
-          />
-        </div>
-        <div class="col-md-3">
-          <input
-            type="email"
-            name="email"
-            class="form-control"
-            placeholder="Email"
-            required
-          />
-        </div>
-        <div class="col-md-2">
-          <input
-            type="password"
-            name="mat_khau"
-            class="form-control"
-            placeholder="Mật khẩu"
-            required
-          />
-        </div>
-        <div class="col-md-2">
-          <select name="gioi_tinh" class="form-select">
-            <option value="Nam">Nam</option>
-            <option value="Nữ">Nữ</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <button type="submit" class="btn btn-success w-100 rounded-pill">
-            Thêm
-          </button>
-        </div>
+  <!-- 🔔 Thông báo -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  {% for cat, msg in messages %}
+  <div class="alert alert-{{ 'success' if cat == 'success' else 'danger' }} alert-dismissible fade show shadow-sm">
+    {{ msg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+  {% endif %}
+  {% endwith %}
+
+  <!-- ======================= FORM THÊM BÁC SĨ (THU GỌN) ======================= -->
+  <div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center rounded-top-4">
+      <h5 class="mb-0">➕ Thêm bác sĩ mới</h5>
+      <button class="btn btn-light btn-sm fw-semibold rounded-pill" type="button" data-bs-toggle="collapse"
+        data-bs-target="#addDoctorForm">
+        Hiển thị / Ẩn
+      </button>
+    </div>
+
+    <div class="collapse" id="addDoctorForm">
+      <div class="card-body">
+        <form method="post">
+          <input type="hidden" name="add_doctor" value="1" />
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Họ tên</label>
+              <input type="text" name="ho_ten" class="form-control" required placeholder="VD: Nguyễn Văn A" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label fw-semibold">Giới tính</label>
+              <select name="gioi_tinh" class="form-select">
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Ngày sinh</label>
+              <input type="date" name="ngay_sinh" class="form-control" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Email</label>
+              <input type="email" name="email" class="form-control" required placeholder="doctor@cvdapp.com" />
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Mật khẩu</label>
+              <input type="password" name="mat_khau" class="form-control" required placeholder="******" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Điện thoại</label>
+              <input type="text" name="dien_thoai" class="form-control" placeholder="0909xxxxxx" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Địa chỉ</label>
+              <input type="text" name="dia_chi" class="form-control" placeholder="VD: 140 Lê Trọng Tấn, Tân Phú" />
+            </div>
+          </div>
+
+          <div class="text-end mt-3">
+            <button type="submit" class="btn btn-success rounded-pill px-4">
+              ➕ Thêm bác sĩ
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   </div>
 
+  <!-- ======================= DANH SÁCH BÁC SĨ ======================= -->
   <div class="table-responsive shadow-sm rounded-4">
     <table class="table table-bordered align-middle">
       <thead class="table-light text-center">
@@ -56,6 +83,9 @@
           <th>Họ tên</th>
           <th>Email</th>
           <th>Giới tính</th>
+          <th>Ngày sinh</th>
+          <th>Điện thoại</th>
+          <th>Địa chỉ</th>
           <th>Hành động</th>
         </tr>
       </thead>
@@ -66,19 +96,123 @@
           <td>{{ d.Email }}</td>
           <td class="text-center">{{ d.GioiTinh or '—' }}</td>
           <td class="text-center">
+            {% if d.NgaySinh %}
+            {{ d.NgaySinh.strftime('%d/%m/%Y') }}
+            {% else %}
+            —
+            {% endif %}
+          </td>
+
+          <td class="text-center">{{ d.DienThoai or '—' }}</td>
+          <td>{{ d.DiaChi or '—' }}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-info me-1 rounded-pill px-3" data-bs-toggle="modal"
+              data-bs-target="#viewDoctorModal{{ d.ID }}">
+              👁 Xem
+            </button>
+            <button class="btn btn-sm btn-primary me-1 rounded-pill px-3" data-bs-toggle="modal"
+              data-bs-target="#editDoctorModal{{ d.ID }}">
+              ✏️ Sửa
+            </button>
             <form method="post" class="d-inline">
               <input type="hidden" name="id" value="{{ d.ID }}" />
-              <button
-                type="submit"
-                name="delete_doctor"
-                class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                onclick="return confirm('Xóa bác sĩ này?');"
-              >
+              <button type="submit" name="delete_doctor" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                onclick="return confirm('Bạn có chắc chắn muốn xóa bác sĩ này?');">
                 🗑 Xóa
               </button>
             </form>
           </td>
         </tr>
+
+        <!-- Modal Xem chi tiết -->
+        <div class="modal fade" id="viewDoctorModal{{ d.ID }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-3 shadow-lg border-0">
+              <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">👁 Thông tin bác sĩ</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item"><b>Họ tên:</b> {{ d.HoTen }}</li>
+                  <li class="list-group-item"><b>Giới tính:</b> {{ d.GioiTinh or '—' }}</li>
+                  <li class="list-group-item"><b>Ngày sinh:</b> {{ d.NgaySinh.strftime('%d/%m/%Y') if d.NgaySinh else
+                    '—' }}</li>
+                  <li class="list-group-item"><b>Email:</b> {{ d.Email }}</li>
+                  <li class="list-group-item"><b>Điện thoại:</b> {{ d.DienThoai or '—' }}</li>
+                  <li class="list-group-item"><b>Địa chỉ:</b> {{ d.DiaChi or '—' }}</li>
+                  <li class="list-group-item"><b>Ngày tạo tài khoản:</b> {{ d.NgayTao.strftime('%d/%m/%Y') if d.NgayTao
+                    else '—' }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Sửa bác sĩ -->
+        <div class="modal fade" id="editDoctorModal{{ d.ID }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-3 shadow">
+              <form method="post">
+                <input type="hidden" name="id" value="{{ d.ID }}" />
+                <input type="hidden" name="edit_doctor" value="1" />
+                <div class="modal-header bg-primary text-white">
+                  <h5 class="modal-title">✏️ Cập nhật thông tin bác sĩ</h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Họ tên</label>
+                      <input type="text" name="ho_ten" class="form-control" value="{{ d.HoTen }}" required />
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Giới tính</label>
+                      <select name="gioi_tinh" class="form-select">
+                        <option value="Nam" {% if d.GioiTinh=='Nam' %}selected{% endif %}>Nam</option>
+                        <option value="Nữ" {% if d.GioiTinh=='Nữ' %}selected{% endif %}>Nữ</option>
+                      </select>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Ngày sinh</label>
+                      <input type="date" name="ngay_sinh" class="form-control"
+                        value="{{ d.NgaySinh.strftime('%Y-%m-%d') if d.NgaySinh else '' }}" />
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Email</label>
+                      <input type="email" name="email" class="form-control" value="{{ d.Email }}" required />
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Mật khẩu (để trống nếu không đổi)</label>
+                      <input type="password" name="mat_khau" class="form-control" placeholder="••••••" />
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Điện thoại</label>
+                      <input type="text" name="dien_thoai" class="form-control" value="{{ d.DienThoai or '' }}" />
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label fw-semibold">Địa chỉ</label>
+                      <input type="text" name="dia_chi" class="form-control" value="{{ d.DiaChi or '' }}" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                  <button type="submit" class="btn btn-success">💾 Lưu thay đổi</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
         {% endfor %}
       </tbody>
     </table>

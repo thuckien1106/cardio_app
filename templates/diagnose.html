@@ -113,19 +113,27 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Cholesterol</label>
                             <select name="cholesterol" id="cholesterol" class="form-select">
-                                <option value="normal">Bình thường</option>
-                                <option value="above_normal">Cao hơn bình thường</option>
-                                <option value="high">Cao</option>
+                                <option value="normal" {% if request.form.get('cholesterol')=='normal' %}selected{%
+                                    endif %}>Bình thường</option>
+                                <option value="above_normal" {% if request.form.get('cholesterol')=='above_normal'
+                                    %}selected{% endif %}>Cao hơn bình thường</option>
+                                <option value="high" {% if request.form.get('cholesterol')=='high' %}selected{% endif
+                                    %}>Cao</option>
                             </select>
                         </div>
+
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Đường huyết</label>
                             <select name="glucose" id="glucose" class="form-select">
-                                <option value="normal">Bình thường</option>
-                                <option value="above_normal">Cao hơn bình thường</option>
-                                <option value="high">Cao</option>
+                                <option value="normal" {% if request.form.get('glucose')=='normal' %}selected{% endif
+                                    %}>Bình thường</option>
+                                <option value="above_normal" {% if request.form.get('glucose')=='above_normal'
+                                    %}selected{% endif %}>Cao hơn bình thường</option>
+                                <option value="high" {% if request.form.get('glucose')=='high' %}selected{% endif %}>Cao
+                                </option>
                             </select>
                         </div>
+
                     </div>
 
                     <div class="row g-2 mt-2">

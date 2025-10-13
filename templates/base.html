@@ -126,16 +126,16 @@
             <!-- 🌟 MENU ADMIN -->
             <li class="nav-item">
               <a
-                class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}"
-                href="{{ url_for('admin_dashboard') }}"
-                >📈 Thống kê</a
+                class="nav-link {% if request.endpoint == 'admin_manage_doctors' %}active{% endif %}"
+                href="{{ url_for('admin_manage_doctors') }}"
+                >👩‍⚕️ Quản lý bác sĩ</a
               >
             </li>
             <li class="nav-item">
               <a
-                class="nav-link {% if request.endpoint == 'admin_manage_doctors' %}active{% endif %}"
-                href="{{ url_for('admin_manage_doctors') }}"
-                >👩‍⚕️ Quản lý bác sĩ</a
+                class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}"
+                href="{{ url_for('admin_dashboard') }}"
+                >📈 Thống kê hệ thống</a
               >
             </li>
 
@@ -168,14 +168,7 @@
               <a
                 class="nav-link {% if request.endpoint == 'manage_accounts' %}active{% endif %}"
                 href="{{ url_for('manage_accounts') }}"
-                >Quản lý tài khoản</a
-              >
-            </li>
-            <li class="nav-item">
-              <a
-                class="nav-link {% if request.endpoint == 'stats' %}active{% endif %}"
-                href="{{ url_for('stats') }}"
-                >📊 Thống kê</a
+                >Quản lý bệnh nhân</a
               >
             </li>
             {% else %}

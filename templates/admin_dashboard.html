@@ -1,59 +1,223 @@
 {% extends 'base.html' %} {% block content %}
-<div class="container mt-5">
-  <h2 class="fw-bold text-gradient mb-4">📊 Thống kê hệ thống</h2>
-
-  <div class="row text-center mb-4">
-    <div class="col-md-4">
-      <div class="card p-3 rounded-4 shadow-sm border-0 bg-light">
-        <h5>👩‍⚕️ Bác sĩ</h5>
-        <h3 class="text-primary fw-bold">{{ total_doctors }}</h3>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card p-3 rounded-4 shadow-sm border-0 bg-light">
-        <h5>🧍‍♂️ Bệnh nhân</h5>
-        <h3 class="text-success fw-bold">{{ total_patients }}</h3>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card p-3 rounded-4 shadow-sm border-0 bg-light">
-        <h5>🩺 Lượt chẩn đoán</h5>
-        <h3 class="text-danger fw-bold">{{ total_diagnoses }}</h3>
-      </div>
-    </div>
+<div class="container mt-5 pt-4">
+  <!-- ====== TIÊU ĐỀ ====== -->
+  <div class="text-center mb-5">
+    <h2 class="fw-bold text-gradient mb-2">📊 Thống kê Hệ thống</h2>
+    <p class="text-muted">
+      Tổng quan hoạt động của toàn hệ thống chẩn đoán bệnh tim mạch
+    </p>
   </div>
 
-  <div class="card shadow-sm border-0 rounded-4 p-4 mt-4">
-    <h5 class="fw-bold text-primary mb-3">🏆 Bác sĩ chẩn đoán nhiều nhất</h5>
-    <table class="table table-hover align-middle">
-      <thead class="table-primary text-center">
-        <tr>
-          <th>Tên bác sĩ</th>
-          <th>Số ca chẩn đoán</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for d in top_doctors %}
-        <tr>
-          <td>{{ d.HoTen }}</td>
-          <td class="text-center fw-bold">{{ d.SoCa }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <form
-      method="post"
-      action="{{ url_for('export_admin_stats') }}"
-      class="text-end mt-3"
-    >
+  <!-- ====== NÚT XUẤT EXCEL ====== -->
+  <div class="text-center mb-5">
+    <form method="post" action="{{ url_for('export_admin_stats') }}">
       <button
         type="submit"
-        class="btn btn-outline-primary rounded-pill shadow-sm"
+        class="btn btn-success btn-lg rounded-pill shadow-sm px-4 py-2"
       >
-        ⬇️ Xuất file Excel
+        📁 Xuất báo cáo Excel
       </button>
     </form>
   </div>
+
+  <!-- ====== TỔNG QUAN ====== -->
+  <div class="row text-center g-4 mb-5">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-light">
+        <div class="card-body">
+          <h5 class="text-primary fw-semibold mb-2">👨‍⚕️ Tổng số bác sĩ</h5>
+          <h1 class="fw-bold text-dark">{{ total_doctors }}</h1>
+          <p class="text-secondary small">
+            Số lượng tài khoản bác sĩ trong hệ thống
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-light">
+        <div class="card-body">
+          <h5 class="text-success fw-semibold mb-2">🧑‍🤝‍🧑 Tổng số bệnh nhân</h5>
+          <h1 class="fw-bold text-dark">{{ total_patients }}</h1>
+          <p class="text-secondary small">Số tài khoản bệnh nhân đã đăng ký</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-light">
+        <div class="card-body">
+          <h5 class="text-warning fw-semibold mb-2">
+            🩺 Tổng số lượt chẩn đoán
+          </h5>
+          <h1 class="fw-bold text-dark">{{ total_diagnoses }}</h1>
+          <p class="text-secondary small">
+            Tổng số lần hệ thống đã được sử dụng để chẩn đoán
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== BIỂU ĐỒ ====== -->
+  <div
+    id="chartData"
+    data-doctors="{{ total_doctors }}"
+    data-patients="{{ total_patients }}"
+    data-months="{{ months | join(',') }}"
+    data-counts="{{ counts | join(',') }}"
+    data-risk-labels="{{ risk_labels | join(',') }}"
+    data-risk-values="{{ risk_values | join(',') }}"
+    data-top-names="{{ top_names | join(',') }}"
+    data-top-counts="{{ top_counts | join(',') }}"
+  ></div>
+
+  <!-- ====== HÀNG 1: PIE + BAR ====== -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+          <h5 class="card-title text-center fw-semibold text-primary mb-3">
+            Tỷ lệ Bác sĩ / Bệnh nhân
+          </h5>
+          <canvas id="pieChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+          <h5 class="card-title text-center fw-semibold text-success mb-3">
+            Lượt chẩn đoán theo tháng
+          </h5>
+          <canvas id="barChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== HÀNG 2: RISK + TOP DOCTOR ====== -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+          <h5 class="card-title text-center fw-semibold text-danger mb-3">
+            Tỷ lệ Nguy cơ Cao / Thấp
+          </h5>
+          <canvas id="riskChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+          <h5 class="card-title text-center fw-semibold text-info mb-3">
+            🏆 Top 5 bác sĩ chẩn đoán nhiều ca nhất
+          </h5>
+          <canvas id="topDoctorsChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- ====== Chart.js ====== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const dataDiv = document.getElementById("chartData");
+  const numDoctors = parseInt(dataDiv.dataset.doctors);
+  const numPatients = parseInt(dataDiv.dataset.patients);
+  const months = dataDiv.dataset.months
+    ? dataDiv.dataset.months.split(",")
+    : [];
+  const counts = dataDiv.dataset.counts
+    ? dataDiv.dataset.counts.split(",").map(Number)
+    : [];
+  const riskLabels = dataDiv.dataset.riskLabels
+    ? dataDiv.dataset.riskLabels.split(",")
+    : [];
+  const riskValues = dataDiv.dataset.riskValues
+    ? dataDiv.dataset.riskValues.split(",").map(Number)
+    : [];
+  const topNames = dataDiv.dataset.topNames
+    ? dataDiv.dataset.topNames.split(",")
+    : [];
+  const topCounts = dataDiv.dataset.topCounts
+    ? dataDiv.dataset.topCounts.split(",").map(Number)
+    : [];
+
+  // === 1. Pie Chart - Bác sĩ / Bệnh nhân ===
+  new Chart(document.getElementById("pieChart"), {
+    type: "pie",
+    data: {
+      labels: ["Bác sĩ", "Bệnh nhân"],
+      datasets: [
+        {
+          data: [numDoctors, numPatients],
+          backgroundColor: ["#36A2EB", "#4CAF50"],
+        },
+      ],
+    },
+    options: { responsive: true, plugins: { legend: { position: "bottom" } } },
+  });
+
+  // === 2. Bar Chart - Lượt chẩn đoán theo tháng ===
+  new Chart(document.getElementById("barChart"), {
+    type: "bar",
+    data: {
+      labels: months,
+      datasets: [
+        {
+          label: "Số lượt chẩn đoán",
+          data: counts,
+          backgroundColor: "#FF6384",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: "Số lượt" } },
+        x: { title: { display: true, text: "Tháng" } },
+      },
+    },
+  });
+
+  // === 3. Pie Chart - Nguy cơ Cao / Thấp ===
+  new Chart(document.getElementById("riskChart"), {
+    type: "pie",
+    data: {
+      labels: riskLabels,
+      datasets: [{ data: riskValues, backgroundColor: ["#dc3545", "#198754"] }],
+    },
+    options: { responsive: true, plugins: { legend: { position: "bottom" } } },
+  });
+
+  // === 4. Bar Chart - Top 5 bác sĩ ===
+  new Chart(document.getElementById("topDoctorsChart"), {
+    type: "bar",
+    data: {
+      labels: topNames,
+      datasets: [
+        {
+          label: "Số ca chẩn đoán",
+          data: topCounts,
+          backgroundColor: "#0d6efd",
+          borderRadius: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: "Số ca" } },
+        x: { title: { display: true, text: "Bác sĩ" } },
+      },
+    },
+  });
+</script>
 {% endblock %}
