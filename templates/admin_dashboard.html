@@ -1,0 +1,59 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container mt-5">
+  <h2 class="fw-bold text-gradient mb-4">📊 Thống kê hệ thống</h2>
+
+  <div class="row text-center mb-4">
+    <div class="col-md-4">
+      <div class="card p-3 rounded-4 shadow-sm border-0 bg-light">
+        <h5>👩‍⚕️ Bác sĩ</h5>
+        <h3 class="text-primary fw-bold">{{ total_doctors }}</h3>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card p-3 rounded-4 shadow-sm border-0 bg-light">
+        <h5>🧍‍♂️ Bệnh nhân</h5>
+        <h3 class="text-success fw-bold">{{ total_patients }}</h3>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card p-3 rounded-4 shadow-sm border-0 bg-light">
+        <h5>🩺 Lượt chẩn đoán</h5>
+        <h3 class="text-danger fw-bold">{{ total_diagnoses }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-4 p-4 mt-4">
+    <h5 class="fw-bold text-primary mb-3">🏆 Bác sĩ chẩn đoán nhiều nhất</h5>
+    <table class="table table-hover align-middle">
+      <thead class="table-primary text-center">
+        <tr>
+          <th>Tên bác sĩ</th>
+          <th>Số ca chẩn đoán</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in top_doctors %}
+        <tr>
+          <td>{{ d.HoTen }}</td>
+          <td class="text-center fw-bold">{{ d.SoCa }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <form
+      method="post"
+      action="{{ url_for('export_admin_stats') }}"
+      class="text-end mt-3"
+    >
+      <button
+        type="submit"
+        class="btn btn-outline-primary rounded-pill shadow-sm"
+      >
+        ⬇️ Xuất file Excel
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

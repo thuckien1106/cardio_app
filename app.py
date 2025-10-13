@@ -1032,6 +1032,213 @@ def export_diagnosis():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+# ==========================================
+# 👑 ADMIN DASHBOARD – Thống kê hệ thống
+# ==========================================
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    if 'user' not in session or session.get('role') != 'admin':
+        flash("❌ Bạn không có quyền truy cập!", "danger")
+        return redirect(url_for('login'))
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Tổng số bác sĩ, bệnh nhân, lượt chẩn đoán
+    cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='doctor'")
+    total_doctors = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='patient'")
+    total_patients = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM ChanDoan")
+    total_diagnoses = cur.fetchone()[0]
+
+    # Bác sĩ có số ca chẩn đoán nhiều nhất
+    cur.execute("""
+        SELECT bs.HoTen, COUNT(cd.ID) AS SoCa
+        FROM ChanDoan cd
+        JOIN NguoiDung bs ON cd.BacSiID = bs.ID
+        GROUP BY bs.HoTen
+        ORDER BY SoCa DESC
+    """)
+    top_doctors = cur.fetchall()
+    conn.close()
+
+    return render_template(
+        'admin_dashboard.html',
+        total_doctors=total_doctors,
+        total_patients=total_patients,
+        total_diagnoses=total_diagnoses,
+        top_doctors=top_doctors
+    )
+
+
+# ==========================================
+# 👩‍⚕️ ADMIN QUẢN LÝ BÁC SĨ
+# ==========================================
+@app.route('/admin/doctors', methods=['GET', 'POST'])
+def admin_manage_doctors():
+    if 'user' not in session or session.get('role') != 'admin':
+        flash("❌ Bạn không có quyền truy cập!", "danger")
+        return redirect(url_for('login'))
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # 🗑 Xóa bác sĩ
+    if request.method == 'POST' and 'delete_doctor' in request.form:
+        doctor_id = request.form['id']
+        try:
+            cur.execute("DELETE FROM NguoiDung WHERE ID=? AND Role='doctor'", (doctor_id,))
+            conn.commit()
+            flash("✅ Đã xóa bác sĩ thành công!", "success")
+        except Exception as e:
+            conn.rollback()
+            flash(f"❌ Lỗi khi xóa bác sĩ: {e}", "danger")
+
+    # ✏️ Sửa thông tin bác sĩ
+    elif request.method == 'POST' and 'edit_doctor' in request.form:
+        try:
+            cur.execute("""
+                UPDATE NguoiDung
+                SET HoTen=?, GioiTinh=?, DienThoai=?, DiaChi=?
+                WHERE ID=? AND Role='doctor'
+            """, (
+                request.form['ho_ten'],
+                request.form['gioi_tinh'],
+                request.form['dien_thoai'],
+                request.form['dia_chi'],
+                request.form['id']
+            ))
+            conn.commit()
+            flash("✅ Cập nhật thông tin bác sĩ thành công!", "success")
+        except Exception as e:
+            conn.rollback()
+            flash(f"❌ Lỗi khi cập nhật thông tin bác sĩ: {e}", "danger")
+
+    # ➕ Thêm bác sĩ mới
+    elif request.method == 'POST' and 'add_doctor' in request.form:
+        email = request.form['email'].strip()
+        cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Email = ?", (email,))
+        exists = cur.fetchone()[0]
+
+        if exists > 0:
+            flash(f"❌ Email '{email}' đã tồn tại trong hệ thống!", "danger")
+        else:
+            try:
+                cur.execute("""
+                    INSERT INTO NguoiDung (HoTen, Email, MatKhau, GioiTinh, Role)
+                    VALUES (?, ?, ?, ?, 'doctor')
+                """, (
+                    request.form['ho_ten'],
+                    email,
+                    request.form['mat_khau'],
+                    request.form['gioi_tinh']
+                ))
+                conn.commit()
+                flash("✅ Thêm bác sĩ mới thành công!", "success")
+            except Exception as e:
+                conn.rollback()
+                flash(f"❌ Lỗi khi thêm bác sĩ: {e}", "danger")
+
+    # Lấy danh sách bác sĩ
+    cur.execute("SELECT ID, HoTen, Email, GioiTinh, DienThoai, DiaChi FROM NguoiDung WHERE Role='doctor'")
+    doctors = cur.fetchall()
+    conn.close()
+
+    return render_template('admin_doctors.html', doctors=doctors)
+
+
+# ==========================================
+# 📊 XUẤT FILE EXCEL THỐNG KÊ HỆ THỐNG
+# ==========================================
+@app.route('/export_admin_stats', methods=['POST'])
+def export_admin_stats():
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from io import BytesIO
+    from flask import send_file
+    from datetime import datetime
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Dữ liệu thống kê
+    cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='doctor'")
+    total_doctors = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='patient'")
+    total_patients = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM ChanDoan")
+    total_diagnoses = cur.fetchone()[0]
+    cur.execute("""
+        SELECT bs.HoTen, COUNT(cd.ID) AS SoCa
+        FROM ChanDoan cd
+        JOIN NguoiDung bs ON cd.BacSiID = bs.ID
+        GROUP BY bs.HoTen
+        ORDER BY SoCa DESC
+    """)
+    top_doctors = cur.fetchall()
+    conn.close()
+
+    # === Excel ===
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Thống kê hệ thống"
+
+    # Định dạng
+    title_font = Font(size=16, bold=True, color="1F4E78")
+    header_font = Font(size=12, bold=True, color="FFFFFF")
+    fill_blue = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+    align_center = Alignment(horizontal="center", vertical="center")
+    border = Border(
+        left=Side(style="thin", color="999999"),
+        right=Side(style="thin", color="999999"),
+        top=Side(style="thin", color="999999"),
+        bottom=Side(style="thin", color="999999")
+    )
+
+    # Tiêu đề
+    ws.merge_cells("A1:C1")
+    ws["A1"] = "BÁO CÁO THỐNG KÊ HỆ THỐNG CHẨN ĐOÁN TIM MẠCH"
+    ws["A1"].font = title_font
+    ws["A1"].alignment = align_center
+
+    ws.append([])
+    ws.append(["Ngày xuất báo cáo:", datetime.now().strftime("%d/%m/%Y %H:%M")])
+    ws.append([])
+    ws.append(["Tổng số bác sĩ", total_doctors])
+    ws.append(["Tổng số bệnh nhân", total_patients])
+    ws.append(["Tổng số lượt chẩn đoán", total_diagnoses])
+    ws.append([])
+
+    # Bảng thống kê bác sĩ
+    ws.append(["Tên bác sĩ", "Số ca chẩn đoán"])
+    for cell in ws[ws.max_row]:
+        cell.font = header_font
+        cell.fill = fill_blue
+        cell.alignment = align_center
+        cell.border = border
+
+    for d in top_doctors:
+        ws.append([d.HoTen, d.SoCa])
+        for cell in ws[ws.max_row]:
+            cell.border = border
+
+    # Căn độ rộng
+    ws.column_dimensions["A"].width = 40
+    ws.column_dimensions["B"].width = 20
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=f"ThongKe_HeThong_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # ==========================================
 # Main

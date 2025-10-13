@@ -1,228 +1,288 @@
 <!DOCTYPE html>
 <html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ title if title else "CVD-App" }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<head>
-  <meta charset="UTF-8">
-  <title>{{ title if title else "CVD-App" }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Bootstrap Icons -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <!-- Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
 
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+      }
 
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+      .navbar-nav .nav-link {
+        color: #fff !important;
+        font-weight: 500;
+        margin: 0 6px;
+        padding: 8px 14px;
+        border-radius: 20px;
+        transition: background 0.3s ease, color 0.3s ease;
+        display: flex;
+        align-items: center;
+      }
 
-  <!-- Bootstrap Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+      .navbar-nav .nav-link:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffc107 !important;
+      }
 
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+      .navbar-nav .nav-link.active {
+        color: #ffc107 !important;
+        font-weight: 600;
+        border-bottom: 3px solid #ffc107;
+      }
 
-  <style>
-    /* ================= Navbar ================= */
-    .navbar-nav .nav-link {
-      color: #fff !important;
-      font-weight: 500;
-      margin: 0 6px;
-      padding: 8px 14px;
-      border-radius: 20px;
-      transition: background 0.3s ease, color 0.3s ease;
-      display: flex;
-      align-items: center;
-    }
+      .navbar-nav .logout-link {
+        color: #ffc107 !important;
+        font-weight: 600;
+      }
 
-    .navbar-nav .nav-link:hover {
-      background: rgba(255, 255, 255, 0.12);
-      color: #ffc107 !important;
-    }
+      .navbar-nav .logout-link:hover {
+        background: rgba(255, 193, 7, 0.12);
+        color: #ffe082 !important;
+      }
 
-    /* Mục đang active */
-    .navbar-nav .nav-link.active {
-      color: #ffc107 !important;
-      font-weight: 600;
-      border-bottom: 3px solid #ffc107;
-    }
+      .navbar-text.user-name {
+        color: #fff;
+        font-weight: 500;
+        margin-left: 10px;
+        display: flex;
+        align-items: center;
+      }
 
-    /* Nút Đăng xuất màu vàng */
-    .navbar-nav .logout-link {
-      color: #ffc107 !important;
-      font-weight: 600;
-    }
+      .navbar-nav {
+        display: flex;
+        align-items: center;
+      }
 
-    .navbar-nav .logout-link:hover {
-      background: rgba(255, 193, 7, 0.12);
-      color: #ffe082 !important;
-    }
+      .main-content {
+        margin-top: 80px;
+        min-height: calc(100vh - 160px);
+      }
 
-    /* Xin chào người dùng */
-    .navbar-text.user-name {
-      color: #fff;
-      font-weight: 500;
-      margin-left: 10px;
-      display: flex;
-      align-items: center;
-    }
+      footer.footer {
+        background: #212529;
+        color: #fff;
+      }
 
-    /* Đảm bảo tất cả mục trên cùng một hàng */
-    .navbar-nav {
-      display: flex;
-      align-items: center;
-    }
+      footer.footer a {
+        color: #ffc107;
+        text-decoration: underline;
+      }
 
-    /* Khoảng cách nội dung chính tránh navbar */
-    .main-content {
-      margin-top: 80px;
-      min-height: calc(100vh - 160px);
-    }
+      footer.footer a:hover {
+        color: #ffe082;
+      }
+    </style>
+  </head>
 
-    footer.footer {
-      background: #212529;
-      color: #fff;
-    }
+  <body>
+    {% if session.get('user') %}
+    <!-- Navbar -->
+    <nav
+      class="navbar navbar-expand-lg navbar-dark shadow-sm fixed-top bg-dark"
+    >
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="{{ url_for('home') }}"
+          >❤️ CVD-App</a
+        >
 
-    footer.footer a {
-      color: #ffc107;
-      text-decoration: underline;
-    }
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
 
-    footer.footer a:hover {
-      color: #ffe082;
-    }
-  </style>
-</head>
+        <div
+          class="collapse navbar-collapse justify-content-end"
+          id="navbarNav"
+        >
+          <ul class="navbar-nav">
+            {% if session.get('role') == 'admin' %}
+            <!-- 🌟 MENU ADMIN -->
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}"
+                href="{{ url_for('admin_dashboard') }}"
+                >📈 Thống kê</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint == 'admin_manage_doctors' %}active{% endif %}"
+                href="{{ url_for('admin_manage_doctors') }}"
+                >👩‍⚕️ Quản lý bác sĩ</a
+              >
+            </li>
 
-<body>
+            {% else %}
+            <!-- 🌿 MENU DOCTOR / PATIENT -->
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint == 'home' %}active{% endif %}"
+                href="{{ url_for('home') }}"
+                >Trang chủ</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint == 'diagnose' %}active{% endif %}"
+                href="{{ url_for('diagnose') }}"
+                >Chẩn đoán</a
+              >
+            </li>
 
-  {% if session.get('user') %}
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark shadow-sm fixed-top bg-dark">
-    <div class="container">
+            {% if session.get('role') == 'doctor' %}
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint == 'history' %}active{% endif %}"
+                href="{{ url_for('history') }}"
+                >Lịch sử</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint == 'manage_accounts' %}active{% endif %}"
+                href="{{ url_for('manage_accounts') }}"
+                >Quản lý tài khoản</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint == 'stats' %}active{% endif %}"
+                href="{{ url_for('stats') }}"
+                >📊 Thống kê</a
+              >
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint == 'history' %}active{% endif %}"
+                href="{{ url_for('history') }}"
+                >Lịch sử chẩn đoán</a
+              >
+            </li>
+            {% endif %}
 
-      <!-- Logo -->
-      <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">❤️ CVD-App</a>
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}"
+                href="{{ url_for('profile') }}"
+                >Hồ sơ</a
+              >
+            </li>
+            {% endif %}
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <ul class="navbar-nav">
-
-          <!-- Trang chủ -->
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'home' %}active{% endif %}" href="{{ url_for('home') }}">
-              Trang chủ
-            </a>
-          </li>
-
-          <!-- Chẩn đoán -->
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'diagnose' %}active{% endif %}"
-              href="{{ url_for('diagnose') }}">
-              Chẩn đoán
-            </a>
-          </li>
-
-          <!-- Lịch sử / Bệnh án -->
-          {% if session.get('role') == 'doctor' %}
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'history' %}active{% endif %}" href="{{ url_for('history') }}">
-              Lịch sử
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'manage_accounts' %}active{% endif %}"
-              href="{{ url_for('manage_accounts') }}">
-              Quản lý tài khoản
-            </a>
-          </li>
-          {% else %}
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'history' %}active{% endif %}" href="{{ url_for('history') }}">
-              Lịch sử chẩn đoán
-            </a>
-          </li>
-          {% endif %}
-
-          <!-- Hồ sơ -->
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}">
-              Hồ sơ
-            </a>
-          </li>
-          {% if session.get('role') == 'doctor' %}
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('stats') }}">📊 Thống kê</a>
-          </li>
-          {% endif %}
-          <!-- Đăng xuất + Xin chào -->
-          <li class="nav-item d-flex align-items-center">
-            <a class="nav-link logout-link" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
-              Đăng xuất
-            </a>
-            <span class="navbar-text user-name">
-              | Xin chào, {{ session.get('user') }}
-            </span>
-          </li>
-
-
-        </ul>
-      </div>
-    </div>
-  </nav>
-  {% endif %}
-
-  <!-- Nội dung chính -->
-  <div class="container main-content">
-    {% block content %}{% endblock %}
-  </div>
-
-  <!-- Footer -->
-  <footer class="footer text-center text-white py-3">
-    <div class="container">
-      <p class="mb-1">&copy; 2025 Ứng dụng Chẩn đoán Bệnh Tim Mạch</p>
-      <p class="mb-1">
-        Liên hệ:
-        <a href="mailto:support@cvdapp.com">thuckien76@gmail.com</a>
-      </p>
-      <p class="mb-1">
-        <i class="bi bi-telephone-fill"></i> Hotline:
-        <span class="fw-semibold">(+84) 0909 123 456</span>
-      </p>
-      <p class="mb-0">
-        <i class="bi bi-geo-alt-fill"></i> Địa chỉ: 140 Lê Trọng Tấn, Tân Phú, TP.HCM
-      </p>
-    </div>
-  </footer>
-
-  <!-- Modal Đăng xuất -->
-  <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content shadow-lg border-0 rounded-3">
-        <div class="modal-header bg-warning text-dark">
-          <h5 class="modal-title fw-bold" id="logoutModalLabel">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> Xác nhận đăng xuất
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-        </div>
-        <div class="modal-body text-center">
-          <p class="mb-0">Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?</p>
-        </div>
-        <div class="modal-footer justify-content-center">
-          <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
-          <a href="{{ url_for('logout') }}" class="btn btn-warning px-4 text-dark fw-semibold">
-            Đăng xuất
-          </a>
+            <!-- Đăng xuất -->
+            <li class="nav-item d-flex align-items-center">
+              <a
+                class="nav-link logout-link"
+                href="#"
+                data-bs-toggle="modal"
+                data-bs-target="#logoutModal"
+                >Đăng xuất</a
+              >
+              <span class="navbar-text user-name"
+                >| Xin chào, {{ session.get('user') }}</span
+              >
+            </li>
+          </ul>
         </div>
       </div>
+    </nav>
+    {% endif %}
+
+    <!-- Nội dung chính -->
+    <div class="container main-content">{% block content %}{% endblock %}</div>
+
+    <!-- Footer -->
+    <footer class="footer text-center text-white py-3">
+      <div class="container">
+        <p class="mb-1">&copy; 2025 Ứng dụng Chẩn đoán Bệnh Tim Mạch</p>
+        <p class="mb-1">
+          Liên hệ:
+          <a href="mailto:thuckien76@gmail.com">thuckien76@gmail.com</a>
+        </p>
+        <p class="mb-1">
+          <i class="bi bi-telephone-fill"></i> Hotline:
+          <span class="fw-semibold">(+84) 0909 123 456</span>
+        </p>
+        <p class="mb-0">
+          <i class="bi bi-geo-alt-fill"></i> 140 Lê Trọng Tấn, Tân Phú, TP.HCM
+        </p>
+      </div>
+    </footer>
+
+    <!-- Modal Đăng xuất -->
+    <div
+      class="modal fade"
+      id="logoutModal"
+      tabindex="-1"
+      aria-labelledby="logoutModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-3">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title fw-bold" id="logoutModalLabel">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> Xác nhận đăng
+              xuất
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Đóng"
+            ></button>
+          </div>
+          <div class="modal-body text-center">
+            <p class="mb-0">
+              Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?
+            </p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button
+              type="button"
+              class="btn btn-secondary px-4"
+              data-bs-dismiss="modal"
+            >
+              Hủy
+            </button>
+            <a
+              href="{{ url_for('logout') }}"
+              class="btn btn-warning px-4 text-dark fw-semibold"
+              >Đăng xuất</a
+            >
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-</body>
-
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
 </html>

@@ -1,0 +1,87 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container mt-5">
+  <h2 class="fw-bold text-gradient mb-4">👩‍⚕️ Quản lý bác sĩ</h2>
+
+  <div class="card p-4 shadow-sm border-0 rounded-4 mb-4">
+    <h5 class="fw-semibold text-primary mb-3">➕ Thêm bác sĩ mới</h5>
+    <form method="post">
+      <input type="hidden" name="add_doctor" value="1" />
+      <div class="row g-2">
+        <div class="col-md-3">
+          <input
+            type="text"
+            name="ho_ten"
+            class="form-control"
+            placeholder="Họ tên"
+            required
+          />
+        </div>
+        <div class="col-md-3">
+          <input
+            type="email"
+            name="email"
+            class="form-control"
+            placeholder="Email"
+            required
+          />
+        </div>
+        <div class="col-md-2">
+          <input
+            type="password"
+            name="mat_khau"
+            class="form-control"
+            placeholder="Mật khẩu"
+            required
+          />
+        </div>
+        <div class="col-md-2">
+          <select name="gioi_tinh" class="form-select">
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-success w-100 rounded-pill">
+            Thêm
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-responsive shadow-sm rounded-4">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light text-center">
+        <tr>
+          <th>Họ tên</th>
+          <th>Email</th>
+          <th>Giới tính</th>
+          <th>Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in doctors %}
+        <tr>
+          <td>{{ d.HoTen }}</td>
+          <td>{{ d.Email }}</td>
+          <td class="text-center">{{ d.GioiTinh or '—' }}</td>
+          <td class="text-center">
+            <form method="post" class="d-inline">
+              <input type="hidden" name="id" value="{{ d.ID }}" />
+              <button
+                type="submit"
+                name="delete_doctor"
+                class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                onclick="return confirm('Xóa bác sĩ này?');"
+              >
+                🗑 Xóa
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
