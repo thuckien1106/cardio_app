@@ -73,6 +73,7 @@ GO
 CREATE OR ALTER VIEW V_LichSuChanDoan AS
 SELECT
     cd.ID AS ChanDoanID,
+    cd.BenhNhanID,                
     bn.HoTen       AS TenBenhNhan,
     bn.GioiTinh,
     DATEDIFF(YEAR, bn.NgaySinh, GETDATE()) AS Tuoi,
@@ -87,7 +88,7 @@ SELECT
     cd.UongCon,
     cd.TapTheDuc,
     cd.NguyCo,
-    cd.LoiKhuyen      -- Lời khuyên từ AI hoặc do bác sĩ nhập sau này
+    cd.LoiKhuyen
 FROM ChanDoan cd
 JOIN NguoiDung bn ON cd.BenhNhanID = bn.ID
 LEFT JOIN NguoiDung bs ON cd.BacSiID = bs.ID;

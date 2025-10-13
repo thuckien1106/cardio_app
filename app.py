@@ -500,6 +500,28 @@ def manage_accounts():
 
     conn = get_connection()
     cur = conn.cursor()
+    # ================================
+    # ➕ THÊM bệnh nhân mới
+    # ================================
+    if request.method == 'POST' and 'add_patient' in request.form:
+        ho_ten = request.form.get('ho_ten')
+        gioi_tinh = request.form.get('gioi_tinh')
+        ngay_sinh = request.form.get('ngay_sinh')
+        email = request.form.get('email')
+        mat_khau = request.form.get('mat_khau')
+        dien_thoai = request.form.get('dien_thoai')
+        dia_chi = request.form.get('dia_chi')
+
+        try:
+            cur.execute("""
+                INSERT INTO NguoiDung (HoTen, GioiTinh, NgaySinh, Email, MatKhau, DienThoai, DiaChi, Role)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'patient')
+            """, (ho_ten, gioi_tinh, ngay_sinh, email, mat_khau, dien_thoai, dia_chi))
+            conn.commit()
+            flash("✅ Đã thêm bệnh nhân mới thành công!", "success")
+        except Exception as e:
+            conn.rollback()
+            flash(f"❌ Lỗi khi thêm bệnh nhân: {e}", "danger")
 
     # ================================
     # 🗑 XÓA tài khoản bệnh nhân
@@ -799,6 +821,209 @@ def export_stats():
         download_name="BaoCao_ThongKe_HeThong.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+# ==========================================
+# 📤 Xuất báo cáo kết quả chẩn đoán ra Excel 
+# ==========================================
+@app.route('/export_diagnosis', methods=['POST'])
+def export_diagnosis():
+    from openpyxl import Workbook
+    from openpyxl.drawing.image import Image as ExcelImage
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from io import BytesIO
+    from flask import send_file
+    from datetime import datetime
+    import os
+
+    # ===== Dữ liệu từ form =====
+    data = {key: request.form.get(key, '') for key in [
+        'age', 'gender', 'bmi', 'systolic', 'diastolic', 'cholesterol',
+        'glucose', 'smoking', 'alcohol', 'exercise',
+        'risk_percent', 'risk_level', 'ai_advice', 'shap_file', 'benhnhan_id'
+    ]}
+
+    # ===== Lấy tên người đăng nhập & vai trò =====
+    user_name = session.get('user', 'Người dùng')
+    user_role = session.get('role', 'patient')
+
+    # ===== Xác định tên bệnh nhân và bác sĩ =====
+    patient_name = None
+    doctor_name = None
+
+    if user_role == 'doctor':
+        # Bác sĩ chọn bệnh nhân trong danh sách => lấy tên bệnh nhân từ DB
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT HoTen FROM NguoiDung WHERE ID = ?", data.get('benhnhan_id'))
+        row = cur.fetchone()
+        conn.close()
+        patient_name = row[0] if row else "Không xác định"
+        doctor_name = user_name
+    else:
+        # Bệnh nhân tự chẩn đoán
+        patient_name = user_name
+        doctor_name = "—"
+
+    # ===== Tạo workbook =====
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Báo cáo chẩn đoán"
+
+    # ===== Style =====
+    title_font = Font(size=18, bold=True, color="1F4E78")
+    header_font = Font(size=13, bold=True, color="FFFFFF")
+    section_font = Font(size=12, bold=True, color="1F4E78")
+    normal_font = Font(size=11)
+    advice_font = Font(size=12, color="000000")
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    wrap = Alignment(wrap_text=True, vertical="top")
+    border = Border(
+        left=Side(style="thin", color="000000"),
+        right=Side(style="thin", color="000000"),
+        top=Side(style="thin", color="000000"),
+        bottom=Side(style="thin", color="000000")
+    )
+    fill_header = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+    fill_sub = PatternFill(start_color="E9F3FF", end_color="E9F3FF", fill_type="solid")
+    fill_high = PatternFill(start_color="F8D7DA", end_color="F8D7DA", fill_type="solid")
+    fill_low = PatternFill(start_color="D1E7DD", end_color="D1E7DD", fill_type="solid")
+
+    # ===== Tiêu đề =====
+    ws.merge_cells("A1:E1")
+    ws["A1"] = "BÁO CÁO KẾT QUẢ CHẨN ĐOÁN TIM MẠCH"
+    ws["A1"].font = title_font
+    ws["A1"].alignment = center
+    ws.append([])
+
+    # ===== I. Thông tin chung =====
+    ws.merge_cells("A3:E3")
+    ws["A3"] = "I. THÔNG TIN CHUNG"
+    ws["A3"].font = section_font
+    ws["A3"].alignment = left
+
+    ws.append(["Tên bệnh nhân", patient_name])
+    ws.append(["Bác sĩ chẩn đoán", doctor_name])
+    ws.append(["Ngày tạo báo cáo", datetime.now().strftime("%d/%m/%Y %H:%M")])
+    ws.append([])
+
+    # ===== II. Dữ liệu đầu vào =====
+    ws.merge_cells("A7:E7")
+    ws["A7"] = "II. DỮ LIỆU ĐẦU VÀO"
+    ws["A7"].font = section_font
+    ws["A7"].alignment = left
+
+    ws.append(["Thuộc tính", "Giá trị", "Thuộc tính", "Giá trị"])
+    for cell in ws[8]:
+        cell.font = header_font
+        cell.fill = fill_header
+        cell.border = border
+        cell.alignment = center
+
+    input_data = [
+        ["Tuổi", data['age'], "Giới tính", data['gender']],
+        ["BMI", data['bmi'], "Huyết áp (HATT/HATTr)", f"{data['systolic']}/{data['diastolic']}"],
+        ["Cholesterol", data['cholesterol'], "Đường huyết", data['glucose']],
+        ["Hút thuốc", "Có" if data['smoking']=="yes" else "Không", "Rượu/Bia", "Có" if data['alcohol']=="yes" else "Không"],
+        ["Tập thể dục", "Có" if data['exercise']=="yes" else "Không", "", ""]
+    ]
+    for row in input_data:
+        ws.append(row)
+        for cell in ws[ws.max_row]:
+            cell.font = normal_font
+            cell.border = border
+            cell.alignment = left
+
+    ws.append([])
+
+    # ===== III. Kết quả chẩn đoán =====
+    ws.merge_cells(f"A{ws.max_row+1}:E{ws.max_row+1}")
+    ws[f"A{ws.max_row}"] = "III. KẾT QUẢ CHẨN ĐOÁN"
+    ws[f"A{ws.max_row}"].font = section_font
+    ws[f"A{ws.max_row}"].alignment = left
+
+    ws.append(["Nguy cơ", "Tỉ lệ (%)", "Đánh giá", ""])
+    for cell in ws[ws.max_row]:
+        cell.font = header_font
+        cell.fill = fill_header
+        cell.border = border
+        cell.alignment = center
+
+    ws.append([
+        "Cao" if data['risk_level'] == 'high' else "Thấp",
+        data['risk_percent'] + "%",
+        "⚠️ Cần theo dõi" if data['risk_level'] == 'high' else "✅ Ổn định",
+        ""
+    ])
+    for cell in ws[ws.max_row]:
+        cell.font = normal_font
+        cell.border = border
+        cell.alignment = center
+        cell.fill = fill_high if data['risk_level'] == 'high' else fill_low
+
+    ws.append([])
+
+    # ===== IV. Lời khuyên từ AI =====
+    ws.merge_cells(f"A{ws.max_row+1}:E{ws.max_row+1}")
+    ws[f"A{ws.max_row}"] = "IV. LỜI KHUYÊN TỪ AI"
+    ws[f"A{ws.max_row}"].font = section_font
+    ws[f"A{ws.max_row}"].alignment = left
+
+    # ✅ Fix lỗi merged cell + format đẹp
+    start_row = ws.max_row + 1
+    end_row = start_row + 5
+    ws.merge_cells(f"A{start_row}:E{end_row}")
+    cell = ws[f"A{start_row}"]
+    cell.value = data['ai_advice'] or "Chưa có lời khuyên từ AI."
+    cell.alignment = wrap
+    cell.font = advice_font
+    cell.border = border
+    cell.fill = fill_sub
+
+    ws.append([])
+    ws.append([])
+
+    # ===== V. Biểu đồ SHAP =====
+    shap_path = os.path.join(app.root_path, 'static', 'images', data['shap_file']) if data['shap_file'] else None
+    if shap_path and os.path.exists(shap_path):
+        ws.merge_cells(f"A{ws.max_row+1}:E{ws.max_row+1}")
+        ws[f"A{ws.max_row}"] = "V. GIẢI THÍCH KẾT QUẢ BẰNG BIỂU ĐỒ SHAP"
+        ws[f"A{ws.max_row}"].font = section_font
+        ws[f"A{ws.max_row}"].alignment = left
+        try:
+            img = ExcelImage(shap_path)
+            img.width = 520
+            img.height = 320
+            ws.add_image(img, f"A{ws.max_row+1}")
+        except Exception as e:
+            ws.append([f"Lỗi khi chèn hình: {e}"])
+
+    # ===== Footer =====
+    ws.append([])
+    ws.merge_cells(f"A{ws.max_row}:E{ws.max_row}")
+    ws[f"A{ws.max_row}"] = f"📅 Báo cáo được tạo bởi: {doctor_name or user_name} — {datetime.now().strftime('%H:%M, %d/%m/%Y')}"
+    ws[f"A{ws.max_row}"].alignment = center
+    ws[f"A{ws.max_row}"].font = Font(size=10, italic=True, color="777777")
+
+    # ===== Căn chỉnh độ rộng =====
+    ws.column_dimensions["A"].width = 22
+    ws.column_dimensions["B"].width = 20
+    ws.column_dimensions["C"].width = 25
+    ws.column_dimensions["D"].width = 25
+    ws.column_dimensions["E"].width = 10
+
+    # ===== Xuất file =====
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    filename = f"BaoCao_ChanDoan_{patient_name.replace(' ', '_')}.xlsx"
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
 
 # ==========================================
 # Đăng xuất

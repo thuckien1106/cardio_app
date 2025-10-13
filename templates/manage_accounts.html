@@ -3,7 +3,7 @@
 
 <div class="container mt-5">
   <h2 class="fw-bold text-gradient mb-4">👩‍⚕️ Quản lý tài khoản & hồ sơ bệnh nhân</h2>
-  <p class="text-muted">Bác sĩ có thể tìm kiếm, xem, sửa hoặc xóa thông tin bệnh nhân tại đây.</p>
+  <p class="text-muted">Bác sĩ có thể thêm, tìm kiếm, xem, sửa hoặc xóa thông tin bệnh nhân tại đây.</p>
 
   <!-- Thông báo -->
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -17,21 +17,82 @@
     {% endif %}
   {% endwith %}
 
+  <!-- 🔹 Khu vực thêm bệnh nhân -->
+  <div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="text-primary fw-bold mb-0">➕ Thêm bệnh nhân mới</h5>
+        <button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#addPatientForm">
+          🧍‍♂️ Hiển thị / Ẩn form
+        </button>
+      </div>
+
+      <div class="collapse" id="addPatientForm">
+        <form method="post" class="row g-3">
+          <input type="hidden" name="add_patient" value="1">
+
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Họ tên</label>
+            <input type="text" class="form-control" name="ho_ten" required placeholder="VD: Nguyễn Văn A">
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Giới tính</label>
+            <select class="form-select" name="gioi_tinh">
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Ngày sinh</label>
+            <input type="date" class="form-control" name="ngay_sinh">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Email</label>
+            <input type="email" class="form-control" name="email" required placeholder="VD: a@gmail.com">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Mật khẩu</label>
+            <input type="password" class="form-control" name="mat_khau" required placeholder="Mật khẩu đăng nhập">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Số điện thoại</label>
+            <input type="text" class="form-control" name="dien_thoai" placeholder="VD: 0987xxxxxx">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Địa chỉ</label>
+            <input type="text" class="form-control" name="dia_chi" placeholder="VD: 123 Nguyễn Trãi, Q5, TP.HCM">
+          </div>
+
+          <div class="col-12 text-end mt-3">
+            <button type="submit" class="btn btn-success rounded-pill px-4">
+              ✅ Thêm bệnh nhân
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- 🔎 Thanh tìm kiếm -->
   <form method="get" class="row mb-4 align-items-center">
     <div class="col-md-7 col-lg-5">
       <input type="text" name="search" class="form-control rounded-pill shadow-sm"
-             placeholder="🔎 Nhập tên hoặc email bệnh nhân..."
+             placeholder="🔍 Nhập tên hoặc email bệnh nhân..."
              value="{{ request.args.get('search', '') }}">
     </div>
 
     <div class="col-md-3 col-lg-2">
       <button type="submit" class="btn btn-primary rounded-pill shadow-sm w-100">
-        🔎 Tìm kiếm
+        🔍 Tìm kiếm
       </button>
     </div>
 
-    <!-- 🔄 Nút Reset -->
     <div class="col-md-2 col-lg-2 mt-2 mt-md-0">
       <a href="{{ url_for('manage_accounts') }}" class="btn btn-secondary rounded-pill shadow-sm w-100">
         🔄 Làm mới
@@ -39,12 +100,12 @@
     </div>
   </form>
 
-  <!-- Bảng danh sách -->
+  <!-- 🧾 Bảng danh sách bệnh nhân -->
   {% if patients and patients|length > 0 %}
-  <div class="table-responsive mt-4">
-    <table class="table table-bordered table-striped table-hover align-middle">
-      <thead class="table-light">
-        <tr class="text-center">
+  <div class="table-responsive mt-4 shadow-sm rounded-4">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-primary text-center">
+        <tr>
           <th>Họ tên</th>
           <th>Email</th>
           <th>Giới tính</th>
@@ -61,19 +122,16 @@
           <td>{{ p.Email }}</td>
           <td>{{ p.GioiTinh }}</td>
           <td>{{ p.NgaySinh_str }}</td>
-          <td>{{ p.DienThoai if p.DienThoai else '—' }}</td>
-          <td>{{ p.DiaChi if p.DiaChi else '—' }}</td>
+          <td>{{ p.DienThoai or '—' }}</td>
+          <td>{{ p.DiaChi or '—' }}</td>
           <td class="text-center">
-            <!-- Nút sửa -->
-            <button class="btn btn-sm btn-primary me-1"
+            <button class="btn btn-sm btn-outline-primary me-1"
                     data-bs-toggle="modal" data-bs-target="#editModal{{ p.ID }}">
               ✏️ Sửa
             </button>
-
-            <!-- Nút xóa -->
             <form method="post" class="d-inline">
               <input type="hidden" name="id" value="{{ p.ID }}">
-              <button type="submit" name="delete_patient" class="btn btn-sm btn-danger"
+              <button type="submit" name="delete_patient" class="btn btn-sm btn-outline-danger"
                       onclick="return confirm('Bạn chắc chắn muốn xóa tài khoản này?')">
                 🗑 Xóa
               </button>
@@ -89,16 +147,15 @@
                 <input type="hidden" name="id" value="{{ p.ID }}">
                 <input type="hidden" name="update_patient" value="1">
 
-                <div class="modal-header">
-                  <h5 class="modal-title">Cập nhật thông tin bệnh nhân</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-primary text-white">
+                  <h5 class="modal-title">✏️ Cập nhật hồ sơ bệnh nhân</h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
 
                 <div class="modal-body">
                   <div class="mb-3">
                     <label class="form-label">Họ tên</label>
-                    <input type="text" class="form-control" name="ho_ten"
-                           value="{{ p.HoTen }}" required>
+                    <input type="text" class="form-control" name="ho_ten" value="{{ p.HoTen }}" required>
                   </div>
 
                   <div class="mb-3">
@@ -111,28 +168,24 @@
 
                   <div class="mb-3">
                     <label class="form-label">Ngày sinh</label>
-                    <input type="date" class="form-control" name="ngay_sinh"
-                           value="{{ p.NgaySinh_val }}">
+                    <input type="date" class="form-control" name="ngay_sinh" value="{{ p.NgaySinh_val }}">
                   </div>
 
                   <div class="mb-3">
                     <label class="form-label">Số điện thoại</label>
-                    <input type="text" class="form-control" name="dien_thoai"
-                           value="{{ p.DienThoai or '' }}">
+                    <input type="text" class="form-control" name="dien_thoai" value="{{ p.DienThoai or '' }}">
                   </div>
 
                   <div class="mb-3">
                     <label class="form-label">Địa chỉ</label>
-                    <input type="text" class="form-control" name="dia_chi"
-                           value="{{ p.DiaChi or '' }}">
+                    <input type="text" class="form-control" name="dia_chi" value="{{ p.DiaChi or '' }}">
                   </div>
                 </div>
 
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                  <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                  <button type="submit" class="btn btn-success">Lưu thay đổi</button>
                 </div>
-
               </form>
             </div>
           </div>
@@ -143,7 +196,7 @@
   </div>
 
   {% else %}
-  <div class="alert alert-info mt-4 text-center">
+  <div class="alert alert-info mt-4 text-center rounded-4 shadow-sm">
     Không tìm thấy bệnh nhân nào.
   </div>
   {% endif %}
