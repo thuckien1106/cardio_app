@@ -69,8 +69,18 @@
     </div>
   </form>
 
-  <!-- Bảng -->
+  <!-- Tổng số kết quả -->
   {% if records and records|length > 0 %}
+  <div class="alert alert-secondary d-flex justify-content-between align-items-center shadow-sm rounded-pill py-2 px-4 mb-3">
+    <span><i class="bi bi-bar-chart-line me-2"></i><b>Tổng số kết quả:</b> {{ total_records }}</span>
+    {% if start_date or end_date or risk_filter or doctor_id %}
+    <span class="text-muted small fst-italic">Đang hiển thị dữ liệu đã lọc</span>
+    {% else %}
+    <span class="text-muted small fst-italic">Toàn bộ lịch sử</span>
+    {% endif %}
+  </div>
+
+  <!-- Bảng -->
   <div class="table-responsive shadow-sm rounded-4">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-primary text-center">
@@ -111,11 +121,10 @@
               🔍 Xem chi tiết
             </button>
           </td>
-
         </tr>
 
         <!-- Hàng chi tiết -->
-        <tr id="detail{{ r.ChanDoanID }}" class="collapse bg-light">
+        <tr id="detail{{ r.ChanDoanID }}" class="collapse bg-light detail-row">
           <td colspan="7" class="p-3">
             <div class="row g-3 small">
               <div class="col-md-3"><b>BMI:</b> {{ r.BMI }}</div>
@@ -203,25 +212,13 @@
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const buttons = document.querySelectorAll(".toggle-detail");
-
     buttons.forEach(btn => {
       btn.addEventListener("click", () => {
-        const targetSelector = btn.getAttribute("data-target");
-        const targetRow = document.querySelector(targetSelector);
-
-        // Ẩn các hàng khác nếu muốn chỉ mở 1 cái
-        document.querySelectorAll(".detail-row").forEach(row => {
-          if (row !== targetRow) {
-            row.style.display = "none";
-            const otherBtn = document.querySelector(`[data-target="#${row.id}"]`);
-            if (otherBtn) otherBtn.textContent = "🔍 Xem chi tiết";
-          }
-        });
-
-        // Toggle trạng thái hiện tại
-        const isVisible = targetRow.style.display === "table-row";
-        targetRow.style.display = isVisible ? "none" : "table-row";
-        btn.textContent = isVisible ? "🔍 Xem chi tiết" : "⬆️ Thu gọn";
+        const target = document.querySelector(btn.dataset.target);
+        const open = target.style.display === "table-row";
+        document.querySelectorAll(".detail-row").forEach(r => r.style.display = "none");
+        target.style.display = open ? "none" : "table-row";
+        btn.textContent = open ? "🔍 Xem chi tiết" : "⬆️ Thu gọn";
       });
     });
   });

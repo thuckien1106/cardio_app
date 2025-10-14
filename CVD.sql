@@ -102,11 +102,12 @@ GO
 CREATE OR ALTER VIEW V_LichSuChanDoan AS
 SELECT
     cd.ID AS ChanDoanID,
-    cd.BenhNhanID,                
-    bn.HoTen       AS TenBenhNhan,
+    cd.BenhNhanID,
+    cd.BacSiID,                     
+    bn.HoTen AS TenBenhNhan,
     bn.GioiTinh,
     DATEDIFF(YEAR, bn.NgaySinh, GETDATE()) AS Tuoi,
-    bs.HoTen       AS TenBacSi,
+    bs.HoTen AS TenBacSi,
     cd.NgayChanDoan,
     cd.BMI,
     cd.HuyetApTamThu,

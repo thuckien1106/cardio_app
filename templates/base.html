@@ -148,6 +148,17 @@
                 >Trang chủ</a
               >
             </li>
+            {% if session.get('role') == 'patient' %}
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint == 'tips' %}active{% endif %}"
+                href="{{ url_for('tips') }}"
+              >
+                Kiến thức y tế
+              </a>
+            </li>
+            {% endif %}
+
             <li class="nav-item">
               <a
                 class="nav-link {% if request.endpoint == 'diagnose' %}active{% endif %}"

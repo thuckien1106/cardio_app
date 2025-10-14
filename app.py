@@ -350,7 +350,7 @@ def diagnose():
 
 
 # ==========================================
-# Lịch sử chẩn đoán (có lọc & sắp xếp)
+# 📜 Lịch sử chẩn đoán (có lọc & sắp xếp + đếm tổng số)
 # ==========================================
 @app.route('/history')
 def history():
@@ -377,7 +377,6 @@ def history():
         params.append(session['user_id'])
 
     # ===== Lọc theo ngày =====
-    # SQL Server so sánh DATETIME nên dùng CONVERT tránh lỗi format
     if start_date:
         where_clause += " AND NgayChanDoan >= CONVERT(DATE, ?)"
         params.append(start_date)
@@ -394,7 +393,6 @@ def history():
     if risk_filter == 'high':
         where_clause += " AND LOWER(NguyCo) LIKE '%cao%'"
     elif risk_filter == 'low':
-        # ⚠️ Nhiều SQL Server lưu chữ "thấp" có dấu nên cần COLLATE để không bị lỗi
         where_clause += " AND LOWER(NguyCo COLLATE SQL_Latin1_General_Cp1253_CI_AI) LIKE '%thap%'"
 
     # ===== Câu truy vấn chính =====
@@ -411,6 +409,9 @@ def history():
     cur.execute(query, params)
     records = cur.fetchall()
     conn.close()
+
+    # ✅ Đếm tổng số bản ghi (phục vụ hiển thị trên giao diện)
+    total_records = len(records)
 
     # ===== Lấy danh sách bác sĩ (nếu là bác sĩ đăng nhập) =====
     doctors = []
@@ -430,8 +431,10 @@ def history():
         end_date=end_date,
         doctor_id=doctor_id,
         risk_filter=risk_filter,
-        sort_order=sort_order
+        sort_order=sort_order,
+        total_records=total_records   # 👈 Thêm dòng này
     )
+
 
 # ==========================================
 # Xóa chẩn đoán
@@ -1121,6 +1124,20 @@ def export_admin_stats():
         download_name=f"ThongKe_HeThong_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+# ==========================================
+# 🌿 Trang Kiến thức Y học (cho bệnh nhân)
+# ==========================================
+@app.route('/tips')
+def tips():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    
+    # Chỉ cho phép bệnh nhân xem
+    if session.get('role') != 'patient':
+        flash("Chỉ bệnh nhân mới được truy cập trang này.", "warning")
+        return redirect(url_for('home'))
+    
+    return render_template('tips.html')
 
 # ==========================================
 # Main
