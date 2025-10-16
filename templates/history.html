@@ -71,7 +71,8 @@
 
   <!-- Tổng số kết quả -->
   {% if records and records|length > 0 %}
-  <div class="alert alert-secondary d-flex justify-content-between align-items-center shadow-sm rounded-pill py-2 px-4 mb-3">
+  <div
+    class="alert alert-secondary d-flex justify-content-between align-items-center shadow-sm rounded-pill py-2 px-4 mb-3">
     <span><i class="bi bi-bar-chart-line me-2"></i><b>Tổng số kết quả:</b> {{ total_records }}</span>
     {% if start_date or end_date or risk_filter or doctor_id %}
     <span class="text-muted small fst-italic">Đang hiển thị dữ liệu đã lọc</span>
@@ -137,29 +138,37 @@
               <div class="col-md-3"><b>Rượu/Bia:</b> {{ 'Có' if r.UongCon else 'Không' }}</div>
               <div class="col-md-3"><b>Tập thể dục:</b> {{ 'Có' if r.TapTheDuc else 'Không' }}</div>
 
-              <div class="col-12">
-                <b>🤖 Lời khuyên từ AI:</b><br>
-                <div class="border rounded-3 p-2 bg-white">
-                  {% if r.LoiKhuyen %}
-                  {{ r.LoiKhuyen }}
-                  {% if session['role'] == 'doctor' %}
-                  <button class="btn btn-link p-0 ms-2 text-warning small" data-bs-toggle="modal"
-                    data-bs-target="#editAdviceModal{{ r.ChanDoanID }}">
-                    ✏️ Sửa
-                  </button>
-                  {% endif %}
-                  {% else %}
-                  {% if session['role'] == 'doctor' %}
-                  <button class="btn btn-sm btn-outline-success rounded-pill" data-bs-toggle="modal"
-                    data-bs-target="#editAdviceModal{{ r.ChanDoanID }}">
-                    ➕ Thêm lời khuyên
-                  </button>
-                  {% else %}
-                  <span class="text-muted">—</span>
-                  {% endif %}
-                  {% endif %}
+              <div class="col-12 mt-2">
+                {% if r.LoiKhuyen %}
+                <div class="card border-0 shadow-sm rounded-4 p-3" style="background-color:#eaf4ff;">
+                  <div class="d-flex align-items-center mb-2">
+                    <div
+                      class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                      style="width:30px;height:30px;font-size:16px;">💡</div>
+                    <h6 class="fw-bold text-primary mb-0">Lời khuyên</h6>
+                  </div>
+                  <div class="ps-2 text-dark" style="font-size:15px; line-height:1.7; white-space:pre-line;">
+                    {{ r.LoiKhuyen | safe }}
+                    {% if session['role'] == 'doctor' %}
+                    <button class="btn btn-link p-0 ms-2 text-warning small" data-bs-toggle="modal"
+                      data-bs-target="#editAdviceModal{{ r.ChanDoanID }}">
+                      ✏️ Sửa
+                    </button>
+                    {% endif %}
+                  </div>
                 </div>
+                {% else %}
+                {% if session['role'] == 'doctor' %}
+                <button class="btn btn-sm btn-outline-success rounded-pill" data-bs-toggle="modal"
+                  data-bs-target="#editAdviceModal{{ r.ChanDoanID }}">
+                  ➕ Thêm lời khuyên
+                </button>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+                {% endif %}
               </div>
+
 
               {% if session['role'] == 'doctor' %}
               <div class="col-12 text-end">
@@ -208,20 +217,47 @@
   {% endif %}
 </div>
 
-<!-- JS toggle hàng chi tiết -->
+<!-- JS toggle hàng chi tiết (accordion ổn định) -->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+    // Ẩn tất cả hàng chi tiết ngay khi load
+    document.querySelectorAll(".detail-row").forEach(r => (r.style.display = "none"));
+
     const buttons = document.querySelectorAll(".toggle-detail");
+    let openRow = null;
+    let openBtn = null;
+
     buttons.forEach(btn => {
       btn.addEventListener("click", () => {
         const target = document.querySelector(btn.dataset.target);
-        const open = target.style.display === "table-row";
-        document.querySelectorAll(".detail-row").forEach(r => r.style.display = "none");
-        target.style.display = open ? "none" : "table-row";
-        btn.textContent = open ? "🔍 Xem chi tiết" : "⬆️ Thu gọn";
+
+        // Nếu có dòng đang mở và không phải dòng hiện tại → đóng dòng cũ
+        if (openRow && openRow !== target) {
+          openRow.style.display = "none";
+          if (openBtn) openBtn.textContent = "🔍 Xem chi tiết";
+          openRow = null;
+          openBtn = null;
+        }
+
+        // Toggle dòng hiện tại
+        const isOpen = target.style.display === "table-row";
+        if (isOpen) {
+          // Đang mở → đóng lại
+          target.style.display = "none";
+          btn.textContent = "🔍 Xem chi tiết";
+          openRow = null;
+          openBtn = null;
+        } else {
+          // Đang đóng → mở ra
+          target.style.display = "table-row";
+          btn.textContent = "⬆️ Thu gọn";
+          openRow = target;
+          openBtn = btn;
+        }
       });
     });
   });
 </script>
+
 
 {% endblock %}

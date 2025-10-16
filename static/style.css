@@ -336,3 +336,14 @@ p {
     transform: translateY(0);
   }
 }
+.text-primary-subtle {
+  background-color: #e9f2ff;
+}
+
+.card ul li {
+  margin-bottom: 6px;
+}
+
+.card ul li:last-child {
+  margin-bottom: 0;
+}

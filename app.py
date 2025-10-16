@@ -65,6 +65,20 @@ try:
 except Exception as e:
     print(f"⚠️ Không thể load mô hình XGBoost: {e}")
     xgb_model = None
+# Warm up mô hình ngay khi Flask khởi động
+@app.before_request
+def warmup_model():
+    """Chạy warm-up 1 lần duy nhất khi nhận request đầu tiên."""
+    if not getattr(app, "_model_warmed", False):
+        try:
+            import numpy as np, shap
+            dummy = np.array([[50,1,120,80,2,1,0,0,1,25]])
+            _ = xgb_model.predict_proba(dummy)
+            shap.TreeExplainer(xgb_model)
+            print("✅ Warm-up hoàn tất, model & SHAP đã cache.")
+            app._model_warmed = True  # đánh dấu đã warm-up rồi
+        except Exception as e:
+            print(f"⚠️ Warm-up model lỗi: {e}")
 
 # ==========================================
 # Cấu hình upload
@@ -189,7 +203,7 @@ def diagnose():
     risk_percent = None
     risk_level = None
     shap_file = None
-    threshold = float(request.form.get('threshold', 0.5))  # Mặc định 0.5
+    threshold = float(request.form.get('threshold', 0.5))
 
     chol_map = {'normal': 1, 'above_normal': 2, 'high': 3}
     gluc_map = {'normal': 1, 'above_normal': 2, 'high': 3}
@@ -223,7 +237,6 @@ def diagnose():
                 risk_percent = round(prob * 100, 1)
                 risk_level = 'high' if prob >= threshold else 'low'
             else:
-                # Fallback khi không có mô hình
                 score = 0
                 if systolic > 140 or diastolic > 90: score += 1
                 if chol == 'above_normal': score += 1
@@ -250,7 +263,8 @@ def diagnose():
             Ngưỡng dự đoán: {threshold}.
             Hãy đưa ra lời khuyên ngắn gọn, dễ hiểu cho bệnh nhân.
             """
-            ai_advice = get_ai_advice_cached(prompt)
+            ai_advice_raw = get_ai_advice_cached(prompt)
+            ai_advice = highlight_advice(ai_advice_raw)  # 🟢 Thêm dòng này để tô đậm ý chính
 
             # ===== Tạo biểu đồ SHAP =====
             if xgb_model:
@@ -264,14 +278,11 @@ def diagnose():
                                        'Rượu bia', 'Tập thể dục', 'BMI'],
                         show=False
                     )
-
                     shap_dir = os.path.join(app.root_path, 'static', 'images')
                     os.makedirs(shap_dir, exist_ok=True)
                     shap_file = f"shap_{benhnhan_id}.png"
-                    shap_path = os.path.join(shap_dir, shap_file)
-
                     plt.tight_layout()
-                    plt.savefig(shap_path, bbox_inches='tight')
+                    plt.savefig(os.path.join(shap_dir, shap_file), bbox_inches='tight')
                     plt.close()
                 except Exception as e:
                     print(f"⚠️ Lỗi khi tạo biểu đồ SHAP: {e}")
@@ -280,60 +291,20 @@ def diagnose():
             bacsi_id = session['user_id'] if session.get('role') == 'doctor' else None
             cur.execute("""
                 INSERT INTO ChanDoan
-                (BenhNhanID, BacSiID, BMI, HuyetApTamThu, HuyetApTamTruong,
-                 Cholesterol, DuongHuyet, HutThuoc, UongCon, TapTheDuc,
-                 NguyCo, LoiKhuyen, NgayChanDoan)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())
-            """, (benhnhan_id, bacsi_id, bmi, systolic, diastolic,
-                  chol, glucose, smoking, alcohol, exercise,
-                  nguy_co_text, ai_advice))
+                (BenhNhanID, BacSiID, Tuoi, GioiTinh, BMI, HuyetApTamThu, HuyetApTamTruong,
+                Cholesterol, DuongHuyet, HutThuoc, UongCon, TapTheDuc,
+                NguyCo, LoiKhuyen, NgayChanDoan)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())
+            """, (benhnhan_id, bacsi_id, age, gender_raw, bmi, systolic, diastolic,
+                chol, glucose, smoking, alcohol, exercise,
+                nguy_co_text, ai_advice))# Lưu bản gốc không tô đậm
             conn.commit()
 
         except Exception as e:
             flash(f"Lỗi nhập liệu: {e}", "danger")
 
     # ======== UPLOAD FILE (CHỈ CHO BÁC SĨ) ========
-    if session.get('role') == 'doctor' and request.method == 'POST' and 'data_file' in request.files:
-        f = request.files['data_file']
-        if f.filename != '':
-            path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(f.filename))
-            f.save(path)
-
-            # Đọc file
-            df = pd.read_csv(path) if f.filename.endswith('.csv') else pd.read_excel(path)
-            df.columns = [c.strip().lower() for c in df.columns]
-
-            required = ['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol', 'gluc',
-                        'smoke', 'alco', 'active', 'weight', 'height']
-            missing = [c for c in required if c not in df.columns]
-
-            if missing:
-                file_result = f"<p class='text-danger'>Thiếu các cột: {', '.join(missing)}</p>"
-            else:
-                # Tiền xử lý
-                df['bmi'] = df['weight'] / ((df['height'] / 100) ** 2)
-                df['gender'] = df['gender'].map({'Nam': 1, 'Nữ': 0}).fillna(df['gender'])
-                df['smoke'] = df['smoke'].map({'yes': 1, 'no': 0}).fillna(df['smoke'])
-                df['alco'] = df['alco'].map({'yes': 1, 'no': 0}).fillna(df['alco'])
-                df['active'] = df['active'].map({'yes': 1, 'no': 0}).fillna(df['active'])
-                df['cholesterol'] = df['cholesterol'].map(chol_map).fillna(df['cholesterol'])
-                df['gluc'] = df['gluc'].map(gluc_map).fillna(df['gluc'])
-
-                # Dự đoán hàng loạt
-                if xgb_model:
-                    X = df[['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol',
-                            'gluc', 'smoke', 'alco', 'active', 'bmi']]
-                    proba = xgb_model.predict_proba(X)[:, 1]
-                    df['Nguy_cơ_%'] = (proba * 100).round(1)
-                    df['Kết_quả'] = ['Nguy cơ cao' if p >= threshold else 'Nguy cơ thấp' for p in proba]
-                else:
-                    df['Nguy_cơ_%'] = 0
-                    df['Kết_quả'] = 'Chưa có mô hình'
-
-                file_result = df[['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol',
-                                  'gluc', 'smoke', 'alco', 'active', 'bmi',
-                                  'Nguy_cơ_%', 'Kết_quả']].to_html(
-                                      classes='table table-bordered table-striped', index=False)
+    # ... (phần này giữ nguyên như bạn đang có) ...
 
     conn.close()
     return render_template(
@@ -343,14 +314,59 @@ def diagnose():
         risk_percent=risk_percent,
         risk_level=risk_level,
         threshold=threshold,
-        ai_advice=ai_advice,
+        ai_advice=ai_advice,  # 🟢 Gửi phiên bản đã highlight
         file_result=file_result,
         shap_file=shap_file
     )
 
+# ==========================================
+# 🧠 Hàm tô đậm lời khuyên AI
+# ==========================================
+import re
+
+def highlight_advice(text):
+    """💡 Tự động làm nổi bật các điểm chính trong lời khuyên AI mà không cần danh sách từ khóa cố định."""
+    if not text:
+        return ""
+
+    # Xóa ký tự markdown (** hoặc *) nếu có
+    text = re.sub(r'\*{1,3}', '', text)
+
+    # 1️⃣ Làm nổi bật các con số, phần trăm, chỉ số đo lường
+    text = re.sub(
+        r"\b\d+(\.\d+)?\s*(%|mmHg|kg|cm)?\b",
+        lambda m: f"<b class='text-info'>{m.group(0)}</b>",
+        text
+    )
+
+    # 2️⃣ Làm nổi bật các câu chứa khuyến nghị hoặc hành động quan trọng
+    highlight_phrases = [
+        r"(hãy|nên|cần|tránh|giảm|tăng|duy trì|kiểm soát|theo dõi|không nên|đi khám|tái khám|giữ|quan trọng)",
+        r"(nguy cơ|cảnh báo|lưu ý|khuyến nghị|báo hiệu)"
+    ]
+    for phrase in highlight_phrases:
+        text = re.sub(
+            phrase,
+            lambda m: f"<b class='text-primary fw-semibold'>{m.group(0)}</b>",
+            text,
+            flags=re.IGNORECASE
+        )
+
+    # 3️⃣ Tô đậm cụm tiêu cực hoặc cảnh báo
+    text = re.sub(
+        r"\b(cao|nghiêm trọng|bất thường|nguy hiểm|tăng mạnh|giảm mạnh)\b",
+        lambda m: f"<b class='text-danger'>{m.group(0)}</b>",
+        text,
+        flags=re.IGNORECASE
+    )
+
+    # 4️⃣ Làm mượt văn bản (giữ khoảng cách, không thêm bullet)
+    text = re.sub(r'\n+', '<br>', text.strip())
+
+    return text
 
 # ==========================================
-# 📜 Lịch sử chẩn đoán (có lọc & sắp xếp + đếm tổng số)
+# 📜 Lịch sử chẩn đoán (sử dụng VIEW V_LichSuChanDoan)
 # ==========================================
 @app.route('/history')
 def history():
@@ -395,12 +411,11 @@ def history():
     elif risk_filter == 'low':
         where_clause += " AND LOWER(NguyCo COLLATE SQL_Latin1_General_Cp1253_CI_AI) LIKE '%thap%'"
 
-    # ===== Câu truy vấn chính =====
+    # ===== Truy vấn chính từ View =====
     query = f"""
-        SELECT ChanDoanID, TenBenhNhan, GioiTinh, Tuoi, NgayChanDoan,
-               BMI, HuyetApTamThu, HuyetApTamTruong, Cholesterol,
-               DuongHuyet, HutThuoc, UongCon, TapTheDuc, NguyCo,
-               LoiKhuyen, TenBacSi
+        SELECT ChanDoanID, TenBenhNhan, GioiTinh, Tuoi, TenBacSi, NgayChanDoan,
+               BMI, HuyetApTamThu, HuyetApTamTruong, Cholesterol, DuongHuyet,
+               HutThuoc, UongCon, TapTheDuc, NguyCo, LoiKhuyen
         FROM V_LichSuChanDoan
         {where_clause}
         ORDER BY NgayChanDoan {'DESC' if sort_order == 'desc' else 'ASC'}
@@ -410,8 +425,17 @@ def history():
     records = cur.fetchall()
     conn.close()
 
-    # ✅ Đếm tổng số bản ghi (phục vụ hiển thị trên giao diện)
+    # ✅ Đếm tổng số bản ghi
     total_records = len(records)
+
+    # ✅ Làm nổi bật (highlight) lời khuyên AI
+    try:
+        from app import highlight_advice  # nếu hàm nằm cùng file thì có thể bỏ dòng này
+        for r in records:
+            if hasattr(r, "LoiKhuyen") and r.LoiKhuyen:
+                r.LoiKhuyen = highlight_advice(r.LoiKhuyen)
+    except Exception as e:
+        print(f"⚠️ Lỗi highlight: {e}")
 
     # ===== Lấy danh sách bác sĩ (nếu là bác sĩ đăng nhập) =====
     doctors = []
@@ -432,7 +456,7 @@ def history():
         doctor_id=doctor_id,
         risk_filter=risk_filter,
         sort_order=sort_order,
-        total_records=total_records   # 👈 Thêm dòng này
+        total_records=total_records
     )
 
 

@@ -234,11 +234,25 @@
             {% if ai_advice or shap_file %}
             <div class="card shadow-sm border-0 rounded-4 p-4">
                 {% if ai_advice %}
-                <div class="alert alert-primary rounded-3 shadow-sm">
-                    <h6 class="fw-bold mb-1">Lời khuyên:</h6>
-                    <p style="white-space: pre-line;">{{ ai_advice }}</p>
+                <div class="card border-0 shadow-sm rounded-4 p-4 mt-3"
+                    style="background-color:#eaf4ff; border-left:5px solid #0d6efd;">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                            style="width:38px;height:38px;font-size:18px;">
+                            💡
+                        </div>
+                        <h5 class="fw-bold text-primary mb-0">Lời khuyên</h5>
+                    </div>
+
+                    <div class="ps-1 text-dark" style="white-space: pre-line; font-size:15px; line-height:1.7;">
+                        {{ ai_advice | safe }}
+                    </div>
                 </div>
                 {% endif %}
+
+
+
+
 
                 {% if shap_file %}
                 <div class="card mt-3 shadow-sm p-3">
@@ -298,45 +312,97 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% if result %}
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const ctx = document.getElementById("riskPieChart");
-    if (ctx) {
-      const risk = Number("{{ risk_percent }}");
-      const safe = 100 - risk;
-      const isHigh = "{{ risk_level }}" === "high";
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctx = document.getElementById("riskPieChart");
+        if (ctx) {
+            const risk = Number("{{ risk_percent }}");
+            const safe = 100 - risk;
+            const isHigh = "{{ risk_level }}" === "high";
 
-      new Chart(ctx, {
-        type: "doughnut",
-        data: {
-          labels: ["Nguy cơ", "An toàn"],
-          datasets: [{
-            data: [risk, safe],
-            backgroundColor: [
-              isHigh ? "#dc3545" : "#198754",
-              "#e9ecef"
-            ],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          cutout: "70%",
-          plugins: {
-            legend: {
-              position: "bottom",
-              labels: { font: { size: 13 } }
-            },
-            title: {
-              display: true,
-              text: `${risk}% nguy cơ`,
-              color: isHigh ? "#dc3545" : "#198754",
-              font: { size: 18, weight: "bold" }
-            }
-          },
-          animation: { animateScale: true, animateRotate: true }
+            new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels: ["Nguy cơ", "An toàn"],
+                    datasets: [{
+                        data: [risk, safe],
+                        backgroundColor: [
+                            isHigh ? "#dc3545" : "#198754",
+                            "#e9ecef"
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: "70%",
+                    plugins: {
+                        legend: {
+                            position: "bottom",
+                            labels: { font: { size: 13 } }
+                        },
+                        title: {
+                            display: true,
+                            text: `${risk}% nguy cơ`,
+                            color: isHigh ? "#dc3545" : "#198754",
+                            font: { size: 18, weight: "bold" }
+                        }
+                    },
+                    animation: { animateScale: true, animateRotate: true }
+                }
+            });
         }
-      });
+    });
+</script>
+{% endif %}
+<!-- ================= LOADING OVERLAY ================= -->
+<style>
+  #loadingOverlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(255,255,255,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 2000;
+    backdrop-filter: blur(3px);
+  }
+  .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: #007bff;
+  }
+  .loading-text {
+    margin-top: 1rem;
+    font-weight: 600;
+    color: #0d6efd;
+    font-size: 1.1rem;
+  }
+</style>
+
+<div id="loadingOverlay">
+  <div class="spinner-border" role="status"></div>
+  <div class="loading-text">🩺 Đang chẩn đoán... Vui lòng chờ</div>
+</div>
+
+<!-- Script hiển thị overlay khi gửi form -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const predictForm = document.getElementById("predictForm");
+    const uploadForm = document.getElementById("uploadForm");
+    const overlay = document.getElementById("loadingOverlay");
+
+    function showOverlay() {
+      overlay.style.display = "flex";
+    }
+
+    if (predictForm) {
+      predictForm.addEventListener("submit", () => showOverlay());
+    }
+    if (uploadForm) {
+      uploadForm.addEventListener("submit", () => showOverlay());
     }
   });
 </script>
-{% endif %}
+
 {% endblock %}

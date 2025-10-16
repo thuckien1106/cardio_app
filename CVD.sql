@@ -51,6 +51,9 @@ CREATE TABLE ChanDoan (
         REFERENCES NguoiDung(ID)
 );
 GO
+ALTER TABLE ChanDoan 
+ADD Tuoi INT NULL,
+    GioiTinh NVARCHAR(10) NULL;
 
 
 /* ============================================================
@@ -103,10 +106,10 @@ CREATE OR ALTER VIEW V_LichSuChanDoan AS
 SELECT
     cd.ID AS ChanDoanID,
     cd.BenhNhanID,
-    cd.BacSiID,                     
+    cd.BacSiID,
     bn.HoTen AS TenBenhNhan,
-    bn.GioiTinh,
-    DATEDIFF(YEAR, bn.NgaySinh, GETDATE()) AS Tuoi,
+    ISNULL(cd.GioiTinh, bn.GioiTinh) AS GioiTinh,   -- 👈 Ưu tiên dữ liệu nhập
+    ISNULL(cd.Tuoi, DATEDIFF(YEAR, bn.NgaySinh, GETDATE())) AS Tuoi, -- 👈 Ưu tiên dữ liệu nhập
     bs.HoTen AS TenBacSi,
     cd.NgayChanDoan,
     cd.BMI,
@@ -123,6 +126,7 @@ FROM ChanDoan cd
 JOIN NguoiDung bn ON cd.BenhNhanID = bn.ID
 LEFT JOIN NguoiDung bs ON cd.BacSiID = bs.ID;
 GO
+
 
 
 /* ============================================================
