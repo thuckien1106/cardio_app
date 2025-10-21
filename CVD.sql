@@ -162,3 +162,4 @@ SELECT * FROM V_BenhNhan;
 SELECT * FROM V_LichSuChanDoan;
 SELECT * FROM V_ThongKeBacSi;
 GO
+  

@@ -15,7 +15,6 @@
     </div>
 
     <div class="row g-3 align-items-start">
-
         <!-- ======== Form nhập liệu + kết quả ======== -->
         <div class="col-lg-6">
             <div class="card shadow-sm p-4 border-0 rounded-4">
@@ -27,15 +26,16 @@
                     {% if session['role'] == 'doctor' %}
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Chọn bệnh nhân</label>
-                        <select name="benhnhan_id" class="form-select">
+                        <select name="benhnhan_id" class="form-select shadow-sm" required>
                             <option value="">-- Chọn bệnh nhân --</option>
                             {% for bn in benhnhans %}
                             <option value="{{ bn.ID }}" {% if request.form.get('benhnhan_id')==bn.ID|string %}selected{%
                                 endif %}>
-                                {{ bn.HoTen }} | {{ bn.GioiTinh }} | {{ bn.NgaySinh }}
+                                {{ bn.MaBN }} - {{ bn.HoTen }}
                             </option>
                             {% endfor %}
                         </select>
+
                     </div>
                     {% endif %}
 
@@ -249,11 +249,6 @@
                     </div>
                 </div>
                 {% endif %}
-
-
-
-
-
                 {% if shap_file %}
                 <div class="card mt-3 shadow-sm p-3">
                     <h6 class="fw-bold text-primary mb-1">📊 Giải thích kết quả bằng SHAP</h6>
@@ -355,54 +350,89 @@
 {% endif %}
 <!-- ================= LOADING OVERLAY ================= -->
 <style>
-  #loadingOverlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: rgba(255,255,255,0.8);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    z-index: 2000;
-    backdrop-filter: blur(3px);
-  }
-  .spinner-border {
-    width: 3rem;
-    height: 3rem;
-    color: #007bff;
-  }
-  .loading-text {
-    margin-top: 1rem;
-    font-weight: 600;
-    color: #0d6efd;
-    font-size: 1.1rem;
-  }
+    #loadingOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(255, 255, 255, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 2000;
+        backdrop-filter: blur(3px);
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        color: #007bff;
+    }
+
+    .loading-text {
+        margin-top: 1rem;
+        font-weight: 600;
+        color: #0d6efd;
+        font-size: 1.1rem;
+    }
 </style>
 
 <div id="loadingOverlay">
-  <div class="spinner-border" role="status"></div>
-  <div class="loading-text">🩺 Đang chẩn đoán... Vui lòng chờ</div>
+    <div class="spinner-border" role="status"></div>
+    <div class="loading-text">🩺 Đang chẩn đoán... Vui lòng chờ</div>
 </div>
 
 <!-- Script hiển thị overlay khi gửi form -->
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const predictForm = document.getElementById("predictForm");
-    const uploadForm = document.getElementById("uploadForm");
-    const overlay = document.getElementById("loadingOverlay");
+    document.addEventListener("DOMContentLoaded", () => {
+        const predictForm = document.getElementById("predictForm");
+        const uploadForm = document.getElementById("uploadForm");
+        const overlay = document.getElementById("loadingOverlay");
 
-    function showOverlay() {
-      overlay.style.display = "flex";
-    }
+        function showOverlay() {
+            overlay.style.display = "flex";
+        }
 
-    if (predictForm) {
-      predictForm.addEventListener("submit", () => showOverlay());
-    }
-    if (uploadForm) {
-      uploadForm.addEventListener("submit", () => showOverlay());
-    }
-  });
+        if (predictForm) {
+            predictForm.addEventListener("submit", () => showOverlay());
+        }
+        if (uploadForm) {
+            uploadForm.addEventListener("submit", () => showOverlay());
+        }
+    });
+    document.addEventListener("DOMContentLoaded", () => {
+        const selectPatient = document.querySelector('select[name="benhnhan_id"]');
+        const inputAge = document.getElementById("age");
+        const selectGender = document.getElementById("gender");
+
+        if (selectPatient) {
+            selectPatient.addEventListener("change", async () => {
+                const benhnhanId = selectPatient.value;
+                if (!benhnhanId) return;
+
+                try {
+                    const res = await fetch(`/get_patient_info/${benhnhanId}`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+
+                    if (data.tuoi) inputAge.value = data.tuoi;
+                    if (data.gioitinh) selectGender.value = data.gioitinh;
+
+                    // Hiệu ứng nhẹ khi auto-fill
+                    [inputAge, selectGender].forEach(el => {
+                        el.classList.add("border-success", "bg-light");
+                        setTimeout(() => el.classList.remove("border-success", "bg-light"), 1200);
+                    });
+
+                } catch (err) {
+                    console.error("⚠️ Lỗi khi lấy thông tin bệnh nhân:", err);
+                }
+            });
+        }
+
+    });
 </script>
 
 {% endblock %}

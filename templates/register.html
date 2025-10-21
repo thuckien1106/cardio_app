@@ -1,83 +1,114 @@
-{% extends 'base.html' %}
-{% block content %}
+{% extends 'base.html' %} {% block content %}
 
 <div class="login-wrapper">
   <div class="card login-card shadow-lg p-4">
-
     <!-- Tiêu đề -->
     <div class="text-center mb-3">
       <div class="logo-circle mb-3">
         <i class="bi bi-person-plus-fill fs-1 text-success"></i>
       </div>
       <h2 class="fw-bold text-gradient">Đăng ký tài khoản</h2>
-      <p class="text-muted">Vui lòng nhập thông tin bên dưới để tạo tài khoản</p>
+      <p class="text-muted">
+        Vui lòng nhập thông tin bên dưới để tạo tài khoản
+      </p>
     </div>
 
-    {% if error %}
-      <div class="alert alert-danger text-center rounded-pill">{{ error }}</div>
-    {% endif %}
+    <!-- 🔔 Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, msg in messages %}
+    <div
+      class="alert alert-{{ category }} text-center rounded-pill shadow-sm mt-2"
+    >
+      {{ msg }}
+    </div>
+    {% endfor %} {% endif %} {% endwith %}
 
+    <!-- Form đăng ký -->
     <form method="post">
-      <!-- Họ tên -->
       <div class="mb-3 input-group rounded-pill shadow-sm">
-        <span class="input-group-text"><i class="bi bi-person-fill text-primary"></i></span>
-        <input type="text" name="ho_ten" class="form-control border-0 rounded-end rounded-pill"
-               placeholder="Họ và tên" required>
+        <span class="input-group-text"
+          ><i class="bi bi-person-fill text-primary"></i
+        ></span>
+        <input
+          type="text"
+          name="ho_ten"
+          class="form-control border-0 rounded-end rounded-pill"
+          placeholder="Họ và tên"
+          required
+        />
       </div>
 
-      <!-- Giới tính -->
       <div class="mb-3 input-group rounded-pill shadow-sm">
-        <span class="input-group-text"><i class="bi bi-gender-ambiguous text-primary"></i></span>
-        <select name="gioi_tinh" class="form-select border-0 rounded-end rounded-pill" required>
+        <span class="input-group-text"
+          ><i class="bi bi-gender-ambiguous text-primary"></i
+        ></span>
+        <select
+          name="gioi_tinh"
+          class="form-select border-0 rounded-end rounded-pill"
+          required
+        >
           <option value="">-- Chọn giới tính --</option>
           <option value="Nam">Nam</option>
           <option value="Nữ">Nữ</option>
         </select>
       </div>
 
-      <!-- Ngày sinh -->
       <div class="mb-3 input-group rounded-pill shadow-sm">
-        <span class="input-group-text"><i class="bi bi-calendar-date text-primary"></i></span>
-        <input type="date" name="ngay_sinh" class="form-control border-0 rounded-end rounded-pill"
-               max="{{ today }}" required>
+        <span class="input-group-text"
+          ><i class="bi bi-calendar-date text-primary"></i
+        ></span>
+        <input
+          type="date"
+          name="ngay_sinh"
+          class="form-control border-0 rounded-end rounded-pill"
+          max="{{ today }}"
+          required
+        />
       </div>
 
-      <!-- Email -->
       <div class="mb-3 input-group rounded-pill shadow-sm">
-        <span class="input-group-text"><i class="bi bi-envelope-fill text-primary"></i></span>
-        <input type="email" name="email" class="form-control border-0 rounded-end rounded-pill"
-               placeholder="Email" required>
+        <span class="input-group-text"
+          ><i class="bi bi-envelope-fill text-primary"></i
+        ></span>
+        <input
+          type="email"
+          name="email"
+          class="form-control border-0 rounded-end rounded-pill"
+          placeholder="Email"
+          required
+        />
       </div>
 
-      <!-- Mật khẩu -->
       <div class="mb-4 input-group rounded-pill shadow-sm">
-        <span class="input-group-text"><i class="bi bi-lock-fill text-primary"></i></span>
-        <input type="password" name="mat_khau" class="form-control border-0 rounded-end rounded-pill"
-               placeholder="Mật khẩu" required>
+        <span class="input-group-text"
+          ><i class="bi bi-lock-fill text-primary"></i
+        ></span>
+        <input
+          type="password"
+          name="mat_khau"
+          class="form-control border-0 rounded-end rounded-pill"
+          placeholder="Mật khẩu"
+          required
+        />
       </div>
 
-      <!-- Vai trò: bỏ chọn, mặc định patient -->
-      <input type="hidden" name="role" value="patient">
-
-      <!-- Nút đăng ký -->
-      <button type="submit" class="btn btn-success w-100 py-2 rounded-pill fw-semibold shadow-sm">
+      <button
+        type="submit"
+        class="btn btn-success w-100 py-2 rounded-pill fw-semibold shadow-sm"
+      >
         Đăng ký
       </button>
 
-      <!-- Chuyển sang đăng nhập -->
       <p class="text-center mt-3 small text-muted">
         Đã có tài khoản?
-        <a href="{{ url_for('login') }}" class="text-decoration-none fw-semibold">Đăng nhập</a>
+        <a
+          href="{{ url_for('login') }}"
+          class="text-decoration-none fw-semibold"
+          >Đăng nhập</a
+        >
       </p>
     </form>
   </div>
 </div>
-
-{% if success %}
-<script>
-  alert("🎉 Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.");
-  window.location.href = "{{ url_for('login') }}";
-</script>
-{% endif %}
 
 {% endblock %}

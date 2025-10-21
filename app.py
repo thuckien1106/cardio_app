@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash,jsonify
 import pandas as pd
 import os
 from werkzeug.utils import secure_filename
@@ -88,30 +88,29 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # ==========================================
-# Đăng ký
+# 🧾 Đăng ký tài khoản
 # ==========================================
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     today = date.today().strftime('%Y-%m-%d')
 
-
     if request.method == 'POST':
         ho_ten = request.form.get('ho_ten')
         gioi_tinh = request.form.get('gioi_tinh')
         ngay_sinh = request.form.get('ngay_sinh')
-        email = request.form.get('email')
+        email = request.form.get('email').strip().lower()
         mat_khau = request.form.get('mat_khau')
-
-        role = 'patient'   # Mặc định là bệnh nhân
+        role = 'patient'  # Mặc định là bệnh nhân
 
         conn = get_connection()
         cur = conn.cursor()
 
-        # Kiểm tra email trùng
-        cur.execute("SELECT ID FROM NguoiDung WHERE Email=?", (email,))
+        # 🔹 Kiểm tra email đã tồn tại
+        cur.execute("SELECT ID FROM NguoiDung WHERE Email = ?", (email,))
         if cur.fetchone():
             conn.close()
-            return render_template('register.html', error="Email đã được sử dụng!", today=today)
+            flash("⚠️ Email đã được sử dụng! Vui lòng chọn email khác.", "warning")
+            return render_template('register.html', today=today)
 
         try:
             cur.execute("""
@@ -120,11 +119,15 @@ def register():
             """, (ho_ten, gioi_tinh, ngay_sinh, email, mat_khau, role))
             conn.commit()
             conn.close()
-            return render_template('register.html', success=True, today=today)
+
+            flash("🎉 Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.", "success")
+            return redirect(url_for('login'))
+
         except Exception as e:
             conn.rollback()
             conn.close()
-            return render_template('register.html', error=f"Lỗi: {e}", today=today)
+            flash(f"❌ Lỗi khi đăng ký: {e}", "danger")
+            return render_template('register.html', today=today)
 
     return render_template('register.html', today=today)
 
@@ -140,27 +143,37 @@ def login():
         conn = get_connection()
         cur = conn.cursor()
         cur.execute("""
-            SELECT ID, HoTen, Role
+            SELECT ID, HoTen, Role, MatKhau
             FROM NguoiDung
-            WHERE Email = ? AND MatKhau = ?
-        """, (email, pw))
+            WHERE Email = ?
+        """, (email,))
         user = cur.fetchone()
         conn.close()
 
-        if user:
-            session['user_id'] = user[0]
-            session['user'] = user[1]
-            session['role'] = user[2]
+        # 🔹 Kiểm tra tài khoản & mật khẩu
+        if user and user.MatKhau == pw:
+            # Tạo session
+            session['user_id'] = user.ID
+            session['user'] = user.HoTen
+            session['role'] = user.Role
+
+            # Hiển thị thông báo chào mừng
+            flash(f"🎉 Chào mừng {user.HoTen} đăng nhập thành công!", "success")
 
             # ✅ Điều hướng theo vai trò
-            if user[2] == 'admin':
-                return redirect(url_for('admin_manage_doctors'))
+            if user.Role == 'admin':
+                return redirect(url_for('history'))
+            elif user.Role == 'doctor':
+                return redirect(url_for('history'))  # hoặc trang thống kê bác sĩ
             else:
                 return redirect(url_for('home'))
+
         else:
+            # ❌ Sai mật khẩu → hiển thị ngay
             flash("❌ Sai tài khoản hoặc mật khẩu. Vui lòng thử lại!", "danger")
             return render_template('login.html')
 
+    # GET request → hiển thị form
     return render_template('login.html')
 
 # ==========================================
@@ -171,6 +184,36 @@ def home():
     if 'user' not in session:
         return redirect(url_for('login'))
     return render_template('home.html')
+# ==========================================
+# 📡 API: Lấy thông tin bệnh nhân từ hồ sơ NguoiDung
+# ==========================================
+@app.route('/get_patient_info/<int:benhnhan_id>')
+def get_patient_info(benhnhan_id):
+    if 'user' not in session or session.get('role') != 'doctor':
+        return jsonify({"error": "Unauthorized"}), 403
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # 🔹 Lấy trực tiếp tuổi và giới tính từ hồ sơ NguoiDung
+    cur.execute("""
+        SELECT 
+            DATEDIFF(YEAR, NgaySinh, GETDATE()) AS Tuoi,
+            GioiTinh
+        FROM NguoiDung
+        WHERE ID = ?
+    """, (benhnhan_id,))
+
+    row = cur.fetchone()
+    conn.close()
+
+    if row:
+        return jsonify({
+            "tuoi": row.Tuoi,
+            "gioitinh": row.GioiTinh
+        })
+    else:
+        return jsonify({"tuoi": None, "gioitinh": None})
 
 # ==========================================
 # Chẩn đoán bệnh tim mạch + Giải thích SHAP
@@ -182,19 +225,15 @@ def diagnose():
 
     conn = get_connection()
     cur = conn.cursor()
-
-    # Danh sách bệnh nhân (chỉ dành cho bác sĩ)
     benhnhans = []
+    # Danh sách bệnh nhân (chỉ dành cho bác sĩ)
     if session.get('role') == 'doctor':
-        cur.execute("SELECT ID, HoTen, GioiTinh, NgaySinh FROM NguoiDung WHERE Role='patient'")
-        for r in cur.fetchall():
-            ns_fmt = r.NgaySinh.strftime("%d/%m/%Y") if hasattr(r.NgaySinh, 'strftime') else str(r.NgaySinh)
-            benhnhans.append({
-                "ID": r.ID,
-                "HoTen": r.HoTen,
-                "GioiTinh": r.GioiTinh,
-                "NgaySinh": ns_fmt
-            })
+        
+        cur.execute("SELECT ID, HoTen FROM NguoiDung WHERE Role='patient'")
+        benhnhans = [
+            {"ID": r.ID, "MaBN": f"BN{r.ID:03}", "HoTen": r.HoTen}
+            for r in cur.fetchall()
+        ]
 
     # Biến khởi tạo
     result = None
@@ -303,8 +342,86 @@ def diagnose():
         except Exception as e:
             flash(f"Lỗi nhập liệu: {e}", "danger")
 
-    # ======== UPLOAD FILE (CHỈ CHO BÁC SĨ) ========
-    # ... (phần này giữ nguyên như bạn đang có) ...
+        # ======== UPLOAD FILE (CHỈ CHO BÁC SĨ) ========
+    if request.method == 'POST' and 'data_file' in request.files:
+        try:
+            file = request.files['data_file']
+            if not file:
+                flash("⚠️ Vui lòng chọn file Excel trước khi tải lên.", "warning")
+                return redirect(url_for('diagnose'))
+
+            # ✅ Chỉ chấp nhận Excel
+            filename = file.filename.lower()
+            if not filename.endswith(('.xls', '.xlsx')):
+                flash("❌ Chỉ hỗ trợ định dạng Excel (.xls, .xlsx)", "danger")
+                return redirect(url_for('diagnose'))
+
+            # ✅ Đọc dữ liệu
+            df = pd.read_excel(file)
+            df.columns = [c.strip().lower() for c in df.columns]
+
+            # ✅ Kiểm tra cột cần có
+            required_cols = ['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol',
+                             'gluc', 'smoke', 'alco', 'active', 'weight', 'height']
+            missing = [c for c in required_cols if c not in df.columns]
+            if missing:
+                flash(f"⚠️ File thiếu các cột: {', '.join(missing)}", "danger")
+                return redirect(url_for('diagnose'))
+
+            # ✅ Tính BMI
+            df['bmi'] = (df['weight'] / ((df['height'] / 100) ** 2)).round(2)
+
+            results = []
+            for _, row in df.iterrows():
+                age = row['age']
+                gender_raw = row['gender']
+                gender = 1 if str(gender_raw).strip().lower() in ['nam', 'male', '1'] else 0
+                systolic = row['ap_hi']
+                diastolic = row['ap_lo']
+                chol = str(row['cholesterol']).lower()
+                gluc = str(row['gluc']).lower()
+                smoking = 1 if str(row['smoke']).lower() in ['yes', '1', 'có'] else 0
+                alcohol = 1 if str(row['alco']).lower() in ['yes', '1', 'có'] else 0
+                exercise = 1 if str(row['active']).lower() in ['yes', '1', 'có'] else 0
+                bmi = row['bmi']
+
+                # Dự đoán bằng mô hình
+                if xgb_model:
+                    X = np.array([[age, gender, systolic, diastolic,
+                                   chol_map.get(chol, 1), gluc_map.get(gluc, 1),
+                                   smoking, alcohol, exercise, bmi]])
+                    prob = float(xgb_model.predict_proba(X)[0, 1])
+                else:
+                    prob = 0.5
+
+                risk_percent = round(prob * 100, 1)
+                risk_level = "Nguy cơ cao" if prob >= threshold else "Nguy cơ thấp"
+
+                results.append({
+                    "Tuổi": age,
+                    "Giới tính": gender_raw,
+                    "Huyết áp": f"{systolic}/{diastolic}",
+                    "Cholesterol": chol,
+                    "Đường huyết": gluc,
+                    "BMI": bmi,
+                    "Hút thuốc": "Có" if smoking else "Không",
+                    "Rượu/Bia": "Có" if alcohol else "Không",
+                    "Tập thể dục": "Có" if exercise else "Không",
+                    "Nguy cơ": risk_level,
+                    "Xác suất (%)": risk_percent
+                })
+
+            # ✅ Hiển thị kết quả bảng
+            file_result = pd.DataFrame(results).to_html(
+                index=False,
+                classes="table table-hover table-striped text-center align-middle small shadow-sm rounded-3"
+            )
+
+            flash("✅ Dự đoán từ file Excel đã hoàn tất!", "success")
+
+        except Exception as e:
+            flash(f"❌ Lỗi khi xử lý file Excel: {e}", "danger")
+
 
     conn.close()
     return render_template(
@@ -314,37 +431,37 @@ def diagnose():
         risk_percent=risk_percent,
         risk_level=risk_level,
         threshold=threshold,
-        ai_advice=ai_advice,  # 🟢 Gửi phiên bản đã highlight
+        ai_advice=ai_advice,  
         file_result=file_result,
         shap_file=shap_file
     )
 
 # ==========================================
-# 🧠 Hàm tô đậm lời khuyên AI
+# 🧠 Hàm tô đậm lời khuyên AI (2 màu tối giản, chuyên nghiệp)
 # ==========================================
 import re
 
 def highlight_advice(text):
-    """💡 Tự động làm nổi bật các điểm chính trong lời khuyên AI mà không cần danh sách từ khóa cố định."""
+    """💡 Làm nổi bật ý chính trong lời khuyên AI với 2 tông màu: xanh dương (tích cực) và đỏ (cảnh báo)."""
     if not text:
         return ""
 
-    # Xóa ký tự markdown (** hoặc *) nếu có
+    # Xóa ký tự markdown (** hoặc *)
     text = re.sub(r'\*{1,3}', '', text)
 
-    # 1️⃣ Làm nổi bật các con số, phần trăm, chỉ số đo lường
+    # 1️⃣ Làm nổi bật các con số, phần trăm, chỉ số đo lường → màu xanh
     text = re.sub(
         r"\b\d+(\.\d+)?\s*(%|mmHg|kg|cm)?\b",
-        lambda m: f"<b class='text-info'>{m.group(0)}</b>",
+        lambda m: f"<b class='text-primary'>{m.group(0)}</b>",
         text
     )
 
-    # 2️⃣ Làm nổi bật các câu chứa khuyến nghị hoặc hành động quan trọng
-    highlight_phrases = [
-        r"(hãy|nên|cần|tránh|giảm|tăng|duy trì|kiểm soát|theo dõi|không nên|đi khám|tái khám|giữ|quan trọng)",
-        r"(nguy cơ|cảnh báo|lưu ý|khuyến nghị|báo hiệu)"
+    # 2️⃣ Tô đậm các từ khóa quan trọng / hành động tích cực → xanh dương
+    positive_phrases = [
+        r"(hãy|nên|cần|duy trì|kiểm soát|theo dõi|giữ|tăng|tập luyện|ăn uống|ngủ đủ)",
+        r"(lưu ý|quan trọng|khuyến nghị|cải thiện|điều chỉnh)"
     ]
-    for phrase in highlight_phrases:
+    for phrase in positive_phrases:
         text = re.sub(
             phrase,
             lambda m: f"<b class='text-primary fw-semibold'>{m.group(0)}</b>",
@@ -352,21 +469,32 @@ def highlight_advice(text):
             flags=re.IGNORECASE
         )
 
-    # 3️⃣ Tô đậm cụm tiêu cực hoặc cảnh báo
+    # 3️⃣ Cảnh báo hoặc yếu tố tiêu cực → màu đỏ
     text = re.sub(
-        r"\b(cao|nghiêm trọng|bất thường|nguy hiểm|tăng mạnh|giảm mạnh)\b",
-        lambda m: f"<b class='text-danger'>{m.group(0)}</b>",
+        r"(cao|nguy cơ|nguy hiểm|nghiêm trọng|bất thường|tăng mạnh|giảm mạnh|hút thuốc|rượu|bia|béo phì)",
+        lambda m: f"<b class='text-danger fw-semibold'>{m.group(0)}</b>",
         text,
         flags=re.IGNORECASE
     )
 
-    # 4️⃣ Làm mượt văn bản (giữ khoảng cách, không thêm bullet)
+    # 4️⃣ Làm mượt hiển thị: căn đều, khoảng cách dòng ổn định
     text = re.sub(r'\n+', '<br>', text.strip())
+
+    # ✅ Gói trong khung căn đều đẹp mắt
+    text = f"""
+    <div style="
+        text-align: justify;
+        text-justify: inter-word;
+        line-height: 1.8;
+        font-size: 15px;
+    ">{text}</div>
+    """
 
     return text
 
+
 # ==========================================
-# 📜 Lịch sử chẩn đoán (sử dụng VIEW V_LichSuChanDoan)
+# 📜 Lịch sử chẩn đoán (phân quyền + lọc bệnh nhân cho bác sĩ)
 # ==========================================
 @app.route('/history')
 def history():
@@ -379,6 +507,7 @@ def history():
     # ===== Lấy các tham số lọc từ URL =====
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
+    patient_id = request.args.get('patient_id')
     doctor_id = request.args.get('doctor_id')
     risk_filter = request.args.get('risk_filter')
     sort_order = request.args.get('sort', 'desc')
@@ -387,10 +516,31 @@ def history():
     where_clause = "WHERE 1=1"
     params = []
 
-    # Nếu là bệnh nhân → chỉ xem của họ
-    if session.get('role') != 'doctor':
+    # ===== Phân quyền =====
+    role = session.get('role')
+
+    if role == 'doctor':
+        # 👨‍⚕️ Bác sĩ xem các ca do mình chẩn đoán
+        where_clause += " AND BacSiID = ?"
+        params.append(session['user_id'])
+        # Và có thể lọc thêm theo bệnh nhân
+        if patient_id:
+            where_clause += " AND BenhNhanID = ?"
+            params.append(patient_id)
+
+    elif role == 'patient':
+        # 🧑‍🦱 Bệnh nhân xem toàn bộ các ca của mình
         where_clause += " AND BenhNhanID = ?"
         params.append(session['user_id'])
+
+    else:
+        # 🧑‍💼 Admin xem toàn bộ, có thể lọc theo bác sĩ hoặc bệnh nhân
+        if doctor_id:
+            where_clause += " AND BacSiID = ?"
+            params.append(doctor_id)
+        if patient_id:
+            where_clause += " AND BenhNhanID = ?"
+            params.append(patient_id)
 
     # ===== Lọc theo ngày =====
     if start_date:
@@ -400,22 +550,18 @@ def history():
         where_clause += " AND NgayChanDoan <= CONVERT(DATE, ?)"
         params.append(end_date)
 
-    # ===== Lọc theo bác sĩ =====
-    if doctor_id:
-        where_clause += " AND BacSiID = ?"
-        params.append(doctor_id)
-
     # ===== Lọc theo nguy cơ =====
     if risk_filter == 'high':
         where_clause += " AND LOWER(NguyCo) LIKE '%cao%'"
     elif risk_filter == 'low':
         where_clause += " AND LOWER(NguyCo COLLATE SQL_Latin1_General_Cp1253_CI_AI) LIKE '%thap%'"
 
-    # ===== Truy vấn chính từ View =====
+    # ===== Truy vấn chính =====
     query = f"""
-        SELECT ChanDoanID, TenBenhNhan, GioiTinh, Tuoi, TenBacSi, NgayChanDoan,
-               BMI, HuyetApTamThu, HuyetApTamTruong, Cholesterol, DuongHuyet,
-               HutThuoc, UongCon, TapTheDuc, NguyCo, LoiKhuyen
+        SELECT ChanDoanID, BenhNhanID, TenBenhNhan, GioiTinh, Tuoi, TenBacSi, NgayChanDoan,
+       BMI, HuyetApTamThu, HuyetApTamTruong, Cholesterol, DuongHuyet,
+       HutThuoc, UongCon, TapTheDuc, NguyCo, LoiKhuyen
+
         FROM V_LichSuChanDoan
         {where_clause}
         ORDER BY NgayChanDoan {'DESC' if sort_order == 'desc' else 'ASC'}
@@ -428,22 +574,39 @@ def history():
     # ✅ Đếm tổng số bản ghi
     total_records = len(records)
 
-    # ✅ Làm nổi bật (highlight) lời khuyên AI
+    # ✅ Highlight lời khuyên
     try:
-        from app import highlight_advice  # nếu hàm nằm cùng file thì có thể bỏ dòng này
+        from app import highlight_advice
         for r in records:
             if hasattr(r, "LoiKhuyen") and r.LoiKhuyen:
                 r.LoiKhuyen = highlight_advice(r.LoiKhuyen)
     except Exception as e:
         print(f"⚠️ Lỗi highlight: {e}")
 
-    # ===== Lấy danh sách bác sĩ (nếu là bác sĩ đăng nhập) =====
-    doctors = []
-    if session.get('role') == 'doctor':
+    # ===== Danh sách lọc =====
+    doctors, patients = [], []
+
+    if role == 'doctor':
+        # Danh sách bệnh nhân mà bác sĩ đó đã chẩn đoán
+        conn2 = get_connection()
+        cur2 = conn2.cursor()
+        cur2.execute("""
+            SELECT DISTINCT bn.ID, bn.HoTen 
+            FROM ChanDoan cd 
+            JOIN NguoiDung bn ON cd.BenhNhanID = bn.ID
+            WHERE cd.BacSiID = ?
+        """, (session['user_id'],))
+        patients = cur2.fetchall()
+        conn2.close()
+
+    elif role == 'admin':
+        # Danh sách bác sĩ và bệnh nhân cho admin
         conn2 = get_connection()
         cur2 = conn2.cursor()
         cur2.execute("SELECT ID, HoTen FROM NguoiDung WHERE Role='doctor'")
         doctors = cur2.fetchall()
+        cur2.execute("SELECT ID, HoTen FROM NguoiDung WHERE Role='patient'")
+        patients = cur2.fetchall()
         conn2.close()
 
     # ===== Render =====
@@ -451,8 +614,10 @@ def history():
         'history.html',
         records=records,
         doctors=doctors,
+        patients=patients,
         start_date=start_date,
         end_date=end_date,
+        patient_id=patient_id,
         doctor_id=doctor_id,
         risk_filter=risk_filter,
         sort_order=sort_order,
@@ -461,34 +626,34 @@ def history():
 
 
 # ==========================================
-# Xóa chẩn đoán
+# 🗑️ Xóa bản ghi chẩn đoán
 # ==========================================
 @app.route('/delete_history/<int:id>', methods=['POST'])
 def delete_history(id):
     if 'user' not in session:
         return redirect(url_for('login'))
 
+    # 🔒 Chỉ bác sĩ được phép xóa
     if session.get('role') != 'doctor':
-        flash("❌ Bạn không có quyền xóa.", "danger")
+        flash("❌ Bạn không có quyền xóa bản ghi chẩn đoán.", "danger")
         return redirect(url_for('history'))
 
     conn = get_connection()
     cur = conn.cursor()
-
     try:
+        # ✅ Sửa lại đúng tên cột khóa chính
         cur.execute("DELETE FROM ChanDoan WHERE ID = ?", (id,))
         conn.commit()
-        flash("✅ Đã xóa bản ghi chẩn đoán.", "success")
+        flash("🗑️ Đã xóa bản ghi chẩn đoán thành công!", "success")
 
     except Exception as e:
         conn.rollback()
-        flash(f"❌ Lỗi khi xóa: {e}", "danger")
+        flash(f"❌ Lỗi khi xóa bản ghi: {e}", "danger")
 
     finally:
         conn.close()
 
     return redirect(url_for('history'))
-
 
 # ==========================================
 # Chỉnh sửa lời khuyên (chỉ dành cho bác sĩ)
@@ -647,6 +812,41 @@ def manage_accounts():
 
     # ✅ Truyền cả patients và từ khóa tìm kiếm vào template
     return render_template('manage_accounts.html', patients=patients, search=search)
+from flask import flash
+from werkzeug.security import check_password_hash, generate_password_hash
+
+# ==========================================
+# 🔐 Đổi mật khẩu (xử lý AJAX)
+# ==========================================
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Vui lòng đăng nhập lại."}), 403
+
+    old_pw = request.form.get('old_password')
+    new_pw = request.form.get('new_password')
+    confirm_pw = request.form.get('confirm_password')
+
+    if not old_pw or not new_pw or not confirm_pw:
+        return jsonify({"success": False, "message": "Vui lòng nhập đầy đủ thông tin."})
+
+    if new_pw != confirm_pw:
+        return jsonify({"success": False, "message": "Mật khẩu xác nhận không khớp."})
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT MatKhau FROM NguoiDung WHERE ID=?", (session['user_id'],))
+    row = cur.fetchone()
+
+    if not row or row.MatKhau != old_pw:
+        conn.close()
+        return jsonify({"success": False, "message": "Mật khẩu cũ không chính xác."})
+
+    # Cập nhật trực tiếp text thuần
+    cur.execute("UPDATE NguoiDung SET MatKhau=? WHERE ID=?", (new_pw, session['user_id']))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "message": "Đổi mật khẩu thành công!"})
 
 # ==========================================
 # Hồ sơ cá nhân
@@ -689,7 +889,7 @@ def export_diagnosis():
     from io import BytesIO
     from flask import send_file
     from datetime import datetime
-    import os
+    import os, re
 
     # ===== Dữ liệu từ form =====
     data = {key: request.form.get(key, '') for key in [
@@ -707,7 +907,6 @@ def export_diagnosis():
     doctor_name = None
 
     if user_role == 'doctor':
-        # Bác sĩ chọn bệnh nhân trong danh sách => lấy tên bệnh nhân từ DB
         conn = get_connection()
         cur = conn.cursor()
         cur.execute("SELECT HoTen FROM NguoiDung WHERE ID = ?", data.get('benhnhan_id'))
@@ -716,7 +915,6 @@ def export_diagnosis():
         patient_name = row[0] if row else "Không xác định"
         doctor_name = user_name
     else:
-        # Bệnh nhân tự chẩn đoán
         patient_name = user_name
         doctor_name = "—"
 
@@ -792,7 +990,7 @@ def export_diagnosis():
 
     ws.append([])
 
-    # ===== III. Kết quả chẩn đoán =====
+        # ===== III. Kết quả chẩn đoán =====
     ws.merge_cells(f"A{ws.max_row+1}:E{ws.max_row+1}")
     ws[f"A{ws.max_row}"] = "III. KẾT QUẢ CHẨN ĐOÁN"
     ws[f"A{ws.max_row}"].font = section_font
@@ -819,25 +1017,38 @@ def export_diagnosis():
 
     ws.append([])
 
-    # ===== IV. Lời khuyên từ AI =====
-    ws.merge_cells(f"A{ws.max_row+1}:E{ws.max_row+1}")
-    ws[f"A{ws.max_row}"] = "IV. LỜI KHUYÊN TỪ AI"
-    ws[f"A{ws.max_row}"].font = section_font
-    ws[f"A{ws.max_row}"].alignment = left
+    import re
+    from html import unescape
 
-    # ✅ Fix lỗi merged cell + format đẹp
+    # ===== Làm sạch và định dạng lời khuyên =====
+    advice_raw = data.get('ai_advice') or "Chưa có lời khuyên từ AI."
+
+    # ✅ Bỏ toàn bộ thẻ HTML & thuộc tính style
+    advice_text = re.sub(r'style="[^"]*"', '', advice_raw)     # xóa thuộc tính style
+    advice_text = re.sub(r'<[^>]+>', '', advice_text)          # xóa thẻ HTML còn lại
+    advice_text = unescape(advice_text)                        # giải mã HTML entity (&nbsp;,...)
+    advice_text = re.sub(r'\s*\n\s*', '\n', advice_text.strip())
+    advice_text = re.sub(r'\s{2,}', ' ', advice_text)
+
+    # ✅ Tự động ngắt dòng sau dấu chấm (khi sau đó là chữ in hoa hoặc tiếng Việt có dấu)
+    advice_text = re.sub(r'\.\s*(?=[A-ZÀ-Ỹ])', '.\n', advice_text)
+
+    # ✅ Ngắt dòng trước các cụm từ như “Lời khuyên”, “Khuyến nghị”, “Tóm lại”
+    advice_text = re.sub(r'(?=\b(Lời khuyên|Khuyến nghị|Tóm lại)\b)', '\n', advice_text)
+
+    # ✅ Loại bỏ dòng trống dư
+    advice_text = re.sub(r'\n{2,}', '\n', advice_text).strip()
+
+    # ✅ Ghi ra Excel (xuống dòng, căn đều 2 bên)
     start_row = ws.max_row + 1
-    end_row = start_row + 5
+    end_row = start_row + 8
     ws.merge_cells(f"A{start_row}:E{end_row}")
     cell = ws[f"A{start_row}"]
-    cell.value = data['ai_advice'] or "Chưa có lời khuyên từ AI."
-    cell.alignment = wrap
+    cell.value = advice_text
+    cell.alignment = Alignment(horizontal="justify", vertical="top", wrap_text=True)
     cell.font = advice_font
     cell.border = border
     cell.fill = fill_sub
-
-    ws.append([])
-    ws.append([])
 
     # ===== V. Biểu đồ SHAP =====
     shap_path = os.path.join(app.root_path, 'static', 'images', data['shap_file']) if data['shap_file'] else None
@@ -881,14 +1092,19 @@ def export_diagnosis():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-
 # ==========================================
-# Đăng xuất
+# 🚪 Đăng xuất
 # ==========================================
 @app.route('/logout')
 def logout():
-    session.clear()
+    if 'user' in session:
+        name = session.get('user', 'Người dùng')
+        session.clear()
+        flash(f"👋 {name}, bạn đã đăng xuất khỏi hệ thống thành công!", "success")
+    else:
+        flash("⚠️ Bạn chưa đăng nhập!", "warning")
     return redirect(url_for('login'))
+
 # =========================================================
 # 📊 DASHBOARD THỐNG KÊ (Admin)
 # =========================================================
@@ -1123,7 +1339,7 @@ def admin_manage_doctors():
     return render_template('admin_doctors.html', doctors=doctors)
 
 # ==========================================
-# 📊 XUẤT FILE EXCEL THỐNG KÊ HỆ THỐNG (NÂNG CẤP)
+# 📊 XUẤT FILE EXCEL THỐNG KÊ HỆ THỐNG
 # ==========================================
 @app.route('/export_admin_stats', methods=['POST'])
 def export_admin_stats():
