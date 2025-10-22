@@ -55,6 +55,14 @@ ALTER TABLE ChanDoan
 ADD Tuoi INT NULL,
     GioiTinh NVARCHAR(10) NULL;
 
+CREATE TABLE TinNhanAI (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    BenhNhanID INT NOT NULL,
+    NoiDung NVARCHAR(MAX),
+    PhanHoi NVARCHAR(MAX),
+    ThoiGian DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (BenhNhanID) REFERENCES NguoiDung(ID)
+);
 
 /* ============================================================
    3️⃣ DỮ LIỆU MẪU BAN ĐẦU

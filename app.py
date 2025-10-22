@@ -164,7 +164,7 @@ def login():
             if user.Role == 'admin':
                 return redirect(url_for('history'))
             elif user.Role == 'doctor':
-                return redirect(url_for('history'))  # hoặc trang thống kê bác sĩ
+                return redirect(url_for('home'))  
             else:
                 return redirect(url_for('home'))
 
@@ -1104,9 +1104,8 @@ def logout():
     else:
         flash("⚠️ Bạn chưa đăng nhập!", "warning")
     return redirect(url_for('login'))
-
 # =========================================================
-# 📊 DASHBOARD THỐNG KÊ (Admin)
+# 📊 DASHBOARD THỐNG KÊ (Admin - Bản nâng cấp chuyên sâu)
 # =========================================================
 @app.route('/admin/dashboard')
 def admin_dashboard():
@@ -1118,23 +1117,19 @@ def admin_dashboard():
     conn = get_connection()
     cur = conn.cursor()
 
-    # ==========================
-    # 1️⃣ Tổng số bác sĩ, bệnh nhân, lượt chẩn đoán
-    # ==========================
+    # ========================== 1️⃣ TỔNG QUAN ==========================
     cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='doctor'")
     total_doctors = cur.fetchone()[0]
-
     cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='patient'")
     total_patients = cur.fetchone()[0]
-
     cur.execute("SELECT COUNT(*) FROM ChanDoan")
     total_diagnoses = cur.fetchone()[0]
 
-    # ==========================
-    # 2️⃣ Lượt chẩn đoán theo tháng
-    # ==========================
+    # ========================== 2️⃣ XU HƯỚNG CHẨN ĐOÁN ==========================
     cur.execute("""
-        SELECT FORMAT(NgayChanDoan, 'MM-yyyy') AS Thang, COUNT(*) AS SoLuong
+        SELECT FORMAT(NgayChanDoan, 'MM-yyyy') AS Thang,
+               COUNT(*) AS SoLuong,
+               SUM(CASE WHEN LOWER(NguyCo) LIKE '%cao%' THEN 1 ELSE 0 END) AS SoCao
         FROM ChanDoan
         GROUP BY FORMAT(NgayChanDoan, 'MM-yyyy')
         ORDER BY MIN(NgayChanDoan)
@@ -1142,10 +1137,9 @@ def admin_dashboard():
     monthly = cur.fetchall()
     months = [row.Thang for row in monthly]
     counts = [row.SoLuong for row in monthly]
+    high_risk = [row.SoCao for row in monthly]
 
-    # ==========================
-    # 3️⃣ Tỷ lệ nguy cơ Cao / Thấp
-    # ==========================
+    # ========================== 3️⃣ TỶ LỆ NGUY CƠ ==========================
     cur.execute("""
         SELECT NguyCo, COUNT(*) AS SoLuong
         FROM ChanDoan
@@ -1155,11 +1149,10 @@ def admin_dashboard():
     risk_labels = [row.NguyCo for row in risk_data]
     risk_values = [row.SoLuong for row in risk_data]
 
-    # ==========================
-    # 4️⃣ Top 5 bác sĩ có nhiều ca nhất
-    # ==========================
+    # ========================== 4️⃣ TOP BÁC SĨ ==========================
     cur.execute("""
-        SELECT TOP 5 bs.HoTen, COUNT(cd.ID) AS SoCa
+        SELECT TOP 5 bs.HoTen, COUNT(cd.ID) AS SoCa,
+               SUM(CASE WHEN cd.NguyCo LIKE '%cao%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS TyLeCao
         FROM ChanDoan cd
         JOIN NguoiDung bs ON cd.BacSiID = bs.ID
         GROUP BY bs.HoTen
@@ -1168,63 +1161,62 @@ def admin_dashboard():
     top_doctors = cur.fetchall()
     top_names = [row.HoTen for row in top_doctors]
     top_counts = [row.SoCa for row in top_doctors]
+    top_rates = [round(row.TyLeCao, 1) for row in top_doctors]
 
-    # ==========================
-    # 5️⃣ Trung bình chỉ số y khoa (BMI, Huyết áp, hành vi)
-    # ==========================
+    # ========================== 5️⃣ TRUNG BÌNH CHỈ SỐ Y KHOA ==========================
     cur.execute("""
         SELECT 
-            AVG(BMI) AS AvgBMI,
-            AVG(HuyetApTamThu) AS AvgHATT,
-            AVG(HuyetApTamTruong) AS AvgHATTr,
-            SUM(CASE WHEN HutThuoc = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS SmokePercent,
-            SUM(CASE WHEN UongCon = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS AlcoPercent,
-            SUM(CASE WHEN TapTheDuc = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS ActivePercent
+            ROUND(AVG(BMI), 1) AS AvgBMI,
+            ROUND(AVG(HuyetApTamThu), 0) AS AvgHATT,
+            ROUND(AVG(HuyetApTamTruong), 0) AS AvgHATTr,
+            SUM(CASE WHEN HutThuoc=1 THEN 1 ELSE 0 END)*100.0/COUNT(*) AS SmokePercent,
+            SUM(CASE WHEN UongCon=1 THEN 1 ELSE 0 END)*100.0/COUNT(*) AS AlcoPercent,
+            SUM(CASE WHEN TapTheDuc=1 THEN 1 ELSE 0 END)*100.0/COUNT(*) AS ActivePercent
         FROM ChanDoan
     """)
     row = cur.fetchone()
-    avg_bmi = round(row.AvgBMI, 1) if row.AvgBMI else 0
-    avg_systolic = int(row.AvgHATT) if row.AvgHATT else 0
-    avg_diastolic = int(row.AvgHATTr) if row.AvgHATTr else 0
-    smoke_percent = round(row.SmokePercent, 1) if row.SmokePercent else 0
-    alco_percent = round(row.AlcoPercent, 1) if row.AlcoPercent else 0
-    active_percent = round(row.ActivePercent, 1) if row.ActivePercent else 0
+    avg_bmi = row.AvgBMI or 0
+    avg_systolic = row.AvgHATT or 0
+    avg_diastolic = row.AvgHATTr or 0
+    smoke_percent = round(row.SmokePercent or 0, 1)
+    alco_percent = round(row.AlcoPercent or 0, 1)
+    active_percent = round(row.ActivePercent or 0, 1)
 
-    # ==========================
-    # 6️⃣ Hiệu suất chẩn đoán của bác sĩ
-    # ==========================
+    # ========================== 6️⃣ HIỆU SUẤT BÁC SĨ ==========================
     cur.execute("""
-        SELECT 
-            ND.HoTen AS BacSi,
-            COUNT(CD.ID) AS SoCa,
-            AVG(CD.BMI) AS TB_BMI,
-            SUM(CASE WHEN CD.NguyCo LIKE '%cao%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS TyLeCao
+        SELECT ND.HoTen AS BacSi,
+               COUNT(CD.ID) AS SoCa,
+               SUM(CASE WHEN CD.NguyCo LIKE '%cao%' THEN 1 ELSE 0 END)*100.0/COUNT(*) AS TyLeCao
         FROM ChanDoan CD
         JOIN NguoiDung ND ON CD.BacSiID = ND.ID
         GROUP BY ND.HoTen
         ORDER BY SoCa DESC
     """)
     perf_rows = cur.fetchall()
-    perf_names = [row.BacSi for row in perf_rows]
-    perf_cases = [row.SoCa for row in perf_rows]
-    perf_rate = [round(row.TyLeCao, 1) if row.TyLeCao else 0 for row in perf_rows]
+    perf_names = [r.BacSi for r in perf_rows]
+    perf_cases = [r.SoCa for r in perf_rows]
+    perf_rate = [round(r.TyLeCao or 0, 1) for r in perf_rows]
+
+    # ========================== 7️⃣ TỔNG SỐ BỆNH NHÂN CÓ CHẨN ĐOÁN ==========================
+    cur.execute("SELECT COUNT(DISTINCT BenhNhanID) FROM ChanDoan")
+    diagnosed_patients = cur.fetchone()[0]
 
     conn.close()
 
-    # ==========================
-    # Trả dữ liệu cho template
-    # ==========================
     return render_template(
         'admin_dashboard.html',
         total_doctors=total_doctors,
         total_patients=total_patients,
         total_diagnoses=total_diagnoses,
+        diagnosed_patients=diagnosed_patients,
         months=months,
         counts=counts,
+        high_risk=high_risk,
         risk_labels=risk_labels,
         risk_values=risk_values,
         top_names=top_names,
         top_counts=top_counts,
+        top_rates=top_rates,
         avg_bmi=avg_bmi,
         avg_systolic=avg_systolic,
         avg_diastolic=avg_diastolic,
@@ -1235,7 +1227,6 @@ def admin_dashboard():
         perf_cases=perf_cases,
         perf_rate=perf_rate
     )
-
 
 # =========================================================
 # 👩‍⚕️ Quản lý Bác sĩ (Admin)
@@ -1339,7 +1330,7 @@ def admin_manage_doctors():
     return render_template('admin_doctors.html', doctors=doctors)
 
 # ==========================================
-# 📊 XUẤT FILE EXCEL THỐNG KÊ HỆ THỐNG
+# 📊 XUẤT FILE EXCEL THỐNG KÊ HỆ THỐNG - Nâng cấp chuyên nghiệp
 # ==========================================
 @app.route('/export_admin_stats', methods=['POST'])
 def export_admin_stats():
@@ -1354,10 +1345,9 @@ def export_admin_stats():
     conn = get_connection()
     cur = conn.cursor()
 
-    # ===============================
-    # Lấy dữ liệu thống kê từ DB
-    # ===============================
-    # Tổng quan
+    # =============================== #
+    # 📥 LẤY DỮ LIỆU TỪ DATABASE
+    # =============================== #
     cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='doctor'")
     total_doctors = cur.fetchone()[0]
     cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='patient'")
@@ -1365,7 +1355,6 @@ def export_admin_stats():
     cur.execute("SELECT COUNT(*) FROM ChanDoan")
     total_diagnoses = cur.fetchone()[0]
 
-    # Tỷ lệ nguy cơ
     cur.execute("""
         SELECT NguyCo, COUNT(*) AS SoLuong
         FROM ChanDoan
@@ -1373,7 +1362,6 @@ def export_admin_stats():
     """)
     risk_data = cur.fetchall()
 
-    # Top 5 bác sĩ
     cur.execute("""
         SELECT TOP 5 bs.HoTen, COUNT(cd.ID) AS SoCa
         FROM ChanDoan cd
@@ -1383,32 +1371,30 @@ def export_admin_stats():
     """)
     top_doctors = cur.fetchall()
 
-    # Hiệu suất bác sĩ
     cur.execute("""
-        SELECT 
-            ND.HoTen AS BacSi,
-            COUNT(CD.ID) AS SoCa,
-            SUM(CASE WHEN CD.NguyCo LIKE '%cao%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS TyLeCao
+        SELECT ND.HoTen AS BacSi,
+               COUNT(CD.ID) AS SoCa,
+               SUM(CASE WHEN CD.NguyCo LIKE '%cao%' THEN 1 ELSE 0 END)*100.0/COUNT(*) AS TyLeCao
         FROM ChanDoan CD
         JOIN NguoiDung ND ON CD.BacSiID = ND.ID
         GROUP BY ND.HoTen
         ORDER BY SoCa DESC
     """)
     perf_rows = cur.fetchall()
-
     conn.close()
 
-    # ===============================
-    # Tạo workbook Excel
-    # ===============================
+    # =============================== #
+    # 📘 TẠO FILE EXCEL
+    # =============================== #
     wb = Workbook()
     ws = wb.active
-    ws.title = "Tổng quan"
+    ws.title = "Tổng quan hệ thống"
 
-    # --- Style cơ bản ---
+    # --- STYLE ---
     title_font = Font(size=16, bold=True, color="1F4E78")
     header_font = Font(size=12, bold=True, color="FFFFFF")
     fill_blue = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+    fill_gray = PatternFill(start_color="E9ECEF", end_color="E9ECEF", fill_type="solid")
     align_center = Alignment(horizontal="center", vertical="center")
     border = Border(
         left=Side(style="thin", color="999999"),
@@ -1417,39 +1403,46 @@ def export_admin_stats():
         bottom=Side(style="thin", color="999999")
     )
 
-    # ===============================
-    # 📄 Sheet 1: Tổng quan hệ thống
-    # ===============================
-    ws.merge_cells("A1:D1")
+    # =============================== #
+    # 📄 SHEET 1: TỔNG QUAN
+    # =============================== #
+    ws.merge_cells("A1:E1")
     ws["A1"] = "BÁO CÁO THỐNG KÊ HỆ THỐNG CHẨN ĐOÁN TIM MẠCH"
     ws["A1"].font = title_font
     ws["A1"].alignment = align_center
 
     ws.append([])
     ws.append(["Ngày xuất báo cáo:", datetime.now().strftime("%d/%m/%Y %H:%M")])
+    ws.append(["Người xuất:", session.get('user', 'Quản trị viên')])
     ws.append([])
+    ws.append(["📊 Chỉ số tổng quan"])
     ws.append(["Tổng số bác sĩ", total_doctors])
     ws.append(["Tổng số bệnh nhân", total_patients])
-    ws.append(["Tổng số lượt chẩn đoán", total_diagnoses])
+    ws.append(["Tổng lượt chẩn đoán", total_diagnoses])
     ws.append([])
 
-    ws.append(["Tên bác sĩ", "Số ca chẩn đoán"])
+    ws.append(["🏆 Top 5 bác sĩ có số ca chẩn đoán nhiều nhất"])
+    ws.append(["Tên bác sĩ", "Số ca"])
     for cell in ws[ws.max_row]:
         cell.font = header_font
         cell.fill = fill_blue
         cell.alignment = align_center
         cell.border = border
-    for d in top_doctors:
+
+    for idx, d in enumerate(top_doctors, start=1):
         ws.append([d.HoTen, d.SoCa])
         for cell in ws[ws.max_row]:
             cell.border = border
+            if idx % 2 == 0:
+                cell.fill = fill_gray
+
     ws.column_dimensions["A"].width = 40
     ws.column_dimensions["B"].width = 20
 
-    # ===============================
-    # 📊 Sheet 2: Bác sĩ / Bệnh nhân
-    # ===============================
-    ws2 = wb.create_sheet("Bác sĩ_Bệnh nhân")
+    # =============================== #
+    # 📊 SHEET 2: TỶ LỆ BÁC SĨ / BỆNH NHÂN
+    # =============================== #
+    ws2 = wb.create_sheet("Bác sĩ - Bệnh nhân")
     ws2.append(["Loại tài khoản", "Số lượng"])
     ws2.append(["Bác sĩ", total_doctors])
     ws2.append(["Bệnh nhân", total_patients])
@@ -1464,18 +1457,28 @@ def export_admin_stats():
             c.border = border
             c.alignment = align_center
 
+    from openpyxl.chart.label import DataLabelList
+
     pie = PieChart()
     pie.title = "Tỷ lệ Bác sĩ / Bệnh nhân"
     data = Reference(ws2, min_col=2, min_row=1, max_row=3)
     labels = Reference(ws2, min_col=1, min_row=2, max_row=3)
     pie.add_data(data, titles_from_data=True)
     pie.set_categories(labels)
+
+    # ✅ Hiển thị giá trị + phần trăm + tên
+    pie.dLbls = DataLabelList()
+    pie.dLbls.showVal = True
+    pie.dLbls.showPercent = True
+    pie.dLbls.showCatName = True
+
     ws2.add_chart(pie, "D5")
 
-    # ===============================
-    # 📊 Sheet 3: Tỷ lệ nguy cơ
-    # ===============================
-    ws3 = wb.create_sheet("Nguy cơ")
+
+    # =============================== #
+    # 📊 SHEET 3: TỶ LỆ NGUY CƠ
+    # =============================== #
+    ws3 = wb.create_sheet("Nguy cơ cao - thấp")
     ws3.append(["Mức nguy cơ", "Số lượng"])
     for r in risk_data:
         ws3.append([r.NguyCo, r.SoLuong])
@@ -1493,15 +1496,15 @@ def export_admin_stats():
     bar.add_data(data, titles_from_data=True)
     bar.set_categories(cats)
     bar.y_axis.title = "Số lượng"
-    ws3.add_chart(bar, "D5")
+    ws3.add_chart(bar, "E5")
 
-    # ===============================
-    # 📊 Sheet 4: Top 5 bác sĩ
-    # ===============================
-    ws4 = wb.create_sheet("Top 5 bác sĩ")
-    ws4.append(["Tên bác sĩ", "Số ca chẩn đoán"])
-    for d in top_doctors:
-        ws4.append([d.HoTen, d.SoCa])
+    # =============================== #
+    # 📊 SHEET 4: HIỆU SUẤT BÁC SĨ
+    # =============================== #
+    ws4 = wb.create_sheet("Hiệu suất bác sĩ")
+    ws4.append(["Bác sĩ", "Số ca", "Tỷ lệ nguy cơ cao (%)"])
+    for p in perf_rows:
+        ws4.append([p.BacSi, p.SoCa, round(p.TyLeCao or 0, 1)])
 
     for cell in ws4[1]:
         cell.font = header_font
@@ -1509,56 +1512,53 @@ def export_admin_stats():
         cell.alignment = align_center
         cell.border = border
 
-    chart4 = BarChart()
-    chart4.title = "Top 5 bác sĩ chẩn đoán nhiều ca nhất"
-    data = Reference(ws4, min_col=2, min_row=1, max_row=ws4.max_row)
+    for row in ws4.iter_rows(min_row=2, max_col=3):
+        for cell in row:
+            cell.border = border
+            if row[0].row % 2 == 0:
+                cell.fill = fill_gray
+            cell.alignment = align_center
+
+    # --- Biểu đồ kết hợp ---
+    chart = BarChart()
+    chart.title = "Hiệu suất & Tỷ lệ nguy cơ cao của bác sĩ"
+    chart.y_axis.title = "Số ca"
+    data_bar = Reference(ws4, min_col=2, min_row=1, max_row=ws4.max_row)
     cats = Reference(ws4, min_col=1, min_row=2, max_row=ws4.max_row)
-    chart4.add_data(data, titles_from_data=True)
-    chart4.set_categories(cats)
-    chart4.y_axis.title = "Số ca"
-    ws4.add_chart(chart4, "D5")
+    chart.add_data(data_bar, titles_from_data=True)
+    chart.set_categories(cats)
 
-    # ===============================
-    # 📊 Sheet 5: Hiệu suất bác sĩ
-    # ===============================
-    ws5 = wb.create_sheet("Hiệu suất bác sĩ")
-    ws5.append(["Bác sĩ", "Số ca", "Tỷ lệ nguy cơ cao (%)"])
-    for p in perf_rows:
-        ws5.append([p.BacSi, p.SoCa, round(p.TyLeCao or 0, 1)])
+    line = LineChart()
+    data_line = Reference(ws4, min_col=3, min_row=1, max_row=ws4.max_row)
+    line.add_data(data_line, titles_from_data=True)
+    line.y_axis.title = "Tỷ lệ (%)"
+    line.y_axis.axId = 200
+    chart.y_axis.crosses = "max"
+    chart += line
+    ws4.add_chart(chart, "E5")
 
-    for cell in ws5[1]:
-        cell.font = header_font
-        cell.fill = fill_blue
-        cell.alignment = align_center
-        cell.border = border
+    # =============================== #
+    # 📊 SHEET 5: GHI CHÚ & CHỮ KÝ
+    # =============================== #
+    ws5 = wb.create_sheet("Ghi chú & Chữ ký")
+    ws5["A1"] = "Ghi chú:"
+    ws5["A2"] = "• Báo cáo được xuất tự động từ hệ thống CVD-App."
+    ws5["A3"] = "• Dữ liệu cập nhật đến thời điểm xuất file."
+    ws5["A5"] = "Người lập báo cáo:"
+    ws5["A6"] = session.get('user', 'Quản trị viên')
+    ws5["A8"] = "Chữ ký:"
+    ws5["A9"] = "____________________________"
 
-    linechart = LineChart()
-    linechart.title = "Hiệu suất chẩn đoán và tỷ lệ nguy cơ cao"
-    data_line = Reference(ws5, min_col=3, min_row=1, max_row=ws5.max_row)
-    cats = Reference(ws5, min_col=1, min_row=2, max_row=ws5.max_row)
-    linechart.add_data(data_line, titles_from_data=True)
-    linechart.set_categories(cats)
-    linechart.y_axis.title = "Tỷ lệ (%)"
+    ws5["A1"].font = Font(bold=True, color="1F4E78", size=13)
+    ws5.column_dimensions["A"].width = 70
 
-    barchart = BarChart()
-    data_bar = Reference(ws5, min_col=2, min_row=1, max_row=ws5.max_row)
-    barchart.add_data(data_bar, titles_from_data=True)
-    barchart.set_categories(cats)
-    barchart.y_axis.title = "Số ca"
-
-    # Gộp 2 biểu đồ (bar + line)
-    linechart.y_axis.crosses = "max"
-    barchart += linechart
-    ws5.add_chart(barchart, "E5")
-
-    # ===============================
-    # Xuất file
-    # ===============================
+    # =============================== #
+    # 💾 XUẤT FILE EXCEL
+    # =============================== #
     output = BytesIO()
     wb.save(output)
     output.seek(0)
-
-    filename = f"ThongKe_HeThong_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    filename = f"ThongKe_CVDApp_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
 
     return send_file(
         output,
@@ -1566,6 +1566,7 @@ def export_admin_stats():
         download_name=filename,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 # ==========================================
 # 🌿 Trang Kiến thức Y học (cho bệnh nhân)
@@ -1581,6 +1582,76 @@ def tips():
         return redirect(url_for('home'))
     
     return render_template('tips.html')
+
+# ============================================
+# 🤖 API CHAT AI (AJAX) — Nâng cấp chuyên nghiệp
+# ============================================
+@app.route('/chat_ai_api', methods=['POST'])
+def chat_ai_api():
+    if 'user' not in session or session.get('role') != 'patient':
+        return jsonify({'reply': '⚠️ Bạn chưa đăng nhập hoặc không có quyền truy cập.'}), 403
+
+    import google.generativeai as genai
+    from datetime import datetime
+    from flask import jsonify
+
+    data = request.get_json()
+    msg = data.get('message', '').strip()
+    if not msg:
+        return jsonify({'reply': '📝 Vui lòng nhập câu hỏi của bạn.'})
+
+    try:
+        # --- Cấu hình model (đã cấu hình sẵn API KEY ở đầu file) ---
+        model = genai.GenerativeModel(MODEL_NAME)
+
+        # --- Prompt chuyên nghiệp ---
+        prompt = f"""
+        Bạn là **Trợ lý y tế ảo CVD-AI**, chuyên tư vấn về **bệnh tim mạch, huyết áp, tiểu đường, lối sống lành mạnh**.
+        - Trả lời ngắn gọn, rõ ràng, dễ hiểu, dùng tiếng Việt tự nhiên.
+        - Giữ giọng văn **thân thiện, chuyên nghiệp**, tránh dùng từ ngữ phức tạp y học.
+        - Nếu câu hỏi ngoài chủ đề sức khỏe, hãy nói nhẹ nhàng: 
+          “Xin lỗi, tôi chỉ có thể tư vấn về sức khỏe và tim mạch thôi nhé ”.
+        - Có thể chia câu trả lời thành 2-3 đoạn rõ ràng.
+        - Nếu liên quan đến thói quen, gợi ý **thực hành cụ thể** (ví dụ: “Nên tập thể dục 30 phút mỗi ngày”).
+        - Không dùng markdown nặng (chỉ gạch đầu dòng, emoji nhẹ).
+        
+        📩 Câu hỏi từ bệnh nhân: 
+        {msg}
+        """
+
+        # --- Gọi Gemini API ---
+        response = model.generate_content(prompt)
+
+        answer = response.text.strip() if response and response.text else (
+            "🤔 Xin lỗi, tôi chưa hiểu rõ câu hỏi của bạn. Bạn có thể diễn đạt lại được không?"
+        )
+
+        # --- Làm đẹp phản hồi: xử lý format nhẹ ---
+        formatted_answer = (
+            answer.replace("**", "")  # bỏ markdown đậm
+                  .replace("* ", "• ")  # thay bullet
+                  .replace("#", "")
+        )
+
+        # --- Lưu vào cơ sở dữ liệu ---
+        user_id = session.get('user_id')
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO TinNhanAI (BenhNhanID, NoiDung, PhanHoi, ThoiGian)
+            VALUES (?, ?, ?, ?)
+        """, (user_id, msg, formatted_answer, datetime.now()))
+        conn.commit()
+        conn.close()
+
+        # --- Trả về kết quả cho giao diện ---
+        return jsonify({'reply': formatted_answer})
+
+    except Exception as e:
+        print("⚠️ Lỗi Gemini AI:", e)
+        return jsonify({
+            'reply': '🚫 Hệ thống AI đang bận hoặc kết nối không ổn định. Vui lòng thử lại sau ít phút.'
+        })
 
 # ==========================================
 # Main

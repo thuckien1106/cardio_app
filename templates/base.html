@@ -349,5 +349,243 @@
         }
       });
     </script>
+    <!-- 💬 Chat AI nổi -->
+    {% if session.get('role') == 'patient' %}
+    <!-- Nút tròn nổi -->
+    <div id="chatBubble" class="chat-bubble">
+      <i class="bi bi-robot fs-3"></i>
+    </div>
+
+    <!-- Hộp chat nổi -->
+    <div id="chatWindow" class="chat-window shadow-lg">
+      <div class="chat-header">
+        <div class="d-flex align-items-center">
+          <div class="ai-avatar me-2">
+            <i class="bi bi-robot fs-5"></i>
+          </div>
+          <div>
+            <strong>Trợ lý AI sức khỏe</strong><br />
+            <small class="text-light opacity-75">Hỏi tôi về tim mạch 💓</small>
+          </div>
+        </div>
+        <button id="closeChat" class="btn-close btn-close-white"></button>
+      </div>
+
+      <div id="chatBody" class="chat-body">
+        <div class="text-center text-muted small mt-3">
+          👋 Xin chào! Tôi là trợ lý AI sức khỏe. Hãy đặt câu hỏi của bạn nhé.
+        </div>
+      </div>
+
+      <div class="chat-footer">
+        <form id="chatForm" class="d-flex">
+          <input
+            id="chatInput"
+            class="form-control rounded-pill me-2"
+            placeholder="Nhập câu hỏi..."
+            autocomplete="off"
+          />
+          <button class="btn btn-success rounded-pill px-3">
+            <i class="bi bi-send-fill"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <style>
+      /* --- Nút tròn nổi --- */
+      .chat-bubble {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00c853, #2ecc71);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        z-index: 2000;
+        transition: all 0.25s ease;
+      }
+      .chat-bubble:hover {
+        transform: scale(1.08);
+      }
+
+      /* --- Cửa sổ chat --- */
+      .chat-window {
+        position: fixed;
+        bottom: 100px;
+        right: 25px;
+        width: 380px;
+        height: 500px;
+        border-radius: 16px;
+        background: #f8f9fa;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 3000;
+      }
+
+      /* Header */
+      .chat-header {
+        background: linear-gradient(90deg, #00c853, #43a047);
+        color: white;
+        padding: 10px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .ai-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Body */
+      .chat-body {
+        flex-grow: 1;
+        padding: 10px 15px;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+        font-size: 0.95rem;
+      }
+
+      /* Footer */
+      .chat-footer {
+        padding: 10px;
+        border-top: 1px solid #dee2e6;
+        background: white;
+      }
+
+      /* Tin nhắn */
+      .msg-user,
+      .msg-ai {
+        margin: 6px 0;
+        display: flex;
+        align-items: flex-start;
+      }
+      .msg-user {
+        justify-content: flex-end;
+      }
+      .msg-user .bubble {
+        background: #00c853;
+        color: white;
+        border-radius: 18px 18px 4px 18px;
+      }
+      .msg-ai .bubble {
+        background: #e9ecef;
+        color: #212529;
+        border-radius: 18px 18px 18px 4px;
+      }
+      .bubble {
+        padding: 8px 14px;
+        max-width: 80%;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+      }
+      .typing {
+        font-style: italic;
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-left: 5px;
+      }
+      @media (max-width: 480px) {
+        .chat-window {
+          width: 90%;
+          right: 5%;
+          height: 420px;
+        }
+      }
+    </style>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const bubble = document.getElementById("chatBubble");
+        const windowEl = document.getElementById("chatWindow");
+        const closeBtn = document.getElementById("closeChat");
+        const form = document.getElementById("chatForm");
+        const input = document.getElementById("chatInput");
+        const chatBody = document.getElementById("chatBody");
+
+        // 🧠 1️⃣ Hàm lưu và tải lịch sử
+        function saveChatHistory() {
+          localStorage.setItem("chatHistory", chatBody.innerHTML);
+        }
+        function loadChatHistory() {
+          const saved = localStorage.getItem("chatHistory");
+          if (saved) chatBody.innerHTML = saved;
+        }
+
+        // 🔄 Tải lại lịch sử khi mở trang
+        loadChatHistory();
+
+        // 🎯 2️⃣ Mở / đóng cửa sổ chat
+        bubble.addEventListener("click", () => {
+          windowEl.style.display = "flex";
+          bubble.style.display = "none";
+        });
+        closeBtn.addEventListener("click", () => {
+          windowEl.style.display = "none";
+          bubble.style.display = "flex";
+        });
+
+        // 📤 3️⃣ Gửi tin nhắn
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const text = input.value.trim();
+          if (!text) return;
+
+          // Hiển thị tin nhắn người dùng
+          chatBody.insertAdjacentHTML(
+            "beforeend",
+            `<div class="msg-user"><div class="bubble">${text}</div></div>`
+          );
+          input.value = "";
+          chatBody.scrollTop = chatBody.scrollHeight;
+          saveChatHistory();
+
+          // Hiển thị "AI đang trả lời..."
+          const typing = document.createElement("div");
+          typing.className = "msg-ai";
+          typing.innerHTML = `<div class="bubble"><span class="typing">AI đang trả lời...</span></div>`;
+          chatBody.appendChild(typing);
+          chatBody.scrollTop = chatBody.scrollHeight;
+          saveChatHistory();
+
+          try {
+            const res = await fetch("/chat_ai_api", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message: text }),
+            });
+            const data = await res.json();
+
+            // Xóa "đang gõ"
+            typing.remove();
+
+            // Hiển thị phản hồi AI
+            chatBody.insertAdjacentHTML(
+              "beforeend",
+              `<div class="msg-ai"><div class="bubble">${data.reply}</div></div>`
+            );
+            chatBody.scrollTop = chatBody.scrollHeight;
+            saveChatHistory();
+          } catch {
+            typing.innerHTML = `<div class="bubble text-danger">⚠️ Lỗi kết nối đến AI. Thử lại sau.</div>`;
+            saveChatHistory();
+          }
+        });
+      });
+    </script>
   </body>
 </html>

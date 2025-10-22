@@ -347,3 +347,45 @@ p {
 .card ul li:last-child {
   margin-bottom: 0;
 }
+/* --- Nút tròn nổi --- */
+.chat-bubble {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
+  transition: transform 0.2s ease;
+}
+
+.chat-bubble:hover {
+  transform: scale(1.1);
+}
+
+/* --- Hộp chat nổi --- */
+.chat-window {
+  position: fixed;
+  bottom: 100px;
+  right: 25px;
+  width: 330px;
+  height: 420px;
+  display: none;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  z-index: 3000;
+}
+
+.chat-body {
+  height: 320px;
+  overflow-y: auto;
+  font-size: 0.95rem;
+}
