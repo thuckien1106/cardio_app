@@ -83,12 +83,12 @@
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Cân nặng (kg)</label>
                             <input type="number" step="0.1" name="weight" id="weight" class="form-control" required
-                                value="{{ request.form.get('weight','') }}">
+                               placeholder="VD: 50" value="{{ request.form.get('weight','') }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Chiều cao (cm)</label>
                             <input type="number" step="0.1" name="height" id="height" class="form-control" required
-                                value="{{ request.form.get('height','') }}">
+                               placeholder="VD: 165" value="{{ request.form.get('height','') }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">BMI</label>
@@ -98,16 +98,24 @@
 
                     <div class="row g-2 mt-2">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">HATT</label>
+                            <label class="form-label fw-semibold">HATT (Huyết áp tâm thu)</label>
                             <input type="number" name="systolic" id="systolic" class="form-control" required
-                                placeholder="VD: 130" value="{{ request.form.get('systolic','') }}">
+                                placeholder="VD: 130" value="{{ request.form.get('systolic','') }}" />
+                            <small class="text-muted fst-italic">
+                                Bình thường: <span class="text-success fw-semibold">90 – 139 mmHg</span>
+                            </small>
                         </div>
+
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">HATTr</label>
+                            <label class="form-label fw-semibold">HATTr (Huyết áp tâm trương)</label>
                             <input type="number" name="diastolic" id="diastolic" class="form-control" required
-                                placeholder="VD: 85" value="{{ request.form.get('diastolic','') }}">
+                                placeholder="VD: 85" value="{{ request.form.get('diastolic','') }}" />
+                            <small class="text-muted fst-italic">
+                                Bình thường: <span class="text-success fw-semibold">60 – 89 mmHg</span>
+                            </small>
                         </div>
                     </div>
+
 
                     <div class="row g-2 mt-2">
                         <div class="col-md-6">
