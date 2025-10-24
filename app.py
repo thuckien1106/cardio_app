@@ -292,15 +292,26 @@ def diagnose():
             result = f"{nguy_co_text} - {risk_percent}%"
 
             # --- Sinh lời khuyên AI ---
+            chol_label = {0: "Bình thường", 1: "Cao nhẹ", 2: "Cao"}
+            gluc_label = {0: "Bình thường", 1: "Cao nhẹ", 2: "Cao"}
+
             prompt = f"""
             Bạn là bác sĩ tim mạch.
-            Dữ liệu: Tuổi {age}, Giới tính {gender_raw}, BMI {bmi},
-            Huyết áp {systolic}/{diastolic}, Cholesterol {chol}, Đường huyết {glucose},
-            Hút thuốc {'Có' if smoking else 'Không'}, Rượu {'Có' if alcohol else 'Không'},
-            Tập thể dục {'Có' if exercise else 'Không'}.
+            Dữ liệu bệnh nhân:
+            - Tuổi: {age}
+            - Giới tính: {gender_raw}
+            - BMI: {bmi}
+            - Huyết áp: {systolic}/{diastolic}
+            - Cholesterol: {chol_label.get(chol, 'Không rõ')}
+            - Đường huyết: {gluc_label.get(glucose, 'Không rõ')}
+            - Hút thuốc: {'Có' if smoking else 'Không'}
+            - Uống rượu bia: {'Có' if alcohol else 'Không'}
+            - Tập thể dục: {'Có' if exercise else 'Không'}
+
             Ngưỡng dự đoán: {threshold}.
-            Hãy đưa ra lời khuyên ngắn gọn, dễ hiểu cho bệnh nhân.
+            Hãy đưa ra lời khuyên ngắn gọn, dễ hiểu, phù hợp với tình trạng trên.
             """
+
             ai_advice_raw = get_ai_advice_cached(prompt)
             ai_advice = highlight_advice(ai_advice_raw)
 
@@ -632,15 +643,16 @@ def delete_history(id):
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    # 🔒 Chỉ bác sĩ được phép xóa
-    if session.get('role') != 'doctor':
+    # 🔒 Chỉ bác sĩ hoặc admin được phép xóa
+    role = session.get('role')
+    if role not in ['doctor', 'admin']:
         flash("❌ Bạn không có quyền xóa bản ghi chẩn đoán.", "danger")
         return redirect(url_for('history'))
 
     conn = get_connection()
     cur = conn.cursor()
     try:
-        # ✅ Sửa lại đúng tên cột khóa chính
+        # ✅ Xóa theo ID (khóa chính)
         cur.execute("DELETE FROM ChanDoan WHERE ID = ?", (id,))
         conn.commit()
         flash("🗑️ Đã xóa bản ghi chẩn đoán thành công!", "success")

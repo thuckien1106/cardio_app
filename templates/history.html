@@ -222,7 +222,7 @@
               {% endif %}
             </div>
 
-            {% if session['role'] == 'doctor' %}
+            {% if session['role'] == 'doctor','admin' %}
             <div class="col-12 text-end">
               <form method="post" action="{{ url_for('delete_history', id=r.ChanDoanID) }}"
                 onsubmit="return confirm('Bạn có chắc chắn muốn xóa chẩn đoán này không?');">
