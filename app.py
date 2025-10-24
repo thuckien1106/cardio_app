@@ -55,7 +55,7 @@ def get_ai_advice_cached(prompt: str) -> str:
 xgb_model = None
 try:
     import xgboost as xgb
-    MODEL_PATH = "xgb_T11_Final.json"
+    MODEL_PATH = "xgb_heart30.json"
     if os.path.exists(MODEL_PATH):
         xgb_model = xgb.XGBClassifier()
         xgb_model.load_model(MODEL_PATH)
@@ -216,7 +216,7 @@ def get_patient_info(benhnhan_id):
         return jsonify({"tuoi": None, "gioitinh": None})
 
 # ==========================================
-# Chẩn đoán bệnh tim mạch + Giải thích SHAP
+# 🩺 Chẩn đoán bệnh tim mạch + Giải thích SHAP
 # ==========================================
 @app.route('/diagnose', methods=['GET', 'POST'])
 def diagnose():
@@ -226,16 +226,14 @@ def diagnose():
     conn = get_connection()
     cur = conn.cursor()
     benhnhans = []
-    # Danh sách bệnh nhân (chỉ dành cho bác sĩ)
     if session.get('role') == 'doctor':
-        
         cur.execute("SELECT ID, HoTen FROM NguoiDung WHERE Role='patient'")
         benhnhans = [
             {"ID": r.ID, "MaBN": f"BN{r.ID:03}", "HoTen": r.HoTen}
             for r in cur.fetchall()
         ]
 
-    # Biến khởi tạo
+    # --- Biến khởi tạo ---
     result = None
     ai_advice = None
     file_result = None
@@ -244,15 +242,18 @@ def diagnose():
     shap_file = None
     threshold = float(request.form.get('threshold', 0.5))
 
-    chol_map = {'normal': 1, 'above_normal': 2, 'high': 3}
-    gluc_map = {'normal': 1, 'above_normal': 2, 'high': 3}
-
-    # ======== XỬ LÝ NHẬP LIỆU THỦ CÔNG ========
+    # ======================
+    # 🔹 XỬ LÝ NHẬP LIỆU THỦ CÔNG
+    # ======================
     if request.method == 'POST' and 'predict_form' in request.form:
         try:
-            benhnhan_id = int(request.form.get('benhnhan_id')) if session.get('role') == 'doctor' else session['user_id']
+            benhnhan_id = (
+                int(request.form.get('benhnhan_id'))
+                if session.get('role') == 'doctor'
+                else session['user_id']
+            )
 
-            # Lấy dữ liệu nhập tay
+            # --- Lấy dữ liệu nhập tay ---
             age = int(request.form.get('age'))
             gender_raw = request.form.get('gender')
             gender = 1 if gender_raw == 'Nam' else 0
@@ -261,27 +262,25 @@ def diagnose():
             bmi = round(weight / ((height / 100) ** 2), 2)
             systolic = float(request.form.get('systolic'))
             diastolic = float(request.form.get('diastolic'))
-            chol = request.form.get('cholesterol')
-            glucose = request.form.get('glucose')
+            chol = int(request.form.get('cholesterol'))
+            glucose = int(request.form.get('glucose'))
             smoking = 1 if request.form.get('smoking') == 'yes' else 0
             alcohol = 1 if request.form.get('alcohol') == 'yes' else 0
             exercise = 1 if request.form.get('exercise') == 'yes' else 0
 
-            # ===== Dự đoán bằng mô hình =====
+            # --- Dự đoán bằng mô hình ---
             if xgb_model:
                 X = np.array([[age, gender, systolic, diastolic,
-                               chol_map.get(chol, 1), gluc_map.get(glucose, 1),
-                               smoking, alcohol, exercise, bmi]])
+                               chol, glucose, smoking, alcohol, exercise, bmi]],
+                             dtype=float)
                 prob = float(xgb_model.predict_proba(X)[0, 1])
                 risk_percent = round(prob * 100, 1)
                 risk_level = 'high' if prob >= threshold else 'low'
             else:
                 score = 0
                 if systolic > 140 or diastolic > 90: score += 1
-                if chol == 'above_normal': score += 1
-                elif chol == 'high': score += 2
-                if glucose == 'above_normal': score += 1
-                elif glucose == 'high': score += 2
+                score += chol
+                score += glucose
                 if bmi > 30: score += 1
                 if smoking: score += 1
                 if alcohol: score += 1
@@ -292,7 +291,7 @@ def diagnose():
             nguy_co_text = "Nguy cơ cao" if risk_level == 'high' else "Nguy cơ thấp"
             result = f"{nguy_co_text} - {risk_percent}%"
 
-            # ===== Sinh lời khuyên AI =====
+            # --- Sinh lời khuyên AI ---
             prompt = f"""
             Bạn là bác sĩ tim mạch.
             Dữ liệu: Tuổi {age}, Giới tính {gender_raw}, BMI {bmi},
@@ -303,18 +302,19 @@ def diagnose():
             Hãy đưa ra lời khuyên ngắn gọn, dễ hiểu cho bệnh nhân.
             """
             ai_advice_raw = get_ai_advice_cached(prompt)
-            ai_advice = highlight_advice(ai_advice_raw)  # 🟢 Thêm dòng này để tô đậm ý chính
+            ai_advice = highlight_advice(ai_advice_raw)
 
-            # ===== Tạo biểu đồ SHAP =====
+            # --- Sinh biểu đồ SHAP ---
             if xgb_model:
                 try:
                     explainer = shap.TreeExplainer(xgb_model)
                     shap_values = explainer.shap_values(X)
                     shap.summary_plot(
                         shap_values, X,
-                        feature_names=['Tuổi', 'Giới tính', 'HATT', 'HATTr',
-                                       'Cholesterol', 'Đường huyết', 'Hút thuốc',
-                                       'Rượu bia', 'Tập thể dục', 'BMI'],
+                        feature_names=[
+                            'Tuổi', 'Giới tính', 'HATT', 'HATTr', 'Cholesterol',
+                            'Đường huyết', 'Hút thuốc', 'Rượu bia', 'Tập thể dục', 'BMI'
+                        ],
                         show=False
                     )
                     shap_dir = os.path.join(app.root_path, 'static', 'images')
@@ -326,7 +326,10 @@ def diagnose():
                 except Exception as e:
                     print(f"⚠️ Lỗi khi tạo biểu đồ SHAP: {e}")
 
-            # ===== Lưu kết quả vào CSDL =====
+            # --- Lưu kết quả vào CSDL ---
+            chol_label = {0: "Bình thường", 1: "Cao nhẹ", 2: "Cao"}
+            gluc_label = {0: "Bình thường", 1: "Cao nhẹ", 2: "Cao"}
+
             bacsi_id = session['user_id'] if session.get('role') == 'doctor' else None
             cur.execute("""
                 INSERT INTO ChanDoan
@@ -335,14 +338,16 @@ def diagnose():
                 NguyCo, LoiKhuyen, NgayChanDoan)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())
             """, (benhnhan_id, bacsi_id, age, gender_raw, bmi, systolic, diastolic,
-                chol, glucose, smoking, alcohol, exercise,
-                nguy_co_text, ai_advice))# Lưu bản gốc không tô đậm
+                  chol_label.get(chol), gluc_label.get(glucose),
+                  smoking, alcohol, exercise, nguy_co_text, ai_advice))
             conn.commit()
 
         except Exception as e:
             flash(f"Lỗi nhập liệu: {e}", "danger")
 
-        # ======== UPLOAD FILE (CHỈ CHO BÁC SĨ) ========
+    # ======================
+    # 🔹 XỬ LÝ FILE EXCEL
+    # ======================
     if request.method == 'POST' and 'data_file' in request.files:
         try:
             file = request.files['data_file']
@@ -350,17 +355,14 @@ def diagnose():
                 flash("⚠️ Vui lòng chọn file Excel trước khi tải lên.", "warning")
                 return redirect(url_for('diagnose'))
 
-            # ✅ Chỉ chấp nhận Excel
             filename = file.filename.lower()
             if not filename.endswith(('.xls', '.xlsx')):
                 flash("❌ Chỉ hỗ trợ định dạng Excel (.xls, .xlsx)", "danger")
                 return redirect(url_for('diagnose'))
 
-            # ✅ Đọc dữ liệu
             df = pd.read_excel(file)
             df.columns = [c.strip().lower() for c in df.columns]
 
-            # ✅ Kiểm tra cột cần có
             required_cols = ['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol',
                              'gluc', 'smoke', 'alco', 'active', 'weight', 'height']
             missing = [c for c in required_cols if c not in df.columns]
@@ -368,28 +370,26 @@ def diagnose():
                 flash(f"⚠️ File thiếu các cột: {', '.join(missing)}", "danger")
                 return redirect(url_for('diagnose'))
 
-            # ✅ Tính BMI
             df['bmi'] = (df['weight'] / ((df['height'] / 100) ** 2)).round(2)
 
             results = []
             for _, row in df.iterrows():
-                age = row['age']
+                age = int(row['age'])
                 gender_raw = row['gender']
                 gender = 1 if str(gender_raw).strip().lower() in ['nam', 'male', '1'] else 0
-                systolic = row['ap_hi']
-                diastolic = row['ap_lo']
-                chol = str(row['cholesterol']).lower()
-                gluc = str(row['gluc']).lower()
-                smoking = 1 if str(row['smoke']).lower() in ['yes', '1', 'có'] else 0
-                alcohol = 1 if str(row['alco']).lower() in ['yes', '1', 'có'] else 0
-                exercise = 1 if str(row['active']).lower() in ['yes', '1', 'có'] else 0
-                bmi = row['bmi']
+                systolic = float(row['ap_hi'])
+                diastolic = float(row['ap_lo'])
+                chol = int(row['cholesterol'])
+                gluc = int(row['gluc'])
+                smoking = int(row['smoke'])
+                alcohol = int(row['alco'])
+                exercise = int(row['active'])
+                bmi = float(row['bmi'])
 
-                # Dự đoán bằng mô hình
                 if xgb_model:
                     X = np.array([[age, gender, systolic, diastolic,
-                                   chol_map.get(chol, 1), gluc_map.get(gluc, 1),
-                                   smoking, alcohol, exercise, bmi]])
+                                   chol, gluc, smoking, alcohol, exercise, bmi]],
+                                 dtype=float)
                     prob = float(xgb_model.predict_proba(X)[0, 1])
                 else:
                     prob = 0.5
@@ -411,7 +411,6 @@ def diagnose():
                     "Xác suất (%)": risk_percent
                 })
 
-            # ✅ Hiển thị kết quả bảng
             file_result = pd.DataFrame(results).to_html(
                 index=False,
                 classes="table table-hover table-striped text-center align-middle small shadow-sm rounded-3"
@@ -422,7 +421,6 @@ def diagnose():
         except Exception as e:
             flash(f"❌ Lỗi khi xử lý file Excel: {e}", "danger")
 
-
     conn.close()
     return render_template(
         'diagnose.html',
@@ -431,10 +429,11 @@ def diagnose():
         risk_percent=risk_percent,
         risk_level=risk_level,
         threshold=threshold,
-        ai_advice=ai_advice,  
+        ai_advice=ai_advice,
         file_result=file_result,
         shap_file=shap_file
     )
+
 
 # ==========================================
 # 🧠 Hàm tô đậm lời khuyên AI (2 màu tối giản, chuyên nghiệp)
