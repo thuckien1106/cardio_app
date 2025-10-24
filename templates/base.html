@@ -517,23 +517,36 @@
         const input = document.getElementById("chatInput");
         const chatBody = document.getElementById("chatBody");
 
-        // 🧠 1️⃣ Hàm lưu và tải lịch sử
-        function saveChatHistory() {
-          localStorage.setItem("chatHistory", chatBody.innerHTML);
-        }
-        function loadChatHistory() {
-          const saved = localStorage.getItem("chatHistory");
-          if (saved) chatBody.innerHTML = saved;
+        // 🧠 1️⃣ Tải lịch sử chat từ server (theo user_id)
+        async function loadChatHistory() {
+          try {
+            const res = await fetch("/chat_ai_history");
+            const data = await res.json();
+            chatBody.innerHTML = "";
+            if (data.messages && data.messages.length > 0) {
+              data.messages.forEach((m) => {
+                chatBody.insertAdjacentHTML(
+                  "beforeend",
+                  `<div class='msg-user'><div class='bubble'>${m.user}</div></div>
+             <div class='msg-ai'><div class='bubble'>${m.ai}</div></div>`
+                );
+              });
+            } else {
+              chatBody.innerHTML = `<div class="text-center text-muted small mt-3">👋 Xin chào! Tôi là trợ lý AI sức khỏe. Hãy đặt câu hỏi của bạn nhé.</div>`;
+            }
+            chatBody.scrollTop = chatBody.scrollHeight;
+          } catch (e) {
+            console.error("Lỗi tải lịch sử chat:", e);
+          }
         }
 
-        // 🔄 Tải lại lịch sử khi mở trang
-        loadChatHistory();
-
-        // 🎯 2️⃣ Mở / đóng cửa sổ chat
+        // 🔄 Tải khi mở chat
         bubble.addEventListener("click", () => {
           windowEl.style.display = "flex";
           bubble.style.display = "none";
+          loadChatHistory();
         });
+
         closeBtn.addEventListener("click", () => {
           windowEl.style.display = "none";
           bubble.style.display = "flex";
@@ -552,7 +565,6 @@
           );
           input.value = "";
           chatBody.scrollTop = chatBody.scrollHeight;
-          saveChatHistory();
 
           // Hiển thị "AI đang trả lời..."
           const typing = document.createElement("div");
@@ -560,7 +572,6 @@
           typing.innerHTML = `<div class="bubble"><span class="typing">AI đang trả lời...</span></div>`;
           chatBody.appendChild(typing);
           chatBody.scrollTop = chatBody.scrollHeight;
-          saveChatHistory();
 
           try {
             const res = await fetch("/chat_ai_api", {
@@ -570,19 +581,14 @@
             });
             const data = await res.json();
 
-            // Xóa "đang gõ"
             typing.remove();
-
-            // Hiển thị phản hồi AI
             chatBody.insertAdjacentHTML(
               "beforeend",
               `<div class="msg-ai"><div class="bubble">${data.reply}</div></div>`
             );
             chatBody.scrollTop = chatBody.scrollHeight;
-            saveChatHistory();
           } catch {
             typing.innerHTML = `<div class="bubble text-danger">⚠️ Lỗi kết nối đến AI. Thử lại sau.</div>`;
-            saveChatHistory();
           }
         });
       });

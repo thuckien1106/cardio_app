@@ -98,23 +98,30 @@
 
                     <div class="row g-2 mt-2">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">HATT (Huyết áp tâm thu)</label>
+                            <label class="form-label fw-semibold" data-bs-toggle="tooltip" data-bs-placement="top"
+                                title="HATT (Huyết áp tâm thu): Là áp lực tối đa trong động mạch khi tim co bóp. Giá trị lý tưởng khoảng 90–119 mmHg.">
+                                HATT (Huyết áp tâm thu)
+                            </label>
                             <input type="number" name="systolic" id="systolic" class="form-control" required
-                                placeholder="VD: 130" value="{{ request.form.get('systolic','') }}" />
+                                placeholder="VD: 110" value="{{ request.form.get('systolic','') }}" />
                             <small class="text-muted fst-italic">
-                                Bình thường: <span class="text-success fw-semibold">90 – 139 mmHg</span>
+                                Bình thường: <span class="text-success fw-semibold">90 – 119 mmHg</span>
                             </small>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">HATTr (Huyết áp tâm trương)</label>
+                            <label class="form-label fw-semibold" data-bs-toggle="tooltip" data-bs-placement="top"
+                                title="HATTr (Huyết áp tâm trương): Là áp lực thấp nhất trong động mạch khi tim giãn ra giữa các nhịp. Giá trị lý tưởng khoảng 60–79 mmHg.">
+                                HATTr (Huyết áp tâm trương)
+                            </label>
                             <input type="number" name="diastolic" id="diastolic" class="form-control" required
-                                placeholder="VD: 85" value="{{ request.form.get('diastolic','') }}" />
+                                placeholder="VD: 75" value="{{ request.form.get('diastolic','') }}" />
                             <small class="text-muted fst-italic">
-                                Bình thường: <span class="text-success fw-semibold">60 – 89 mmHg</span>
+                                Bình thường: <span class="text-success fw-semibold">60 – 79 mmHg</span>
                             </small>
                         </div>
                     </div>
+
 
 
                     <div class="row g-2 mt-2">
@@ -168,7 +175,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-success w-100 rounded-pill mt-3">
-                        🔍 Dự đoán & Nhận lời khuyên AI
+                        🔍 Dự đoán & Nhận lời khuyên
                     </button>
                 </form>
 
@@ -443,6 +450,19 @@
         }
 
     });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Kích hoạt tất cả tooltip trên trang
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(function (el) {
+    return new bootstrap.Tooltip(el, {
+      trigger: 'hover focus',   // hover + giữ chuột / chạm
+      delay: { "show": 200, "hide": 100 },
+      placement: 'top'
+    });
+  });
+});
 </script>
 
 {% endblock %}

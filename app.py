@@ -445,63 +445,55 @@ def diagnose():
         shap_file=shap_file
     )
 
-
 # ==========================================
-# 🧠 Hàm tô đậm lời khuyên AI (2 màu tối giản, chuyên nghiệp)
+# 🧠 Hàm tô đậm lời khuyên AI (1 màu nhấn - FIX BUG "600;'>")
 # ==========================================
 import re
 
 def highlight_advice(text):
-    """💡 Làm nổi bật ý chính trong lời khuyên AI với 2 tông màu: xanh dương (tích cực) và đỏ (cảnh báo)."""
+    """💡 Làm nổi bật ý chính trong lời khuyên AI chỉ với 1 màu nhấn, an toàn không lỗi HTML."""
     if not text:
         return ""
 
     # Xóa ký tự markdown (** hoặc *)
     text = re.sub(r'\*{1,3}', '', text)
 
-    # 1️⃣ Làm nổi bật các con số, phần trăm, chỉ số đo lường → màu xanh
+    # 🔹 Nhấn mạnh từ khóa (tích cực hoặc cảnh báo)
+    keywords = [
+        r"(hãy|nên|cần|duy trì|giữ|kiểm soát|theo dõi|tránh|không nên|quan trọng|nguy cơ|cao|béo phì|hút thuốc|rượu|bia|ngủ đủ|tập luyện|ăn uống|điều chỉnh)"
+    ]
+
+    for kw in keywords:
+        text = re.sub(
+            kw,
+            lambda m: f"<b class='text-primary fw-semibold'>{m.group(0)}</b>",
+            text,
+            flags=re.IGNORECASE
+        )
+
+    # 🔹 Làm nổi bật các con số / phần trăm / đơn vị đo
     text = re.sub(
         r"\b\d+(\.\d+)?\s*(%|mmHg|kg|cm)?\b",
         lambda m: f"<b class='text-primary'>{m.group(0)}</b>",
         text
     )
 
-    # 2️⃣ Tô đậm các từ khóa quan trọng / hành động tích cực → xanh dương
-    positive_phrases = [
-        r"(hãy|nên|cần|duy trì|kiểm soát|theo dõi|giữ|tăng|tập luyện|ăn uống|ngủ đủ)",
-        r"(lưu ý|quan trọng|khuyến nghị|cải thiện|điều chỉnh)"
-    ]
-    for phrase in positive_phrases:
-        text = re.sub(
-            phrase,
-            lambda m: f"<b class='text-primary fw-semibold'>{m.group(0)}</b>",
-            text,
-            flags=re.IGNORECASE
-        )
-
-    # 3️⃣ Cảnh báo hoặc yếu tố tiêu cực → màu đỏ
-    text = re.sub(
-        r"(cao|nguy cơ|nguy hiểm|nghiêm trọng|bất thường|tăng mạnh|giảm mạnh|hút thuốc|rượu|bia|béo phì)",
-        lambda m: f"<b class='text-danger fw-semibold'>{m.group(0)}</b>",
-        text,
-        flags=re.IGNORECASE
-    )
-
-    # 4️⃣ Làm mượt hiển thị: căn đều, khoảng cách dòng ổn định
+    # 🔹 Thay newline bằng <br> cho trình bày đẹp
     text = re.sub(r'\n+', '<br>', text.strip())
 
-    # ✅ Gói trong khung căn đều đẹp mắt
+    # 🔹 Gói khối nội dung
     text = f"""
     <div style="
         text-align: justify;
-        text-justify: inter-word;
         line-height: 1.8;
         font-size: 15px;
-    ">{text}</div>
+        color: #212529;
+    ">
+        {text}
+    </div>
     """
 
     return text
-
 
 # ==========================================
 # 📜 Lịch sử chẩn đoán (phân quyền + lọc bệnh nhân cho bác sĩ)
@@ -1663,6 +1655,31 @@ def chat_ai_api():
         return jsonify({
             'reply': '🚫 Hệ thống AI đang bận hoặc kết nối không ổn định. Vui lòng thử lại sau ít phút.'
         })
+# ==========================================
+# 📜 API lấy lịch sử chat AI của người dùng hiện tại
+# ==========================================
+@app.route('/chat_ai_history', methods=['GET'])
+def chat_ai_history():
+    if 'user' not in session or session.get('role') != 'patient':
+        return jsonify({'messages': []}), 403
+
+    user_id = session['user_id']
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT NoiDung, PhanHoi, FORMAT(ThoiGian, 'HH:mm dd/MM') AS ThoiGian
+        FROM TinNhanAI
+        WHERE BenhNhanID = ?
+        ORDER BY ThoiGian
+    """, (user_id,))
+    rows = cur.fetchall()
+    conn.close()
+
+    messages = [
+        {'user': r.NoiDung, 'ai': r.PhanHoi, 'time': r.ThoiGian}
+        for r in rows
+    ]
+    return jsonify({'messages': messages})
 
 # ==========================================
 # Main
