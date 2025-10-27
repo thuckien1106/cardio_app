@@ -87,6 +87,8 @@ UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+import re
+
 # ==========================================
 # 🧾 Đăng ký tài khoản
 # ==========================================
@@ -102,10 +104,15 @@ def register():
         mat_khau = request.form.get('mat_khau')
         role = 'patient'  # Mặc định là bệnh nhân
 
+        # 🧩 Kiểm tra độ mạnh mật khẩu
+        if not re.match(r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', mat_khau):
+            flash("⚠️ Mật khẩu phải ≥8 ký tự, chứa ít nhất 1 chữ hoa, 1 số và 1 ký tự đặc biệt.", "warning")
+            return render_template('register.html', today=today)
+
         conn = get_connection()
         cur = conn.cursor()
 
-        # 🔹 Kiểm tra email đã tồn tại
+        # Kiểm tra email trùng
         cur.execute("SELECT ID FROM NguoiDung WHERE Email = ?", (email,))
         if cur.fetchone():
             conn.close()
@@ -635,9 +642,8 @@ def delete_history(id):
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    # 🔒 Chỉ bác sĩ hoặc admin được phép xóa
     role = session.get('role')
-    if role not in ['doctor', 'admin']:
+    if role not in ['doctor', 'admin','patient']:
         flash("❌ Bạn không có quyền xóa bản ghi chẩn đoán.", "danger")
         return redirect(url_for('history'))
 
@@ -667,7 +673,14 @@ def edit_advice(id):
         flash("❌ Bạn không có quyền chỉnh sửa lời khuyên.", "danger")
         return redirect(url_for('login'))
 
-    new_advice = request.form.get('loi_khuyen')
+    new_advice = request.form.get('loi_khuyen', '').strip()
+
+    # 🧹 Làm sạch: loại bỏ mọi thẻ HTML, style còn sót lại
+    import re
+    from html import unescape
+    clean_text = re.sub(r'<[^>]+>', '', new_advice)   # xóa thẻ HTML
+    clean_text = unescape(clean_text)                 # giải mã HTML entities (&nbsp;)
+    clean_text = re.sub(r'\s{2,}', ' ', clean_text)   # gộp khoảng trắng
 
     conn = get_connection()
     cur = conn.cursor()
@@ -677,21 +690,22 @@ def edit_advice(id):
             UPDATE ChanDoan
             SET LoiKhuyen = ?
             WHERE ID = ?
-        """, (new_advice, id))
+        """, (clean_text, id))
         conn.commit()
-        
+        flash("✅ Đã cập nhật lời khuyên cho bệnh nhân.", "success")
 
     except Exception as e:
         conn.rollback()
-        
+        flash(f"❌ Lỗi khi cập nhật lời khuyên: {e}", "danger")
 
     finally:
         conn.close()
 
     return redirect(url_for('history'))
 
+
 # ==========================================
-# Quản lý tài khoản & hồ sơ bệnh nhân
+# Quản lý tài khoản & hồ sơ bệnh nhân (phiên bản giới hạn quyền)
 # ==========================================
 @app.route('/manage_accounts', methods=['GET', 'POST'])
 def manage_accounts():
@@ -701,6 +715,7 @@ def manage_accounts():
 
     conn = get_connection()
     cur = conn.cursor()
+
     # ================================
     # ➕ THÊM bệnh nhân mới
     # ================================
@@ -725,71 +740,98 @@ def manage_accounts():
             flash(f"❌ Lỗi khi thêm bệnh nhân: {e}", "danger")
 
     # ================================
-    # 🗑 XÓA tài khoản bệnh nhân
+    # 🗑️ XÓA tài khoản bệnh nhân (chỉ nếu bác sĩ từng chẩn đoán)
     # ================================
     if request.method == 'POST' and 'delete_patient' in request.form:
-        patient_id = request.form.get('id')
+        patient_id = int(request.form.get('id'))
+        doctor_id = session['user_id']
 
-        try:
-            # Xóa toàn bộ lịch sử chẩn đoán trước
-            cur.execute("DELETE FROM ChanDoan WHERE BenhNhanID=?", (patient_id,))
-            # Xóa tài khoản bệnh nhân
-            cur.execute("DELETE FROM NguoiDung WHERE ID=?", (patient_id,))
-            conn.commit()
-            flash("✅ Đã xóa tài khoản và toàn bộ lịch sử chẩn đoán của bệnh nhân.", "success")
-        except Exception as e:
-            conn.rollback()
-            flash(f"❌ Lỗi khi xóa: {e}", "danger")
+        # Kiểm tra quyền trước khi xóa
+        cur.execute("""
+            SELECT COUNT(*) FROM ChanDoan 
+            WHERE BacSiID=? AND BenhNhanID=?
+        """, (doctor_id, patient_id))
+        has_permission = cur.fetchone()[0] > 0
+
+        if not has_permission:
+            flash("🚫 Bạn không có quyền xóa bệnh nhân này (chưa từng chẩn đoán).", "danger")
+        else:
+            try:
+                cur.execute("DELETE FROM ChanDoan WHERE BenhNhanID=?", (patient_id,))
+                cur.execute("DELETE FROM NguoiDung WHERE ID=?", (patient_id,))
+                conn.commit()
+                flash("🗑️ Đã xóa tài khoản và toàn bộ lịch sử chẩn đoán của bệnh nhân.", "success")
+            except Exception as e:
+                conn.rollback()
+                flash(f"❌ Lỗi khi xóa: {e}", "danger")
 
     # ================================
-    # ✏️ CẬP NHẬT thông tin bệnh nhân
+    # ✏️ CẬP NHẬT thông tin bệnh nhân (chỉ nếu bác sĩ từng chẩn đoán)
     # ================================
     if request.method == 'POST' and 'update_patient' in request.form:
-        patient_id = request.form.get('id')
+        patient_id = int(request.form.get('id'))
+        doctor_id = session['user_id']
 
-        try:
-            cur.execute("""
-                UPDATE NguoiDung
-                SET HoTen = ?, GioiTinh = ?, NgaySinh = ?, DienThoai = ?, DiaChi = ?
-                WHERE ID = ?
-            """, (
-                request.form.get('ho_ten'),
-                request.form.get('gioi_tinh'),
-                request.form.get('ngay_sinh'),
-                request.form.get('dien_thoai'),
-                request.form.get('dia_chi'),
-                patient_id
-            ))
-            conn.commit()
-            flash("✅ Đã cập nhật thông tin bệnh nhân.", "success")
-        except Exception as e:
-            conn.rollback()
-            flash(f"❌ Lỗi khi cập nhật: {e}", "danger")
+        cur.execute("""
+            SELECT COUNT(*) FROM ChanDoan 
+            WHERE BacSiID=? AND BenhNhanID=?
+        """, (doctor_id, patient_id))
+        has_permission = cur.fetchone()[0] > 0
+
+        if not has_permission:
+            flash("🚫 Bạn không có quyền chỉnh sửa bệnh nhân này (chưa từng chẩn đoán).", "danger")
+        else:
+            try:
+                cur.execute("""
+                    UPDATE NguoiDung
+                    SET HoTen=?, GioiTinh=?, NgaySinh=?, DienThoai=?, DiaChi=?
+                    WHERE ID=?
+                """, (
+                    request.form.get('ho_ten'),
+                    request.form.get('gioi_tinh'),
+                    request.form.get('ngay_sinh'),
+                    request.form.get('dien_thoai'),
+                    request.form.get('dia_chi'),
+                    patient_id
+                ))
+                conn.commit()
+                flash("✅ Đã cập nhật thông tin bệnh nhân.", "success")
+            except Exception as e:
+                conn.rollback()
+                flash(f"❌ Lỗi khi cập nhật: {e}", "danger")
 
     # ================================
     # 🔎 TÌM KIẾM bệnh nhân
     # ================================
-    search = request.args.get('search', '').strip()  # Lấy từ khóa tìm kiếm từ URL (?search=...)
+    search = request.args.get('search', '').strip()
 
     if search:
         cur.execute("""
             SELECT ID, HoTen, Email, GioiTinh, NgaySinh, DienThoai, DiaChi
             FROM NguoiDung
-            WHERE Role = 'patient' AND (HoTen LIKE ? OR Email LIKE ?)
+            WHERE Role='patient' AND (HoTen LIKE ? OR Email LIKE ?)
             ORDER BY HoTen
         """, (f"%{search}%", f"%{search}%"))
     else:
         cur.execute("""
             SELECT ID, HoTen, Email, GioiTinh, NgaySinh, DienThoai, DiaChi
             FROM NguoiDung
-            WHERE Role = 'patient'
+            WHERE Role='patient'
             ORDER BY HoTen
         """)
 
     raw_patients = cur.fetchall()
 
     # ================================
-    # XỬ LÝ dữ liệu trả về
+    # 🔐 Lấy danh sách bệnh nhân bác sĩ từng chẩn đoán
+    # ================================
+    cur.execute("""
+        SELECT DISTINCT BenhNhanID FROM ChanDoan WHERE BacSiID=?
+    """, (session['user_id'],))
+    my_patients = {r.BenhNhanID for r in cur.fetchall()}
+
+    # ================================
+    # XỬ LÝ dữ liệu hiển thị
     # ================================
     patients = []
     for p in raw_patients:
@@ -813,10 +855,19 @@ def manage_accounts():
 
     conn.close()
 
-    # ✅ Truyền cả patients và từ khóa tìm kiếm vào template
-    return render_template('manage_accounts.html', patients=patients, search=search)
+    # ✅ Truyền thêm danh sách quyền my_patients sang template
+    return render_template(
+        'manage_accounts.html',
+        patients=patients,
+        search=search,
+        my_patients=my_patients
+    )
+
 from flask import flash
 from werkzeug.security import check_password_hash, generate_password_hash
+
+import re
+from flask import jsonify
 
 # ==========================================
 # 🔐 Đổi mật khẩu (xử lý AJAX)
@@ -836,6 +887,13 @@ def change_password():
     if new_pw != confirm_pw:
         return jsonify({"success": False, "message": "Mật khẩu xác nhận không khớp."})
 
+    # 🧩 Kiểm tra độ mạnh mật khẩu (ít nhất 8 ký tự, có hoa, số, đặc biệt)
+    if not re.match(r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', new_pw):
+        return jsonify({
+            "success": False,
+            "message": "Mật khẩu phải ≥8 ký tự, chứa ít nhất 1 chữ hoa, 1 số và 1 ký tự đặc biệt."
+        })
+
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT MatKhau FROM NguoiDung WHERE ID=?", (session['user_id'],))
@@ -845,11 +903,11 @@ def change_password():
         conn.close()
         return jsonify({"success": False, "message": "Mật khẩu cũ không chính xác."})
 
-    # Cập nhật trực tiếp text thuần
     cur.execute("UPDATE NguoiDung SET MatKhau=? WHERE ID=?", (new_pw, session['user_id']))
     conn.commit()
     conn.close()
     return jsonify({"success": True, "message": "Đổi mật khẩu thành công!"})
+
 
 # ==========================================
 # Hồ sơ cá nhân
@@ -1232,21 +1290,27 @@ def admin_dashboard():
     )
 
 # =========================================================
-# 👩‍⚕️ Quản lý Bác sĩ (Admin)
+# 🧑‍⚕️ Quản lý người dùng (Bác sĩ / Bệnh nhân) — Admin
 # =========================================================
-@app.route('/admin/manage_doctors', methods=['GET', 'POST'])
-def admin_manage_doctors():
-    # -------------------- Kiểm tra quyền truy cập --------------------
+@app.route('/admin/manage_users', methods=['GET', 'POST'])
+def admin_manage_users():
     if 'user' not in session or session.get('role') != 'admin':
-        flash("Bạn không có quyền truy cập trang này!", "danger")
+        flash("❌ Bạn không có quyền truy cập trang này!", "danger")
         return redirect(url_for('login'))
 
     import datetime
     conn = get_connection()
     cur = conn.cursor()
 
-    # ======================== 🟢 THÊM BÁC SĨ ========================
-    if request.method == 'POST' and 'add_doctor' in request.form:
+    # Xác định loại người dùng đang quản lý
+    role_type = request.args.get('type', 'doctor')  # mặc định là doctor
+    title_map = {'doctor': 'Bác sĩ', 'patient': 'Bệnh nhân'}
+    page_title = f"Quản lý {title_map.get(role_type, 'Người dùng')}"
+
+    # ===================================================
+    # 🟢 THÊM NGƯỜI DÙNG
+    # ===================================================
+    if request.method == 'POST' and 'add_user' in request.form:
         ho_ten = request.form.get('ho_ten', '').strip()
         email = request.form.get('email', '').strip().lower()
         mat_khau = request.form.get('mat_khau', '').strip()
@@ -1258,17 +1322,19 @@ def admin_manage_doctors():
         # Kiểm tra trùng email
         cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Email = ?", (email,))
         if cur.fetchone()[0] > 0:
-            flash("❌ Email này đã tồn tại trong hệ thống!", "danger")
+            flash("⚠️ Email này đã tồn tại!", "warning")
         else:
             cur.execute("""
                 INSERT INTO NguoiDung (HoTen, Email, MatKhau, Role, NgaySinh, GioiTinh, DienThoai, DiaChi)
-                VALUES (?, ?, ?, 'doctor', ?, ?, ?, ?)
-            """, (ho_ten, email, mat_khau, ngay_sinh, gioi_tinh, dien_thoai, dia_chi))
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (ho_ten, email, mat_khau, role_type, ngay_sinh, gioi_tinh, dien_thoai, dia_chi))
             conn.commit()
-            flash("✅ Thêm bác sĩ mới thành công!", "success")
+            flash(f"✅ Thêm {title_map[role_type]} mới thành công!", "success")
 
-    # ======================== 🟡 SỬA BÁC SĨ ========================
-    elif request.method == 'POST' and 'edit_doctor' in request.form:
+    # ===================================================
+    # ✏️ SỬA NGƯỜI DÙNG
+    # ===================================================
+    elif request.method == 'POST' and 'edit_user' in request.form:
         id = request.form.get('id')
         ho_ten = request.form.get('ho_ten', '').strip()
         gioi_tinh = request.form.get('gioi_tinh')
@@ -1278,59 +1344,61 @@ def admin_manage_doctors():
         dien_thoai = request.form.get('dien_thoai')
         dia_chi = request.form.get('dia_chi')
 
-        # Nếu không nhập mật khẩu → giữ nguyên mật khẩu cũ
         if not mat_khau:
             cur.execute("""
                 UPDATE NguoiDung
-                SET HoTen = ?, GioiTinh = ?, NgaySinh = ?, Email = ?, DienThoai = ?, DiaChi = ?
-                WHERE ID = ? AND Role = 'doctor'
-            """, (ho_ten, gioi_tinh, ngay_sinh, email, dien_thoai, dia_chi, id))
+                SET HoTen=?, GioiTinh=?, NgaySinh=?, Email=?, DienThoai=?, DiaChi=?
+                WHERE ID=? AND Role=?
+            """, (ho_ten, gioi_tinh, ngay_sinh, email, dien_thoai, dia_chi, id, role_type))
         else:
             cur.execute("""
                 UPDATE NguoiDung
-                SET HoTen = ?, GioiTinh = ?, NgaySinh = ?, Email = ?, MatKhau = ?, DienThoai = ?, DiaChi = ?
-                WHERE ID = ? AND Role = 'doctor'
-            """, (ho_ten, gioi_tinh, ngay_sinh, email, mat_khau, dien_thoai, dia_chi, id))
-
+                SET HoTen=?, GioiTinh=?, NgaySinh=?, Email=?, MatKhau=?, DienThoai=?, DiaChi=?
+                WHERE ID=? AND Role=?
+            """, (ho_ten, gioi_tinh, ngay_sinh, email, mat_khau, dien_thoai, dia_chi, id, role_type))
         conn.commit()
-        flash("✏️ Cập nhật thông tin bác sĩ thành công!", "success")
+        flash(f"✏️ Cập nhật thông tin {title_map[role_type]} thành công!", "success")
 
-    # ======================== 🔴 XÓA BÁC SĨ ========================
-    elif request.method == 'POST' and 'delete_doctor' in request.form:
+    # ===================================================
+    # 🗑️ XÓA NGƯỜI DÙNG
+    # ===================================================
+    elif request.method == 'POST' and 'delete_user' in request.form:
         id = request.form.get('id')
-        cur.execute("DELETE FROM NguoiDung WHERE ID = ? AND Role = 'doctor'", (id,))
+        cur.execute("DELETE FROM NguoiDung WHERE ID=? AND Role=?", (id, role_type))
         conn.commit()
-        flash("🗑 Đã xóa bác sĩ khỏi hệ thống!", "success")
+        flash(f"🗑️ Đã xóa {title_map[role_type]} khỏi hệ thống!", "success")
 
-    # ======================== 📋 HIỂN THỊ DANH SÁCH ========================
-    cur.execute("""
+    # ===================================================
+    # 📋 DANH SÁCH NGƯỜI DÙNG
+    # ===================================================
+    cur.execute(f"""
         SELECT ID, HoTen, Email, GioiTinh, NgaySinh, DienThoai, DiaChi, NgayTao
         FROM NguoiDung
-        WHERE Role = 'doctor'
+        WHERE Role=?
         ORDER BY NgayTao DESC
-    """)
-    doctors = cur.fetchall()
+    """, (role_type,))
+    users = cur.fetchall()
 
-    # ✅ Chuyển chuỗi ngày sang datetime (nếu SQL Server trả về dạng text)
-    for d in doctors:
-        # NgaySinh
-        if hasattr(d, 'NgaySinh') and isinstance(d.NgaySinh, str):
+    # Chuyển ngày sang kiểu datetime
+    for u in users:
+        if hasattr(u, 'NgaySinh') and isinstance(u.NgaySinh, str):
             try:
-                d.NgaySinh = datetime.datetime.strptime(d.NgaySinh.split(" ")[0], "%Y-%m-%d")
+                u.NgaySinh = datetime.datetime.strptime(u.NgaySinh.split(" ")[0], "%Y-%m-%d")
             except:
-                d.NgaySinh = None
-
-        # NgayTao
-        if hasattr(d, 'NgayTao') and isinstance(d.NgayTao, str):
+                u.NgaySinh = None
+        if hasattr(u, 'NgayTao') and isinstance(u.NgayTao, str):
             try:
-                d.NgayTao = datetime.datetime.strptime(d.NgayTao.split(" ")[0], "%Y-%m-%d")
+                u.NgayTao = datetime.datetime.strptime(u.NgayTao.split(" ")[0], "%Y-%m-%d")
             except:
-                d.NgayTao = None
+                u.NgayTao = None
 
     conn.close()
 
-    # Trả về giao diện
-    return render_template('admin_doctors.html', doctors=doctors)
+    return render_template('admin_users.html',
+                           users=users,
+                           role_type=role_type,
+                           page_title=page_title)
+
 
 # ==========================================
 # 📊 XUẤT FILE EXCEL THỐNG KÊ HỆ THỐNG - Nâng cấp chuyên nghiệp

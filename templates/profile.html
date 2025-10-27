@@ -155,4 +155,28 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const newPwInput = document.querySelector("input[name='new_password']");
+  const msg = document.getElementById("pwMessage");
+
+  newPwInput.addEventListener("input", () => {
+    const val = newPwInput.value;
+    let strength = 0;
+    if (val.length >= 8) strength++;
+    if (/[A-Z]/.test(val)) strength++;
+    if (/\d/.test(val)) strength++;
+    if (/[@$!%*?&]/.test(val)) strength++;
+
+    if (strength <= 1) {
+      msg.innerHTML = "<span class='text-danger fw-semibold'>🔴 Mật khẩu yếu</span>";
+    } else if (strength === 2 || strength === 3) {
+      msg.innerHTML = "<span class='text-warning fw-semibold'>🟡 Mật khẩu trung bình</span>";
+    } else {
+      msg.innerHTML = "<span class='text-success fw-semibold'>🟢 Mật khẩu mạnh</span>";
+    }
+  });
+});
+</script>
+
 {% endblock %}

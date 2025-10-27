@@ -222,7 +222,7 @@
               {% endif %}
             </div>
 
-            {% if session['role'] == 'doctor','admin' %}
+            {% if session['role'] == 'doctor','admin','patient' %}
             <div class="col-12 text-end">
               <form method="post" action="{{ url_for('delete_history', id=r.ChanDoanID) }}"
                 onsubmit="return confirm('Bạn có chắc chắn muốn xóa chẩn đoán này không?');">
@@ -247,7 +247,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
               </div>
               <div class="modal-body">
-                <textarea name="loi_khuyen" class="form-control" rows="6">{{ r.LoiKhuyen or '' }}</textarea>
+                <textarea name="loi_khuyen" class="form-control" rows="6">{{ r.LoiKhuyen | striptags | safe }}</textarea>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>

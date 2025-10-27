@@ -150,10 +150,20 @@
             </li>
             <li class="nav-item">
               <a
-                class="nav-link {% if request.endpoint == 'admin_manage_doctors' %}active{% endif %}"
-                href="{{ url_for('admin_manage_doctors') }}"
-                >👩‍⚕️ Quản lý bác sĩ</a
+                class="nav-link {% if request.endpoint == 'admin_manage_users' and request.args.get('type') == 'doctor' %}active{% endif %}"
+                href="{{ url_for('admin_manage_users', type='doctor') }}"
               >
+                👩‍⚕️ Quản lý bác sĩ
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.endpoint == 'admin_manage_users' and request.args.get('type') == 'patient' %}active{% endif %}"
+                href="{{ url_for('admin_manage_users', type='patient') }}"
+              >
+                🧍‍♂️ Quản lý bệnh nhân
+              </a>
             </li>
             <li class="nav-item">
               <a
@@ -319,16 +329,19 @@
           opacity: 0;
           transform: translateY(-10px);
         }
+
         to {
           opacity: 1;
           transform: translateY(0);
         }
       }
+
       @keyframes fadeOut {
         from {
           opacity: 1;
           transform: translateY(0);
         }
+
         to {
           opacity: 0;
           transform: translateY(-10px);
@@ -412,6 +425,7 @@
         z-index: 2000;
         transition: all 0.25s ease;
       }
+
       .chat-bubble:hover {
         transform: scale(1.08);
       }
@@ -440,6 +454,7 @@
         justify-content: space-between;
         align-items: center;
       }
+
       .ai-avatar {
         width: 32px;
         height: 32px;
@@ -473,19 +488,23 @@
         display: flex;
         align-items: flex-start;
       }
+
       .msg-user {
         justify-content: flex-end;
       }
+
       .msg-user .bubble {
         background: #00c853;
         color: white;
         border-radius: 18px 18px 4px 18px;
       }
+
       .msg-ai .bubble {
         background: #e9ecef;
         color: #212529;
         border-radius: 18px 18px 18px 4px;
       }
+
       .bubble {
         padding: 8px 14px;
         max-width: 80%;
@@ -493,12 +512,14 @@
         line-height: 1.4;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
       }
+
       .typing {
         font-style: italic;
         color: #6c757d;
         font-size: 0.9rem;
         margin-left: 5px;
       }
+
       @media (max-width: 480px) {
         .chat-window {
           width: 90%;

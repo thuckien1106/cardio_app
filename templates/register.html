@@ -25,6 +25,7 @@
 
     <!-- Form đăng ký -->
     <form method="post">
+      <!-- Họ tên -->
       <div class="mb-3 input-group rounded-pill shadow-sm">
         <span class="input-group-text"
           ><i class="bi bi-person-fill text-primary"></i
@@ -38,6 +39,7 @@
         />
       </div>
 
+      <!-- Giới tính -->
       <div class="mb-3 input-group rounded-pill shadow-sm">
         <span class="input-group-text"
           ><i class="bi bi-gender-ambiguous text-primary"></i
@@ -53,6 +55,7 @@
         </select>
       </div>
 
+      <!-- Ngày sinh -->
       <div class="mb-3 input-group rounded-pill shadow-sm">
         <span class="input-group-text"
           ><i class="bi bi-calendar-date text-primary"></i
@@ -66,6 +69,7 @@
         />
       </div>
 
+      <!-- Email -->
       <div class="mb-3 input-group rounded-pill shadow-sm">
         <span class="input-group-text"
           ><i class="bi bi-envelope-fill text-primary"></i
@@ -79,19 +83,27 @@
         />
       </div>
 
-      <div class="mb-4 input-group rounded-pill shadow-sm">
+      <!-- Mật khẩu -->
+      <div class="mb-4 input-group rounded-pill shadow-sm position-relative">
         <span class="input-group-text"
           ><i class="bi bi-lock-fill text-primary"></i
         ></span>
         <input
           type="password"
           name="mat_khau"
+          id="pwInput"
           class="form-control border-0 rounded-end rounded-pill"
-          placeholder="Mật khẩu"
+          placeholder="Mật khẩu (ít nhất 8 ký tự, có ký tự đặc biệt, chữ hoa và số)"
           required
         />
       </div>
 
+      <!-- Hiển thị độ mạnh mật khẩu -->
+      <div class="text-center mb-3">
+        <small id="pwStrength" class="fw-semibold"></small>
+      </div>
+
+      <!-- Nút đăng ký -->
       <button
         type="submit"
         class="btn btn-success w-100 py-2 rounded-pill fw-semibold shadow-sm"
@@ -110,5 +122,35 @@
     </form>
   </div>
 </div>
+
+<!-- Script kiểm tra độ mạnh mật khẩu -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("pwInput");
+    const label = document.getElementById("pwStrength");
+
+    input.addEventListener("input", () => {
+      const val = input.value;
+      let s = 0;
+      if (val.length >= 8) s++;
+      if (/[A-Z]/.test(val)) s++;
+      if (/\d/.test(val)) s++;
+      if (/[@$!%*?&]/.test(val)) s++;
+
+      if (!val) {
+        label.innerHTML = "";
+      } else if (s <= 1) {
+        label.innerHTML = "🔴 Mật khẩu yếu";
+        label.className = "text-danger fw-semibold";
+      } else if (s === 2 || s === 3) {
+        label.innerHTML = "🟡 Mật khẩu trung bình";
+        label.className = "text-warning fw-semibold";
+      } else {
+        label.innerHTML = "🟢 Mật khẩu mạnh";
+        label.className = "text-success fw-semibold";
+      }
+    });
+  });
+</script>
 
 {% endblock %}
