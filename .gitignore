@@ -18,9 +18,6 @@ __pycache__/
 # Ignore IDE/project settings
 .vscode/
 .idea/
-
-# Ignore large model/data files
-*.json
 *.csv
 *.pkl
 *.h5
