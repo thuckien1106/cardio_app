@@ -13,6 +13,9 @@ import shap
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import sqlite3
+USE_SQLITE = os.getenv("DB_ENGINE", "sqlite").lower() == "sqlite"
+SQLITE_PATH = os.getenv("DB_SQLITE_PATH", os.path.join(os.path.dirname(__file__), "cvd_app.db"))
 
 # ==========================================
 # Cấu hình Flask
@@ -25,13 +28,18 @@ app.secret_key = os.getenv("SECRET_KEY", "cvdapp-secret-key")
 # Kết nối SQL Server
 # ==========================================
 def get_connection():
-    return pyodbc.connect(
-        "DRIVER={SQL Server};"
-        "SERVER=HKT;"
-        "DATABASE=CVD_App;"
-        "UID=sa;"
-        "PWD=123"
-    )
+    if USE_SQLITE:
+        conn = sqlite3.connect(SQLITE_PATH, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        return conn
+    else:
+        return pyodbc.connect(
+            "DRIVER={SQL Server};"
+            "SERVER=HKT;"
+            "DATABASE=CVD_App;"
+            "UID=sa;"
+            "PWD=123"
+        )
 
 # ==========================================
 # Cấu hình Gemini AI
@@ -512,7 +520,7 @@ def history():
     conn = get_connection()
     cur = conn.cursor()
 
-    # ===== Lấy các tham số lọc từ URL =====
+    # ===== Lấy các tham số lọc =====
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     patient_id = request.args.get('patient_id')
@@ -520,29 +528,21 @@ def history():
     risk_filter = request.args.get('risk_filter')
     sort_order = request.args.get('sort', 'desc')
 
-    # ===== Điều kiện mặc định =====
     where_clause = "WHERE 1=1"
     params = []
 
     # ===== Phân quyền =====
     role = session.get('role')
-
     if role == 'doctor':
-        # 👨‍⚕️ Bác sĩ xem các ca do mình chẩn đoán
         where_clause += " AND BacSiID = ?"
         params.append(session['user_id'])
-        # Và có thể lọc thêm theo bệnh nhân
         if patient_id:
             where_clause += " AND BenhNhanID = ?"
             params.append(patient_id)
-
     elif role == 'patient':
-        # 🧑‍🦱 Bệnh nhân xem toàn bộ các ca của mình
         where_clause += " AND BenhNhanID = ?"
         params.append(session['user_id'])
-
     else:
-        # 🧑‍💼 Admin xem toàn bộ, có thể lọc theo bác sĩ hoặc bệnh nhân
         if doctor_id:
             where_clause += " AND BacSiID = ?"
             params.append(doctor_id)
@@ -552,24 +552,27 @@ def history():
 
     # ===== Lọc theo ngày =====
     if start_date:
-        where_clause += " AND NgayChanDoan >= CONVERT(DATE, ?)"
+        where_clause += (
+            " AND date(NgayChanDoan) >= date(?)" if USE_SQLITE else " AND NgayChanDoan >= CONVERT(DATE, ?)"
+        )
         params.append(start_date)
     if end_date:
-        where_clause += " AND NgayChanDoan <= CONVERT(DATE, ?)"
+        where_clause += (
+            " AND date(NgayChanDoan) <= date(?)" if USE_SQLITE else " AND NgayChanDoan <= CONVERT(DATE, ?)"
+        )
         params.append(end_date)
 
     # ===== Lọc theo nguy cơ =====
     if risk_filter == 'high':
-        where_clause += " AND LOWER(NguyCo) LIKE '%cao%'"
+        where_clause += " AND lower(NguyCo) LIKE '%cao%'"
     elif risk_filter == 'low':
-        where_clause += " AND LOWER(NguyCo COLLATE SQL_Latin1_General_Cp1253_CI_AI) LIKE '%thap%'"
+        where_clause += " AND lower(NguyCo) LIKE '%thap%'"
 
     # ===== Truy vấn chính =====
     query = f"""
         SELECT ChanDoanID, BenhNhanID, TenBenhNhan, GioiTinh, Tuoi, TenBacSi, NgayChanDoan,
-       BMI, HuyetApTamThu, HuyetApTamTruong, Cholesterol, DuongHuyet,
-       HutThuoc, UongCon, TapTheDuc, NguyCo, LoiKhuyen
-
+               BMI, HuyetApTamThu, HuyetApTamTruong, Cholesterol, DuongHuyet,
+               HutThuoc, UongCon, TapTheDuc, NguyCo, LoiKhuyen
         FROM V_LichSuChanDoan
         {where_clause}
         ORDER BY NgayChanDoan {'DESC' if sort_order == 'desc' else 'ASC'}
@@ -579,7 +582,7 @@ def history():
     records = cur.fetchall()
     conn.close()
 
-    # ✅ Đếm tổng số bản ghi
+    # ✅ Tổng số bản ghi
     total_records = len(records)
 
     # ✅ Highlight lời khuyên
@@ -595,7 +598,6 @@ def history():
     doctors, patients = [], []
 
     if role == 'doctor':
-        # Danh sách bệnh nhân mà bác sĩ đó đã chẩn đoán
         conn2 = get_connection()
         cur2 = conn2.cursor()
         cur2.execute("""
@@ -608,7 +610,6 @@ def history():
         conn2.close()
 
     elif role == 'admin':
-        # Danh sách bác sĩ và bệnh nhân cho admin
         conn2 = get_connection()
         cur2 = conn2.cursor()
         cur2.execute("SELECT ID, HoTen FROM NguoiDung WHERE Role='doctor'")
@@ -617,7 +618,6 @@ def history():
         patients = cur2.fetchall()
         conn2.close()
 
-    # ===== Render =====
     return render_template(
         'history.html',
         records=records,
@@ -1165,11 +1165,10 @@ def logout():
         flash("⚠️ Bạn chưa đăng nhập!", "warning")
     return redirect(url_for('login'))
 # =========================================================
-# 📊 DASHBOARD THỐNG KÊ (Admin - Bản nâng cấp chuyên sâu)
+# 📊 DASHBOARD THỐNG KÊ (Admin - tương thích SQL Server + SQLite)
 # =========================================================
 @app.route('/admin/dashboard')
 def admin_dashboard():
-    # --- Kiểm tra quyền truy cập ---
     if 'user' not in session or session.get('role') != 'admin':
         flash("Bạn không có quyền truy cập trang này!", "danger")
         return redirect(url_for('login'))
@@ -1177,75 +1176,86 @@ def admin_dashboard():
     conn = get_connection()
     cur = conn.cursor()
 
-    # ========================== 1️⃣ TỔNG QUAN ==========================
-    cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='doctor'")
-    total_doctors = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='patient'")
-    total_patients = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM ChanDoan")
-    total_diagnoses = cur.fetchone()[0]
+    # ================== 1️⃣ Tổng quan ==================
+    total_doctors = cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='doctor'").fetchone()[0]
+    total_patients = cur.execute("SELECT COUNT(*) FROM NguoiDung WHERE Role='patient'").fetchone()[0]
+    total_diagnoses = cur.execute("SELECT COUNT(*) FROM ChanDoan").fetchone()[0]
 
-    # ========================== 2️⃣ XU HƯỚNG CHẨN ĐOÁN ==========================
-    cur.execute("""
-        SELECT FORMAT(NgayChanDoan, 'MM-yyyy') AS Thang,
-               COUNT(*) AS SoLuong,
-               SUM(CASE WHEN LOWER(NguyCo) LIKE '%cao%' THEN 1 ELSE 0 END) AS SoCao
-        FROM ChanDoan
-        GROUP BY FORMAT(NgayChanDoan, 'MM-yyyy')
-        ORDER BY MIN(NgayChanDoan)
-    """)
+    # ================== 2️⃣ Xu hướng chẩn đoán ==================
+    if USE_SQLITE:
+        cur.execute("""
+            SELECT strftime('%m-%Y', NgayChanDoan) AS Thang,
+                   COUNT(*) AS SoLuong,
+                   SUM(CASE WHEN lower(NguyCo) LIKE '%cao%' THEN 1 ELSE 0 END) AS SoCao
+            FROM ChanDoan
+            GROUP BY strftime('%m-%Y', NgayChanDoan)
+            ORDER BY MIN(NgayChanDoan)
+        """)
+    else:
+        cur.execute("""
+            SELECT FORMAT(NgayChanDoan, 'MM-yyyy') AS Thang,
+                   COUNT(*) AS SoLuong,
+                   SUM(CASE WHEN LOWER(NguyCo) LIKE '%cao%' THEN 1 ELSE 0 END) AS SoCao
+            FROM ChanDoan
+            GROUP BY FORMAT(NgayChanDoan, 'MM-yyyy')
+            ORDER BY MIN(NgayChanDoan)
+        """)
     monthly = cur.fetchall()
-    months = [row.Thang for row in monthly]
-    counts = [row.SoLuong for row in monthly]
-    high_risk = [row.SoCao for row in monthly]
+    months = [r[0] for r in monthly]
+    counts = [r[1] for r in monthly]
+    high_risk = [r[2] for r in monthly]
 
-    # ========================== 3️⃣ TỶ LỆ NGUY CƠ ==========================
-    cur.execute("""
-        SELECT NguyCo, COUNT(*) AS SoLuong
-        FROM ChanDoan
-        GROUP BY NguyCo
-    """)
+    # ================== 3️⃣ Tỷ lệ nguy cơ ==================
+    cur.execute("SELECT NguyCo, COUNT(*) FROM ChanDoan GROUP BY NguyCo")
     risk_data = cur.fetchall()
-    risk_labels = [row.NguyCo for row in risk_data]
-    risk_values = [row.SoLuong for row in risk_data]
+    risk_labels = [r[0] for r in risk_data]
+    risk_values = [r[1] for r in risk_data]
 
-    # ========================== 4️⃣ TOP BÁC SĨ ==========================
-    cur.execute("""
-        SELECT TOP 5 bs.HoTen, COUNT(cd.ID) AS SoCa,
-               SUM(CASE WHEN cd.NguyCo LIKE '%cao%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS TyLeCao
-        FROM ChanDoan cd
-        JOIN NguoiDung bs ON cd.BacSiID = bs.ID
-        GROUP BY bs.HoTen
-        ORDER BY SoCa DESC
-    """)
+    # ================== 4️⃣ Top bác sĩ ==================
+    if USE_SQLITE:
+        cur.execute("""
+            SELECT bs.HoTen, COUNT(cd.ID) AS SoCa,
+                   SUM(CASE WHEN cd.NguyCo LIKE '%cao%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS TyLeCao
+            FROM ChanDoan cd
+            JOIN NguoiDung bs ON cd.BacSiID = bs.ID
+            GROUP BY bs.HoTen
+            ORDER BY SoCa DESC
+            LIMIT 5
+        """)
+    else:
+        cur.execute("""
+            SELECT TOP 5 bs.HoTen, COUNT(cd.ID) AS SoCa,
+                   SUM(CASE WHEN cd.NguyCo LIKE '%cao%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS TyLeCao
+            FROM ChanDoan cd
+            JOIN NguoiDung bs ON cd.BacSiID = bs.ID
+            GROUP BY bs.HoTen
+            ORDER BY SoCa DESC
+        """)
     top_doctors = cur.fetchall()
-    top_names = [row.HoTen for row in top_doctors]
-    top_counts = [row.SoCa for row in top_doctors]
-    top_rates = [round(row.TyLeCao, 1) for row in top_doctors]
+    top_names = [r[0] for r in top_doctors]
+    top_counts = [r[1] for r in top_doctors]
+    top_rates = [round(r[2] or 0, 1) for r in top_doctors]
 
-    # ========================== 5️⃣ TRUNG BÌNH CHỈ SỐ Y KHOA ==========================
+    # ================== 5️⃣ Trung bình chỉ số ==================
     cur.execute("""
         SELECT 
-            ROUND(AVG(BMI), 1) AS AvgBMI,
-            ROUND(AVG(HuyetApTamThu), 0) AS AvgHATT,
-            ROUND(AVG(HuyetApTamTruong), 0) AS AvgHATTr,
-            SUM(CASE WHEN HutThuoc=1 THEN 1 ELSE 0 END)*100.0/COUNT(*) AS SmokePercent,
-            SUM(CASE WHEN UongCon=1 THEN 1 ELSE 0 END)*100.0/COUNT(*) AS AlcoPercent,
-            SUM(CASE WHEN TapTheDuc=1 THEN 1 ELSE 0 END)*100.0/COUNT(*) AS ActivePercent
+            AVG(BMI), AVG(HuyetApTamThu), AVG(HuyetApTamTruong),
+            SUM(CASE WHEN HutThuoc=1 THEN 1 ELSE 0 END)*100.0/COUNT(*),
+            SUM(CASE WHEN UongCon=1 THEN 1 ELSE 0 END)*100.0/COUNT(*),
+            SUM(CASE WHEN TapTheDuc=1 THEN 1 ELSE 0 END)*100.0/COUNT(*)
         FROM ChanDoan
     """)
     row = cur.fetchone()
-    avg_bmi = row.AvgBMI or 0
-    avg_systolic = row.AvgHATT or 0
-    avg_diastolic = row.AvgHATTr or 0
-    smoke_percent = round(row.SmokePercent or 0, 1)
-    alco_percent = round(row.AlcoPercent or 0, 1)
-    active_percent = round(row.ActivePercent or 0, 1)
+    avg_bmi = round(row[0] or 0, 1)
+    avg_systolic = round(row[1] or 0)
+    avg_diastolic = round(row[2] or 0)
+    smoke_percent = round(row[3] or 0, 1)
+    alco_percent = round(row[4] or 0, 1)
+    active_percent = round(row[5] or 0, 1)
 
-    # ========================== 6️⃣ HIỆU SUẤT BÁC SĨ ==========================
+    # ================== 6️⃣ Hiệu suất bác sĩ ==================
     cur.execute("""
-        SELECT ND.HoTen AS BacSi,
-               COUNT(CD.ID) AS SoCa,
+        SELECT ND.HoTen, COUNT(CD.ID) AS SoCa,
                SUM(CASE WHEN CD.NguyCo LIKE '%cao%' THEN 1 ELSE 0 END)*100.0/COUNT(*) AS TyLeCao
         FROM ChanDoan CD
         JOIN NguoiDung ND ON CD.BacSiID = ND.ID
@@ -1253,14 +1263,12 @@ def admin_dashboard():
         ORDER BY SoCa DESC
     """)
     perf_rows = cur.fetchall()
-    perf_names = [r.BacSi for r in perf_rows]
-    perf_cases = [r.SoCa for r in perf_rows]
-    perf_rate = [round(r.TyLeCao or 0, 1) for r in perf_rows]
+    perf_names = [r[0] for r in perf_rows]
+    perf_cases = [r[1] for r in perf_rows]
+    perf_rate = [round(r[2] or 0, 1) for r in perf_rows]
 
-    # ========================== 7️⃣ TỔNG SỐ BỆNH NHÂN CÓ CHẨN ĐOÁN ==========================
-    cur.execute("SELECT COUNT(DISTINCT BenhNhanID) FROM ChanDoan")
-    diagnosed_patients = cur.fetchone()[0]
-
+    # ================== 7️⃣ Tổng số bệnh nhân có chẩn đoán ==================
+    diagnosed_patients = cur.execute("SELECT COUNT(DISTINCT BenhNhanID) FROM ChanDoan").fetchone()[0]
     conn.close()
 
     return render_template(
