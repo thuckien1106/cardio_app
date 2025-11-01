@@ -54,7 +54,7 @@ def get_ai_advice_cached(prompt: str) -> str:
 xgb_model = None
 try:
     import xgboost as xgb
-    MODEL_PATH = "xgb_heart30.json"
+    MODEL_PATH = "xgb_p4.json"
     if os.path.exists(MODEL_PATH):
         xgb_model = xgb.XGBClassifier()
         xgb_model.load_model(MODEL_PATH)
