@@ -19,8 +19,6 @@ __pycache__/
 .vscode/
 .idea/
 
-# Ignore large model/data files
-*.json
 *.csv
 *.pkl
 *.h5

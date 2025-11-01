@@ -14,7 +14,19 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import sqlite3
-USE_SQLITE = os.getenv("DB_ENGINE", "sqlite").lower() == "sqlite"
+import sys
+
+# ✅ Tự nhận biết môi trường chạy (Render hoặc local)
+IS_RENDER = os.getenv("RENDER", "false").lower() == "true" or "render.com" in os.getenv("RENDER_EXTERNAL_URL", "")
+USE_SQLITE = IS_RENDER or os.getenv("DB_ENGINE", "sqlite").lower() == "sqlite"
+
+# ✅ Đường dẫn file SQLite
+SQLITE_PATH = os.getenv("DB_SQLITE_PATH", os.path.join(os.path.dirname(__file__), "cvd_app.db"))
+
+# ⚙️ In log để dễ kiểm tra
+print("🔍 Environment detected:", "Render (SQLite)" if USE_SQLITE else "Local (SQL Server)")
+print("📂 Database path:", SQLITE_PATH if USE_SQLITE else "SQL Server: HKT\\CVD_App")
+
 SQLITE_PATH = os.getenv("DB_SQLITE_PATH", os.path.join(os.path.dirname(__file__), "cvd_app.db"))
 
 # ==========================================
@@ -28,18 +40,23 @@ app.secret_key = os.getenv("SECRET_KEY", "cvdapp-secret-key")
 # Kết nối SQL Server
 # ==========================================
 def get_connection():
-    if USE_SQLITE:
-        conn = sqlite3.connect(SQLITE_PATH, check_same_thread=False)
-        conn.row_factory = sqlite3.Row
-        return conn
-    else:
-        return pyodbc.connect(
-            "DRIVER={SQL Server};"
-            "SERVER=HKT;"
-            "DATABASE=CVD_App;"
-            "UID=sa;"
-            "PWD=123"
-        )
+    """Tự động kết nối đúng DB (SQLite hoặc SQL Server)."""
+    try:
+        if USE_SQLITE:
+            conn = sqlite3.connect(SQLITE_PATH, check_same_thread=False)
+            conn.row_factory = sqlite3.Row
+            return conn
+        else:
+            return pyodbc.connect(
+                "DRIVER={SQL Server};"
+                "SERVER=HKT;"
+                "DATABASE=CVD_App;"
+                "UID=sa;"
+                "PWD=123"
+            )
+    except Exception as e:
+        print(f"⚠️ Không thể kết nối CSDL: {e}")
+        raise
 
 # ==========================================
 # Cấu hình Gemini AI
