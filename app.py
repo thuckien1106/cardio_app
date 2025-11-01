@@ -121,10 +121,13 @@ def register():
 
         # Kiểm tra email trùng
         cur.execute("SELECT ID FROM NguoiDung WHERE Email = ?", (email,))
-        if cur.fetchone():
-            conn.close()
-            flash("⚠️ Email đã được sử dụng! Vui lòng chọn email khác.", "warning")
-            return render_template('register.html', today=today)
+        row = cur.fetchone()
+        if row:
+            row_id = row["ID"] if isinstance(row, sqlite3.Row) else row.ID
+            if row_id:
+                conn.close()
+                flash("⚠️ Email đã được sử dụng! Vui lòng chọn email khác.", "warning")
+                return render_template('register.html', today=today)
 
         try:
             cur.execute("""
@@ -144,9 +147,8 @@ def register():
             return render_template('register.html', today=today)
 
     return render_template('register.html', today=today)
-
 # ==========================================
-# 🔐 Đăng nhập hệ thống
+# 🧾 Đăng nhập tài khoản
 # ==========================================
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -164,31 +166,28 @@ def login():
         user = cur.fetchone()
         conn.close()
 
-        # 🔹 Kiểm tra tài khoản & mật khẩu
-        if user and user.MatKhau == pw:
-            # Tạo session
-            session['user_id'] = user.ID
-            session['user'] = user.HoTen
-            session['role'] = user.Role
+        # ✅ Đảm bảo tương thích cả sqlite3.Row và pyodbc.Row
+        if user:
+            matkhau = user["MatKhau"] if isinstance(user, sqlite3.Row) else user.MatKhau
+            if matkhau == pw:
+                session['user_id'] = user["ID"] if isinstance(user, sqlite3.Row) else user.ID
+                session['user'] = user["HoTen"] if isinstance(user, sqlite3.Row) else user.HoTen
+                session['role'] = user["Role"] if isinstance(user, sqlite3.Row) else user.Role
 
-            # Hiển thị thông báo chào mừng
-            flash(f"🎉 Chào mừng {user.HoTen} đăng nhập thành công!", "success")
+                flash(f"🎉 Chào mừng {session['user']} đăng nhập thành công!", "success")
 
-            # ✅ Điều hướng theo vai trò
-            if user.Role == 'admin':
-                return redirect(url_for('history'))
-            elif user.Role == 'doctor':
-                return redirect(url_for('home'))  
-            else:
-                return redirect(url_for('home'))
+                if session['role'] == 'admin':
+                    return redirect(url_for('history'))
+                elif session['role'] == 'doctor':
+                    return redirect(url_for('home'))
+                else:
+                    return redirect(url_for('home'))
 
-        else:
-            # ❌ Sai mật khẩu → hiển thị ngay
-            flash("❌ Sai tài khoản hoặc mật khẩu. Vui lòng thử lại!", "danger")
-            return render_template('login.html')
+        flash("❌ Sai tài khoản hoặc mật khẩu. Vui lòng thử lại!", "danger")
+        return render_template('login.html')
 
-    # GET request → hiển thị form
     return render_template('login.html')
+
 
 # ==========================================
 # Trang chủ
@@ -209,28 +208,32 @@ def get_patient_info(benhnhan_id):
     conn = get_connection()
     cur = conn.cursor()
 
-    # 🔹 Lấy trực tiếp tuổi và giới tính từ hồ sơ NguoiDung
-    cur.execute("""
-        SELECT 
-            DATEDIFF(YEAR, NgaySinh, GETDATE()) AS Tuoi,
-            GioiTinh
-        FROM NguoiDung
-        WHERE ID = ?
-    """, (benhnhan_id,))
-
+    if USE_SQLITE:
+        cur.execute("""
+            SELECT 
+                CAST(strftime('%Y','now') - strftime('%Y', NgaySinh) AS INTEGER) AS Tuoi,
+                GioiTinh
+            FROM NguoiDung
+            WHERE ID = ?
+        """, (benhnhan_id,))
+    else:
+        cur.execute("""
+            SELECT DATEDIFF(YEAR, NgaySinh, GETDATE()) AS Tuoi, GioiTinh
+            FROM NguoiDung
+            WHERE ID = ?
+        """, (benhnhan_id,))
     row = cur.fetchone()
     conn.close()
 
     if row:
-        return jsonify({
-            "tuoi": row.Tuoi,
-            "gioitinh": row.GioiTinh
-        })
+        tuoi = row["Tuoi"] if isinstance(row, sqlite3.Row) else row.Tuoi
+        gioitinh = row["GioiTinh"] if isinstance(row, sqlite3.Row) else row.GioiTinh
+        return jsonify({"tuoi": tuoi, "gioitinh": gioitinh})
     else:
         return jsonify({"tuoi": None, "gioitinh": None})
 
 # ==========================================
-# 🩺 Chẩn đoán bệnh tim mạch + Giải thích SHAP
+# 🩺 Chẩn đoán bệnh tim mạch + Giải thích SHAP (giữ nguyên logic, fix SQLite)
 # ==========================================
 @app.route('/diagnose', methods=['GET', 'POST'])
 def diagnose():
@@ -243,7 +246,9 @@ def diagnose():
     if session.get('role') == 'doctor':
         cur.execute("SELECT ID, HoTen FROM NguoiDung WHERE Role='patient'")
         benhnhans = [
-            {"ID": r.ID, "MaBN": f"BN{r.ID:03}", "HoTen": r.HoTen}
+            {"ID": r["ID"] if isinstance(r, sqlite3.Row) else r.ID,
+             "MaBN": f"BN{r['ID'] if isinstance(r, sqlite3.Row) else r.ID:03}",
+             "HoTen": r["HoTen"] if isinstance(r, sqlite3.Row) else r.HoTen}
             for r in cur.fetchall()
         ]
 
@@ -285,8 +290,7 @@ def diagnose():
             # --- Dự đoán bằng mô hình ---
             if xgb_model:
                 X = np.array([[age, gender, systolic, diastolic,
-                               chol, glucose, smoking, alcohol, exercise, bmi]],
-                             dtype=float)
+                               chol, glucose, smoking, alcohol, exercise, bmi]], dtype=float)
                 prob = float(xgb_model.predict_proba(X)[0, 1])
                 risk_percent = round(prob * 100, 1)
                 risk_level = 'high' if prob >= threshold else 'low'
@@ -352,19 +356,27 @@ def diagnose():
                     print(f"⚠️ Lỗi khi tạo biểu đồ SHAP: {e}")
 
             # --- Lưu kết quả vào CSDL ---
-            chol_label = {0: "Bình thường", 1: "Cao nhẹ", 2: "Cao"}
-            gluc_label = {0: "Bình thường", 1: "Cao nhẹ", 2: "Cao"}
-
             bacsi_id = session['user_id'] if session.get('role') == 'doctor' else None
-            cur.execute("""
-                INSERT INTO ChanDoan
-                (BenhNhanID, BacSiID, Tuoi, GioiTinh, BMI, HuyetApTamThu, HuyetApTamTruong,
-                Cholesterol, DuongHuyet, HutThuoc, UongCon, TapTheDuc,
-                NguyCo, LoiKhuyen, NgayChanDoan)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())
-            """, (benhnhan_id, bacsi_id, age, gender_raw, bmi, systolic, diastolic,
-                  chol_label.get(chol), gluc_label.get(glucose),
-                  smoking, alcohol, exercise, nguy_co_text, ai_advice))
+            if USE_SQLITE:
+                cur.execute("""
+                    INSERT INTO ChanDoan
+                    (BenhNhanID, BacSiID, Tuoi, GioiTinh, BMI, HuyetApTamThu, HuyetApTamTruong,
+                    Cholesterol, DuongHuyet, HutThuoc, UongCon, TapTheDuc,
+                    NguyCo, LoiKhuyen, NgayChanDoan)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, date('now'))
+                """, (benhnhan_id, bacsi_id, age, gender_raw, bmi, systolic, diastolic,
+                      chol_label.get(chol), gluc_label.get(glucose),
+                      smoking, alcohol, exercise, nguy_co_text, ai_advice))
+            else:
+                cur.execute("""
+                    INSERT INTO ChanDoan
+                    (BenhNhanID, BacSiID, Tuoi, GioiTinh, BMI, HuyetApTamThu, HuyetApTamTruong,
+                    Cholesterol, DuongHuyet, HutThuoc, UongCon, TapTheDuc,
+                    NguyCo, LoiKhuyen, NgayChanDoan)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())
+                """, (benhnhan_id, bacsi_id, age, gender_raw, bmi, systolic, diastolic,
+                      chol_label.get(chol), gluc_label.get(glucose),
+                      smoking, alcohol, exercise, nguy_co_text, ai_advice))
             conn.commit()
 
         except Exception as e:
@@ -413,8 +425,7 @@ def diagnose():
 
                 if xgb_model:
                     X = np.array([[age, gender, systolic, diastolic,
-                                   chol, gluc, smoking, alcohol, exercise, bmi]],
-                                 dtype=float)
+                                   chol, gluc, smoking, alcohol, exercise, bmi]], dtype=float)
                     prob = float(xgb_model.predict_proba(X)[0, 1])
                 else:
                     prob = 0.5
@@ -440,7 +451,6 @@ def diagnose():
                 index=False,
                 classes="table table-hover table-striped text-center align-middle small shadow-sm rounded-3"
             )
-
             flash("✅ Dự đoán từ file Excel đã hoàn tất!", "success")
 
         except Exception as e:
@@ -458,6 +468,7 @@ def diagnose():
         file_result=file_result,
         shap_file=shap_file
     )
+
 
 # ==========================================
 # 🧠 Hàm tô đậm lời khuyên AI (1 màu nhấn - FIX BUG "600;'>")
@@ -510,7 +521,7 @@ def highlight_advice(text):
     return text
 
 # ==========================================
-# 📜 Lịch sử chẩn đoán (phân quyền + lọc bệnh nhân cho bác sĩ)
+# 📜 Lịch sử chẩn đoán (phân quyền + lọc bệnh nhân cho bác sĩ) — Giữ nguyên logic, fix SQLite
 # ==========================================
 @app.route('/history')
 def history():
@@ -578,8 +589,39 @@ def history():
         ORDER BY NgayChanDoan {'DESC' if sort_order == 'desc' else 'ASC'}
     """
 
-    cur.execute(query, params)
-    records = cur.fetchall()
+    try:
+        cur.execute(query, params)
+        records = cur.fetchall()
+        from datetime import datetime
+
+# ✅ Chuẩn hóa kiểu dữ liệu NgayChanDoan
+        normalized_records = []
+        for r in records:
+            if isinstance(r, sqlite3.Row):
+                r_dict = dict(r)
+                raw_date = r_dict.get("NgayChanDoan")
+                if isinstance(raw_date, str):
+                    try:
+                        r_dict["NgayChanDoan"] = datetime.strptime(raw_date.split()[0], "%Y-%m-%d")
+                    except:
+                        pass
+                normalized_records.append(r_dict)
+            else:
+                # pyodbc.Row (SQL Server)
+                if isinstance(r.NgayChanDoan, str):
+                    try:
+                        r.NgayChanDoan = datetime.strptime(r.NgayChanDoan.split()[0], "%Y-%m-%d")
+                    except:
+                        pass
+                normalized_records.append(r)
+
+        records = normalized_records
+
+
+    except Exception as e:
+        print(f"⚠️ Lỗi truy vấn lịch sử chẩn đoán: {e}")
+        records = []
+        
     conn.close()
 
     # ✅ Tổng số bản ghi
@@ -588,9 +630,19 @@ def history():
     # ✅ Highlight lời khuyên
     try:
         from app import highlight_advice
+        new_records = []
         for r in records:
-            if hasattr(r, "LoiKhuyen") and r.LoiKhuyen:
-                r.LoiKhuyen = highlight_advice(r.LoiKhuyen)
+            loi_khuyen = None
+            if isinstance(r, sqlite3.Row):
+                loi_khuyen = r["LoiKhuyen"]
+            elif hasattr(r, "LoiKhuyen"):
+                loi_khuyen = r.LoiKhuyen
+
+            if loi_khuyen:
+                loi_khuyen = highlight_advice(loi_khuyen)
+
+            new_records.append(r)
+        records = new_records
     except Exception as e:
         print(f"⚠️ Lỗi highlight: {e}")
 
@@ -618,6 +670,7 @@ def history():
         patients = cur2.fetchall()
         conn2.close()
 
+    # ===== Render giao diện =====
     return render_template(
         'history.html',
         records=records,
@@ -631,6 +684,7 @@ def history():
         sort_order=sort_order,
         total_records=total_records
     )
+
 
 
 # ==========================================
@@ -715,9 +769,7 @@ def manage_accounts():
     conn = get_connection()
     cur = conn.cursor()
 
-    # ================================
     # ➕ THÊM bệnh nhân mới
-    # ================================
     if request.method == 'POST' and 'add_patient' in request.form:
         ho_ten = request.form.get('ho_ten')
         gioi_tinh = request.form.get('gioi_tinh')
@@ -738,14 +790,11 @@ def manage_accounts():
             conn.rollback()
             flash(f"❌ Lỗi khi thêm bệnh nhân: {e}", "danger")
 
-    # ================================
-    # 🗑️ XÓA tài khoản bệnh nhân (chỉ nếu bác sĩ từng chẩn đoán)
-    # ================================
+    # 🗑️ XÓA bệnh nhân (kiểm tra quyền)
     if request.method == 'POST' and 'delete_patient' in request.form:
         patient_id = int(request.form.get('id'))
         doctor_id = session['user_id']
 
-        # Kiểm tra quyền trước khi xóa
         cur.execute("""
             SELECT COUNT(*) FROM ChanDoan 
             WHERE BacSiID=? AND BenhNhanID=?
@@ -759,14 +808,12 @@ def manage_accounts():
                 cur.execute("DELETE FROM ChanDoan WHERE BenhNhanID=?", (patient_id,))
                 cur.execute("DELETE FROM NguoiDung WHERE ID=?", (patient_id,))
                 conn.commit()
-                flash("🗑️ Đã xóa tài khoản và toàn bộ lịch sử chẩn đoán của bệnh nhân.", "success")
+                flash("🗑️ Đã xóa bệnh nhân và toàn bộ lịch sử chẩn đoán.", "success")
             except Exception as e:
                 conn.rollback()
                 flash(f"❌ Lỗi khi xóa: {e}", "danger")
 
-    # ================================
-    # ✏️ CẬP NHẬT thông tin bệnh nhân (chỉ nếu bác sĩ từng chẩn đoán)
-    # ================================
+    # ✏️ CẬP NHẬT thông tin bệnh nhân
     if request.method == 'POST' and 'update_patient' in request.form:
         patient_id = int(request.form.get('id'))
         doctor_id = session['user_id']
@@ -778,7 +825,7 @@ def manage_accounts():
         has_permission = cur.fetchone()[0] > 0
 
         if not has_permission:
-            flash("🚫 Bạn không có quyền chỉnh sửa bệnh nhân này (chưa từng chẩn đoán).", "danger")
+            flash("🚫 Bạn không có quyền chỉnh sửa bệnh nhân này.", "danger")
         else:
             try:
                 cur.execute("""
@@ -799,11 +846,8 @@ def manage_accounts():
                 conn.rollback()
                 flash(f"❌ Lỗi khi cập nhật: {e}", "danger")
 
-    # ================================
-    # 🔎 TÌM KIẾM bệnh nhân
-    # ================================
+    # 🔎 TÌM KIẾM
     search = request.args.get('search', '').strip()
-
     if search:
         cur.execute("""
             SELECT ID, HoTen, Email, GioiTinh, NgaySinh, DienThoai, DiaChi
@@ -818,49 +862,40 @@ def manage_accounts():
             WHERE Role='patient'
             ORDER BY HoTen
         """)
-
     raw_patients = cur.fetchall()
 
-    # ================================
-    # 🔐 Lấy danh sách bệnh nhân bác sĩ từng chẩn đoán
-    # ================================
-    cur.execute("""
-        SELECT DISTINCT BenhNhanID FROM ChanDoan WHERE BacSiID=?
-    """, (session['user_id'],))
-    my_patients = {r.BenhNhanID for r in cur.fetchall()}
+    # Danh sách bệnh nhân bác sĩ từng chẩn đoán
+    cur.execute("SELECT DISTINCT BenhNhanID FROM ChanDoan WHERE BacSiID=?", (session['user_id'],))
+    my_patients = {r["BenhNhanID"] if isinstance(r, sqlite3.Row) else r.BenhNhanID for r in cur.fetchall()}
 
-    # ================================
-    # XỬ LÝ dữ liệu hiển thị
-    # ================================
+    # Hiển thị danh sách
     patients = []
     for p in raw_patients:
-        if p.NgaySinh and hasattr(p.NgaySinh, "strftime"):
-            ngay_sinh_str = p.NgaySinh.strftime("%d/%m/%Y")
-            ngay_sinh_val = p.NgaySinh.strftime("%Y-%m-%d")
+        pid = p["ID"] if isinstance(p, sqlite3.Row) else p.ID
+        hoten = p["HoTen"] if isinstance(p, sqlite3.Row) else p.HoTen
+        email = p["Email"] if isinstance(p, sqlite3.Row) else p.Email
+        gioitinh = p["GioiTinh"] if isinstance(p, sqlite3.Row) else p.GioiTinh
+        ngaysinh = p["NgaySinh"] if isinstance(p, sqlite3.Row) else p.NgaySinh
+        dienthoai = p["DienThoai"] if isinstance(p, sqlite3.Row) else p.DienThoai
+        diachi = p["DiaChi"] if isinstance(p, sqlite3.Row) else p.DiaChi
+
+        if ngaysinh and hasattr(ngaysinh, "strftime"):
+            ngay_sinh_str = ngaysinh.strftime("%d/%m/%Y")
+            ngay_sinh_val = ngaysinh.strftime("%Y-%m-%d")
         else:
-            ngay_sinh_str = p.NgaySinh if p.NgaySinh else "—"
-            ngay_sinh_val = p.NgaySinh if p.NgaySinh else ""
+            ngay_sinh_str = ngaysinh or "—"
+            ngay_sinh_val = ngaysinh or ""
 
         patients.append({
-            "ID": p.ID,
-            "HoTen": p.HoTen,
-            "Email": p.Email,
-            "GioiTinh": p.GioiTinh,
-            "NgaySinh_str": ngay_sinh_str,
-            "NgaySinh_val": ngay_sinh_val,
-            "DienThoai": p.DienThoai,
-            "DiaChi": p.DiaChi
+            "ID": pid, "HoTen": hoten, "Email": email, "GioiTinh": gioitinh,
+            "NgaySinh_str": ngay_sinh_str, "NgaySinh_val": ngay_sinh_val,
+            "DienThoai": dienthoai, "DiaChi": diachi
         })
 
     conn.close()
+    return render_template('manage_accounts.html',
+                           patients=patients, search=search, my_patients=my_patients)
 
-    # ✅ Truyền thêm danh sách quyền my_patients sang template
-    return render_template(
-        'manage_accounts.html',
-        patients=patients,
-        search=search,
-        my_patients=my_patients
-    )
 
 from flask import flash
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -882,11 +917,11 @@ def change_password():
 
     if not old_pw or not new_pw or not confirm_pw:
         return jsonify({"success": False, "message": "Vui lòng nhập đầy đủ thông tin."})
-
     if new_pw != confirm_pw:
         return jsonify({"success": False, "message": "Mật khẩu xác nhận không khớp."})
 
-    # 🧩 Kiểm tra độ mạnh mật khẩu (ít nhất 8 ký tự, có hoa, số, đặc biệt)
+    # 🧩 Kiểm tra độ mạnh
+    import re
     if not re.match(r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', new_pw):
         return jsonify({
             "success": False,
@@ -898,15 +933,19 @@ def change_password():
     cur.execute("SELECT MatKhau FROM NguoiDung WHERE ID=?", (session['user_id'],))
     row = cur.fetchone()
 
-    if not row or row.MatKhau != old_pw:
+    if row:
+        matkhau = row["MatKhau"] if isinstance(row, sqlite3.Row) else row.MatKhau
+        if matkhau != old_pw:
+            conn.close()
+            return jsonify({"success": False, "message": "Mật khẩu cũ không chính xác."})
+    else:
         conn.close()
-        return jsonify({"success": False, "message": "Mật khẩu cũ không chính xác."})
+        return jsonify({"success": False, "message": "Không tìm thấy người dùng."})
 
     cur.execute("UPDATE NguoiDung SET MatKhau=? WHERE ID=?", (new_pw, session['user_id']))
     conn.commit()
     conn.close()
     return jsonify({"success": True, "message": "Đổi mật khẩu thành công!"})
-
 
 # ==========================================
 # Hồ sơ cá nhân
@@ -1296,9 +1335,9 @@ def admin_dashboard():
         perf_rate=perf_rate
     )
 
-# =========================================================
+# ==========================================
 # 🧑‍⚕️ Quản lý người dùng (Bác sĩ / Bệnh nhân) — Admin
-# =========================================================
+# ==========================================
 @app.route('/admin/manage_users', methods=['GET', 'POST'])
 def admin_manage_users():
     if 'user' not in session or session.get('role') != 'admin':
@@ -1343,11 +1382,11 @@ def admin_manage_users():
     # ===================================================
     elif request.method == 'POST' and 'edit_user' in request.form:
         id = request.form.get('id')
-        ho_ten = request.form.get('ho_ten', '').strip()
+        ho_ten = request.form.get('ho_ten')
         gioi_tinh = request.form.get('gioi_tinh')
         ngay_sinh = request.form.get('ngay_sinh') or None
-        email = request.form.get('email', '').strip().lower()
-        mat_khau = request.form.get('mat_khau', '').strip()
+        email = request.form.get('email').strip().lower()
+        mat_khau = request.form.get('mat_khau').strip()
         dien_thoai = request.form.get('dien_thoai')
         dia_chi = request.form.get('dia_chi')
 
@@ -1384,31 +1423,49 @@ def admin_manage_users():
         WHERE Role=?
         ORDER BY NgayTao DESC
     """, (role_type,))
-    users = cur.fetchall()
+    raw_users = cur.fetchall()
 
-    # Chuyển ngày sang kiểu datetime
-    for u in users:
-        if hasattr(u, 'NgaySinh') and isinstance(u.NgaySinh, str):
+    # ✅ Fix lỗi SQLite (Row immutable + ngày là string)
+    users = []
+    for u in raw_users:
+        if isinstance(u, sqlite3.Row):
+            u_dict = dict(u)
             try:
-                u.NgaySinh = datetime.datetime.strptime(u.NgaySinh.split(" ")[0], "%Y-%m-%d")
+                if u_dict.get("NgaySinh"):
+                    u_dict["NgaySinh"] = datetime.datetime.strptime(u_dict["NgaySinh"].split(" ")[0], "%Y-%m-%d")
             except:
-                u.NgaySinh = None
-        if hasattr(u, 'NgayTao') and isinstance(u.NgayTao, str):
+                u_dict["NgaySinh"] = None
             try:
-                u.NgayTao = datetime.datetime.strptime(u.NgayTao.split(" ")[0], "%Y-%m-%d")
+                if u_dict.get("NgayTao"):
+                    u_dict["NgayTao"] = datetime.datetime.strptime(u_dict["NgayTao"].split(" ")[0], "%Y-%m-%d")
             except:
-                u.NgayTao = None
+                u_dict["NgayTao"] = None
+            users.append(u_dict)
+        else:
+            # SQL Server (pyodbc.Row)
+            if hasattr(u, "NgaySinh") and isinstance(u.NgaySinh, str):
+                try:
+                    u.NgaySinh = datetime.datetime.strptime(u.NgaySinh.split(" ")[0], "%Y-%m-%d")
+                except:
+                    u.NgaySinh = None
+            if hasattr(u, "NgayTao") and isinstance(u.NgayTao, str):
+                try:
+                    u.NgayTao = datetime.datetime.strptime(u.NgayTao.split(" ")[0], "%Y-%m-%d")
+                except:
+                    u.NgayTao = None
+            users.append(u)
 
     conn.close()
-
-    return render_template('admin_users.html',
-                           users=users,
-                           role_type=role_type,
-                           page_title=page_title)
+    return render_template(
+        'admin_users.html',
+        users=users,
+        role_type=role_type,
+        page_title=page_title
+    )
 
 
 # ==========================================
-# 📊 XUẤT FILE EXCEL THỐNG KÊ HỆ THỐNG - Nâng cấp chuyên nghiệp
+# 📊 XUẤT FILE EXCEL THỐNG KÊ HỆ THỐNG - Nâng cấp chuyên nghiệp (giữ nguyên logic, fix SQLite)
 # ==========================================
 @app.route('/export_admin_stats', methods=['POST'])
 def export_admin_stats():
@@ -1416,6 +1473,7 @@ def export_admin_stats():
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
     from openpyxl.chart import PieChart, BarChart, LineChart, Reference
     from openpyxl.utils import get_column_letter
+    from openpyxl.chart.label import DataLabelList
     from io import BytesIO
     from flask import send_file
     from datetime import datetime
@@ -1440,13 +1498,24 @@ def export_admin_stats():
     """)
     risk_data = cur.fetchall()
 
-    cur.execute("""
-        SELECT TOP 5 bs.HoTen, COUNT(cd.ID) AS SoCa
-        FROM ChanDoan cd
-        JOIN NguoiDung bs ON cd.BacSiID = bs.ID
-        GROUP BY bs.HoTen
-        ORDER BY SoCa DESC
-    """)
+    # ⚙️ SQLite không hỗ trợ TOP → dùng LIMIT 5
+    if USE_SQLITE:
+        cur.execute("""
+            SELECT bs.HoTen, COUNT(cd.ID) AS SoCa
+            FROM ChanDoan cd
+            JOIN NguoiDung bs ON cd.BacSiID = bs.ID
+            GROUP BY bs.HoTen
+            ORDER BY SoCa DESC
+            LIMIT 5
+        """)
+    else:
+        cur.execute("""
+            SELECT TOP 5 bs.HoTen, COUNT(cd.ID) AS SoCa
+            FROM ChanDoan cd
+            JOIN NguoiDung bs ON cd.BacSiID = bs.ID
+            GROUP BY bs.HoTen
+            ORDER BY SoCa DESC
+        """)
     top_doctors = cur.fetchall()
 
     cur.execute("""
@@ -1508,7 +1577,9 @@ def export_admin_stats():
         cell.border = border
 
     for idx, d in enumerate(top_doctors, start=1):
-        ws.append([d.HoTen, d.SoCa])
+        ten = d["HoTen"] if isinstance(d, sqlite3.Row) else getattr(d, "HoTen", d[0])
+        soca = d["SoCa"] if isinstance(d, sqlite3.Row) else getattr(d, "SoCa", d[1])
+        ws.append([ten, soca])
         for cell in ws[ws.max_row]:
             cell.border = border
             if idx % 2 == 0:
@@ -1535,23 +1606,17 @@ def export_admin_stats():
             c.border = border
             c.alignment = align_center
 
-    from openpyxl.chart.label import DataLabelList
-
     pie = PieChart()
     pie.title = "Tỷ lệ Bác sĩ / Bệnh nhân"
     data = Reference(ws2, min_col=2, min_row=1, max_row=3)
     labels = Reference(ws2, min_col=1, min_row=2, max_row=3)
     pie.add_data(data, titles_from_data=True)
     pie.set_categories(labels)
-
-    # ✅ Hiển thị giá trị + phần trăm + tên
     pie.dLbls = DataLabelList()
     pie.dLbls.showVal = True
     pie.dLbls.showPercent = True
     pie.dLbls.showCatName = True
-
     ws2.add_chart(pie, "D5")
-
 
     # =============================== #
     # 📊 SHEET 3: TỶ LỆ NGUY CƠ
@@ -1559,7 +1624,9 @@ def export_admin_stats():
     ws3 = wb.create_sheet("Nguy cơ cao - thấp")
     ws3.append(["Mức nguy cơ", "Số lượng"])
     for r in risk_data:
-        ws3.append([r.NguyCo, r.SoLuong])
+        nguyco = r["NguyCo"] if isinstance(r, sqlite3.Row) else getattr(r, "NguyCo", r[0])
+        soluong = r["SoLuong"] if isinstance(r, sqlite3.Row) else getattr(r, "SoLuong", r[1])
+        ws3.append([nguyco, soluong])
 
     for cell in ws3[1]:
         cell.font = header_font
@@ -1582,7 +1649,10 @@ def export_admin_stats():
     ws4 = wb.create_sheet("Hiệu suất bác sĩ")
     ws4.append(["Bác sĩ", "Số ca", "Tỷ lệ nguy cơ cao (%)"])
     for p in perf_rows:
-        ws4.append([p.BacSi, p.SoCa, round(p.TyLeCao or 0, 1)])
+        ten = p["BacSi"] if isinstance(p, sqlite3.Row) else getattr(p, "BacSi", p[0])
+        soca = p["SoCa"] if isinstance(p, sqlite3.Row) else getattr(p, "SoCa", p[1])
+        tyle = round((p["TyLeCao"] if isinstance(p, sqlite3.Row) else getattr(p, "TyLeCao", p[2])) or 0, 1)
+        ws4.append([ten, soca, tyle])
 
     for cell in ws4[1]:
         cell.font = header_font
@@ -1597,7 +1667,6 @@ def export_admin_stats():
                 cell.fill = fill_gray
             cell.alignment = align_center
 
-    # --- Biểu đồ kết hợp ---
     chart = BarChart()
     chart.title = "Hiệu suất & Tỷ lệ nguy cơ cao của bác sĩ"
     chart.y_axis.title = "Số ca"
@@ -1626,7 +1695,6 @@ def export_admin_stats():
     ws5["A6"] = session.get('user', 'Quản trị viên')
     ws5["A8"] = "Chữ ký:"
     ws5["A9"] = "____________________________"
-
     ws5["A1"].font = Font(bold=True, color="1F4E78", size=13)
     ws5.column_dimensions["A"].width = 70
 
@@ -1646,6 +1714,7 @@ def export_admin_stats():
     )
 
 
+
 # ==========================================
 # 🌿 Trang Kiến thức Y học (cho bệnh nhân)
 # ==========================================
@@ -1662,7 +1731,7 @@ def tips():
     return render_template('tips.html')
 
 # ============================================
-# 🤖 API CHAT AI (AJAX) — Nâng cấp chuyên nghiệp
+# 🤖 API CHAT AI (AJAX) — Nâng cấp chuyên nghiệp (giữ nguyên logic, fix SQLite)
 # ============================================
 @app.route('/chat_ai_api', methods=['POST'])
 def chat_ai_api():
@@ -1706,8 +1775,8 @@ def chat_ai_api():
 
         # --- Làm đẹp phản hồi: xử lý format nhẹ ---
         formatted_answer = (
-            answer.replace("**", "")  # bỏ markdown đậm
-                  .replace("* ", "• ")  # thay bullet
+            answer.replace("**", "")   # bỏ markdown đậm
+                  .replace("* ", "• ") # thay bullet
                   .replace("#", "")
         )
 
@@ -1715,10 +1784,18 @@ def chat_ai_api():
         user_id = session.get('user_id')
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO TinNhanAI (BenhNhanID, NoiDung, PhanHoi, ThoiGian)
-            VALUES (?, ?, ?, ?)
-        """, (user_id, msg, formatted_answer, datetime.now()))
+
+        # 🧩 SQLite không có datetime.now() tự động, nên truyền chuỗi định dạng chuẩn
+        if USE_SQLITE:
+            cur.execute("""
+                INSERT INTO TinNhanAI (BenhNhanID, NoiDung, PhanHoi, ThoiGian)
+                VALUES (?, ?, ?, ?)
+            """, (user_id, msg, formatted_answer, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        else:
+            cur.execute("""
+                INSERT INTO TinNhanAI (BenhNhanID, NoiDung, PhanHoi, ThoiGian)
+                VALUES (?, ?, ?, ?)
+            """, (user_id, msg, formatted_answer, datetime.now()))
         conn.commit()
         conn.close()
 
@@ -1730,6 +1807,7 @@ def chat_ai_api():
         return jsonify({
             'reply': '🚫 Hệ thống AI đang bận hoặc kết nối không ổn định. Vui lòng thử lại sau ít phút.'
         })
+
 # ==========================================
 # 📜 API lấy lịch sử chat AI của người dùng hiện tại
 # ==========================================
