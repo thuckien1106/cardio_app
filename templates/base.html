@@ -131,9 +131,12 @@
       class="navbar navbar-expand-lg navbar-dark shadow-sm fixed-top bg-dark"
     >
       <div class="container">
-        <a class="navbar-brand fw-bold" href="{{ url_for('home') }}"
-          >❤️ CVD-App</a
+        <a
+          class="navbar-brand fw-bold d-flex align-items-center"
+          href="{% if session.get('role') == 'admin' %}{{ url_for('history') }}{% else %}{{ url_for('home') }}{% endif %}"
         >
+          <span class="fs-4 me-2">❤️</span> CVD-App
+        </a>
 
         <button
           class="navbar-toggler"
@@ -155,7 +158,7 @@
               <a
                 class="nav-link {% if request.endpoint == 'history' %}active{% endif %}"
                 href="{{ url_for('history') }}"
-                >📄Lịch sử toàn hệ thống</a
+                >Lịch sử</a
               >
             </li>
             <li class="nav-item">
@@ -163,7 +166,7 @@
                 class="nav-link {% if request.endpoint == 'admin_manage_users' and request.args.get('type') == 'doctor' %}active{% endif %}"
                 href="{{ url_for('admin_manage_users', type='doctor') }}"
               >
-                👩‍⚕️ Quản lý bác sĩ
+                Quản lý bác sĩ
               </a>
             </li>
 
@@ -172,14 +175,14 @@
                 class="nav-link {% if request.endpoint == 'admin_manage_users' and request.args.get('type') == 'patient' %}active{% endif %}"
                 href="{{ url_for('admin_manage_users', type='patient') }}"
               >
-                🧍‍♂️ Quản lý bệnh nhân
+                Quản lý bệnh nhân
               </a>
             </li>
             <li class="nav-item">
               <a
                 class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}"
                 href="{{ url_for('admin_dashboard') }}"
-                >📈 Thống kê hệ thống</a
+                >Thống kê hệ thống</a
               >
             </li>
 

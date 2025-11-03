@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-4 pt-3">
+<div class="container mt-3 pt-3">
 
     <!-- Tiêu đề -->
     <div class="text-center mb-4">
@@ -230,6 +230,7 @@
         <!-- ======== Upload file + lời khuyên + SHAP ======== -->
         <div class="col-lg-6">
             {% if session['role'] == 'doctor' %}
+            <!-- 📂 Upload file cho bác sĩ -->
             <div class="card shadow-sm p-4 border-0 rounded-4 mb-3">
                 <h4 class="text-primary mb-3">📂 Tải file CSV/Excel</h4>
                 <form method="post" enctype="multipart/form-data" id="uploadForm">
@@ -248,36 +249,48 @@
             </div>
             {% endif %}
 
-            {% if ai_advice or shap_file %}
+            <!-- 💡 Lời khuyên & SHAP hoặc khung gợi ý mặc định -->
             <div class="card shadow-sm border-0 rounded-4 p-4">
+                {% if ai_advice or shap_file %}
                 {% if ai_advice %}
                 <div class="card border-0 shadow-sm rounded-4 p-4 mt-3"
                     style="background-color:#eaf4ff; border-left:5px solid #0d6efd;">
                     <div class="d-flex align-items-center mb-3">
                         <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
-                            style="width:38px;height:38px;font-size:18px;">
-                            💡
-                        </div>
+                            style="width:38px;height:38px;font-size:18px;">💡</div>
                         <h5 class="fw-bold text-primary mb-0">Lời khuyên</h5>
                     </div>
-
                     <div class="ps-1 text-dark" style="white-space: pre-line; font-size:15px; line-height:1.7;">
                         {{ ai_advice | safe }}
                     </div>
                 </div>
                 {% endif %}
+
                 {% if shap_file %}
                 <div class="card mt-3 shadow-sm p-3">
                     <h6 class="fw-bold text-primary mb-1">📊 Giải thích kết quả bằng SHAP</h6>
-                    <p class="text-muted small">Biểu đồ thể hiện mức độ ảnh hưởng của từng yếu tố đến nguy cơ bệnh tim.
+                    <p class="text-muted small">
+                        Biểu đồ thể hiện mức độ ảnh hưởng của từng yếu tố đến nguy cơ bệnh tim.
                     </p>
                     <img src="{{ url_for('static', filename='images/' + shap_file) }}" alt="SHAP Explanation"
                         class="img-fluid rounded-3 shadow-sm">
                 </div>
                 {% endif %}
+                {% else %}
+                <!-- ✨ Hiển thị khi chưa có kết quả -->
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-activity text-primary fs-1 mb-3"></i>
+                    <h6 class="fw-semibold text-secondary">Chưa có dữ liệu chẩn đoán</h6>
+                    <p class="small mb-0">
+                        💬 Hãy nhập thông tin sức khỏe bên trái rồi nhấn
+                        <b>“Dự đoán & Nhận lời khuyên”</b><br>
+                        để xem kết quả, lời khuyên và biểu đồ phân tích SHAP.
+                    </p>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
+
     </div>
 </div>
 
@@ -300,12 +313,31 @@
     }
 
     function hideResults() {
-        resultElements.forEach(el => {
-            el.style.transition = 'opacity 0.25s ease';
-            el.style.opacity = 0;
-            setTimeout(() => el.style.display = 'none', 250);
-        });
-    }
+  // Ẩn phần lời khuyên + SHAP nếu có
+  const adviceCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.border-0.shadow-sm.rounded-4.p-4.mt-3');
+  const shapCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.mt-3.shadow-sm.p-3');
+  if (adviceCard) adviceCard.remove();
+  if (shapCard) shapCard.remove();
+
+  // Xóa thông báo cũ (nếu có)
+  const oldNotice = document.querySelector('.col-lg-6:nth-of-type(2) .data-changed-notice');
+  if (oldNotice) oldNotice.remove();
+
+  // Xác định vùng card hiển thị lời khuyên / SHAP (ở cột phải)
+  const rightCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.shadow-sm.border-0.rounded-4.p-4');
+  if (rightCard) {
+    const notice = document.createElement('div');
+    notice.className = 'data-changed-notice text-center py-5 text-muted fade-in';
+    notice.innerHTML = `
+      <i class="bi bi-info-circle text-primary fs-1 mb-3"></i>
+      <h6 class="fw-semibold text-secondary">Dữ liệu đã thay đổi</h6>
+      <p class="small mb-0">
+        🔄 Vui lòng nhấn <b>“Dự đoán & Nhận lời khuyên”</b><br>
+        để cập nhật lại kết quả, lời khuyên và biểu đồ mới.
+      </p>`;
+    rightCard.appendChild(notice);
+  }
+}
 
     inputs.forEach(input => {
         input.addEventListener('input', () => {
@@ -452,17 +484,17 @@
     });
 </script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  // Kích hoạt tất cả tooltip trên trang
-  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-  tooltipTriggerList.map(function (el) {
-    return new bootstrap.Tooltip(el, {
-      trigger: 'hover focus',   // hover + giữ chuột / chạm
-      delay: { "show": 200, "hide": 100 },
-      placement: 'top'
+    document.addEventListener('DOMContentLoaded', function () {
+        // Kích hoạt tất cả tooltip trên trang
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (el) {
+            return new bootstrap.Tooltip(el, {
+                trigger: 'hover focus',   // hover + giữ chuột / chạm
+                delay: { "show": 200, "hide": 100 },
+                placement: 'top'
+            });
+        });
     });
-  });
-});
 </script>
 
 {% endblock %}

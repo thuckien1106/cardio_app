@@ -1,175 +1,421 @@
 {% extends 'base.html' %} {% block content %}
-<div class="container mt-5 pt-4">
-  <!-- ====== TIÊU ĐỀ ====== -->
-  <div class="text-center mb-5">
-    <h2 class="fw-bold text-gradient">🩺 Kiến thức & Chăm sóc Tim mạch</h2>
-    <p class="text-muted">
-      Trang cung cấp thông tin y học hữu ích, giúp bạn hiểu rõ hơn về bệnh tim
-      mạch và biết cách chăm sóc, phòng ngừa hiệu quả.
-    </p>
-  </div>
 
-  <!-- ====== 1. Tổng quan ====== -->
-  <div class="card border-0 shadow-sm mb-4 rounded-4 p-4">
-    <h4 class="fw-semibold text-primary mb-3">🫀 Tổng quan về bệnh tim mạch</h4>
-    <p>
-      Bệnh tim mạch là nhóm bệnh lý ảnh hưởng đến tim và hệ thống mạch máu, bao
-      gồm cao huyết áp, bệnh mạch vành, rối loạn nhịp tim, suy tim và đột quỵ.
-      Đây là nguyên nhân gây tử vong hàng đầu trên toàn thế giới.
-    </p>
-    <ul>
-      <li>Chiếm khoảng 31% tổng số ca tử vong toàn cầu theo WHO (2024).</li>
-      <li>
-        Nguyên nhân chính: cao huyết áp, béo phì, tiểu đường, hút thuốc lá, căng
-        thẳng kéo dài.
-      </li>
-      <li>
-        Bệnh có thể được phòng ngừa hiệu quả nếu được phát hiện sớm và duy trì
-        lối sống lành mạnh.
-      </li>
-    </ul>
-  </div>
+<div class="container-fluid mt-3 pt-3">
+  <div class="row justify-content-center">
+    <!-- 🌿 CỘT CHÍNH: NỘI DUNG -->
+    <div class="col-lg-8 col-md-10">
+      <!-- 🌟 TIÊU ĐỀ TRANG (phiên bản tinh tế hơn) -->
+      <header class="text-center mb-4 pb-3 border-bottom">
+        <div class="d-flex justify-content-center align-items-center mb-2">
+          <span class="fs-4 me-2 text-primary">💖</span>
+          <h2 class="fw-bold text-gradient mb-0">
+            Kiến thức & Chăm sóc Tim mạch
+          </h2>
+        </div>
+        <p class="text-muted small mb-0" style="max-width: 620px; margin: auto">
+          Cập nhật thông tin y học hữu ích giúp bạn hiểu rõ hơn về bệnh tim
+          mạch, cách chăm sóc sức khỏe tim và phòng ngừa hiệu quả.
+        </p>
+      </header>
 
-  <!-- ====== 2. Nguyên nhân & triệu chứng ====== -->
-  <div class="card border-0 shadow-sm mb-4 rounded-4 p-4">
-    <h4 class="fw-semibold text-danger mb-3">
-      ❤️ Nguyên nhân & triệu chứng cần chú ý
-    </h4>
-    <div class="row">
-      <div class="col-md-6">
-        <h6 class="fw-bold text-dark">Nguyên nhân phổ biến:</h6>
-        <ul>
-          <li>Huyết áp cao kéo dài làm tổn thương mạch máu và tim.</li>
-          <li>Mức cholesterol LDL (“xấu”) cao gây xơ vữa động mạch.</li>
-          <li>Thói quen hút thuốc, uống rượu bia, ít vận động.</li>
-          <li>Di truyền hoặc tiền sử gia đình mắc bệnh tim.</li>
-        </ul>
-      </div>
-      <div class="col-md-6">
-        <h6 class="fw-bold text-dark">Triệu chứng cảnh báo sớm:</h6>
-        <ul>
-          <li>Đau hoặc tức ngực, nhất là khi hoạt động.</li>
-          <li>Khó thở, mệt mỏi, tim đập nhanh hoặc không đều.</li>
-          <li>Phù chân, chóng mặt, buồn nôn.</li>
-          <li>Vã mồ hôi nhiều, đặc biệt khi không vận động mạnh.</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+      <!-- 🩺 1. Tổng quan -->
+      <section id="overview" class="card section-card mb-4">
+        <div class="card-body p-4 p-md-5">
+          <h4 class="fw-semibold text-primary mb-3">
+            🫀 Tổng quan về bệnh tim mạch
+          </h4>
+          <p>
+            Bệnh tim mạch là nhóm bệnh lý ảnh hưởng đến tim và hệ thống mạch
+            máu, bao gồm cao huyết áp, bệnh mạch vành, rối loạn nhịp tim, suy
+            tim và đột quỵ. Đây là nguyên nhân gây tử vong hàng đầu trên toàn
+            thế giới.
+          </p>
+          <ul class="custom-list">
+            <li>
+              Chiếm khoảng <b>31%</b> tổng số ca tử vong toàn cầu theo WHO
+              (2024).
+            </li>
+            <li>
+              Nguyên nhân chính: cao huyết áp, béo phì, tiểu đường, hút thuốc
+              lá, căng thẳng kéo dài.
+            </li>
+            <li>
+              Bệnh có thể được phòng ngừa nếu phát hiện sớm và duy trì lối sống
+              lành mạnh.
+            </li>
+          </ul>
+        </div>
+      </section>
 
-  <!-- ====== 3. Chế độ ăn ====== -->
-  <div class="card border-0 shadow-sm mb-4 rounded-4 p-4">
-    <h4 class="fw-semibold text-success mb-3">🥗 Chế độ ăn tốt cho tim mạch</h4>
-    <p>
-      Dinh dưỡng đóng vai trò quan trọng trong việc phòng ngừa và điều trị bệnh
-      tim mạch. Hãy ưu tiên thực phẩm tươi sạch, ít cholesterol, giàu chất xơ và
-      omega-3.
-    </p>
-    <div class="row">
-      <div class="col-md-6">
-        <h6 class="fw-bold">Nên ăn:</h6>
-        <ul>
-          <li>Cá hồi, cá thu, cá ngừ (giàu Omega-3).</li>
+      <!-- ❤️ 2. Nguyên nhân & triệu chứng -->
+      <section id="causes" class="card section-card mb-4">
+        <div class="card-body p-4 p-md-5">
+          <h4 class="fw-semibold text-danger mb-3">
+            ❤️ Nguyên nhân & triệu chứng cần chú ý
+          </h4>
+          <div class="row gy-3">
+            <div class="col-md-6">
+              <h6 class="fw-bold text-dark">Nguyên nhân phổ biến:</h6>
+              <ul class="custom-list">
+                <li>Huyết áp cao kéo dài làm tổn thương mạch máu và tim.</li>
+                <li>Mức cholesterol LDL (“xấu”) cao gây xơ vữa động mạch.</li>
+                <li>Thói quen hút thuốc, uống rượu bia, ít vận động.</li>
+                <li>Di truyền hoặc tiền sử gia đình mắc bệnh tim.</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold text-dark">Triệu chứng cảnh báo sớm:</h6>
+              <ul class="custom-list">
+                <li>Đau hoặc tức ngực, nhất là khi hoạt động.</li>
+                <li>Khó thở, mệt mỏi, tim đập nhanh hoặc không đều.</li>
+                <li>Phù chân, chóng mặt, buồn nôn.</li>
+                <li>Vã mồ hôi nhiều, đặc biệt khi không vận động mạnh.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🥗 3. Chế độ ăn -->
+      <section id="diet" class="card section-card mb-4">
+        <div class="card-body p-4 p-md-5">
+          <h4 class="fw-semibold text-success mb-3">
+            🥗 Chế độ ăn tốt cho tim mạch
+          </h4>
+          <p>
+            Dinh dưỡng đóng vai trò quan trọng trong phòng ngừa và điều trị bệnh
+            tim mạch. Hãy ưu tiên thực phẩm tươi sạch, ít cholesterol, giàu chất
+            xơ và omega-3.
+          </p>
+          <div class="row gy-3">
+            <div class="col-md-6">
+              <h6 class="fw-bold text-success">Nên ăn:</h6>
+              <ul class="custom-list">
+                <li>Cá hồi, cá thu, cá ngừ (giàu Omega-3).</li>
+                <li>Rau xanh, trái cây tươi (táo, bưởi, cam, việt quất...)</li>
+                <li>Ngũ cốc nguyên hạt, hạt óc chó, hạnh nhân.</li>
+                <li>Dầu ô liu, sữa chua không đường, thực phẩm ít béo.</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold text-danger">Hạn chế ăn:</h6>
+              <ul class="custom-list">
+                <li>Thức ăn chiên rán, nhiều dầu mỡ động vật.</li>
+                <li>Nhiều muối, đường, đồ ăn nhanh (fast food).</li>
+                <li>Nước ngọt có gas, bia rượu, thuốc lá.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🏃‍♀️ 4. Lối sống -->
+      <section id="lifestyle" class="card section-card mb-4">
+        <div class="card-body p-4 p-md-5">
+          <h4 class="fw-semibold text-info mb-3">
+            🏃‍♀️ Lối sống & thói quen tốt cho tim
+          </h4>
+          <ul class="custom-list">
+            <li>
+              Tập thể dục đều đặn ít nhất 150 phút/tuần (đi bộ, bơi, yoga,...).
+            </li>
+            <li>
+              Giảm căng thẳng bằng thiền, nghe nhạc, ngủ đủ 7–8 giờ mỗi ngày.
+            </li>
+            <li>Không hút thuốc lá, hạn chế rượu bia và cà phê đặc.</li>
+            <li>Giữ cân nặng hợp lý (BMI < 25), kiểm tra huyết áp định kỳ.</li>
+            <li>
+              Dành thời gian thư giãn, gặp gỡ bạn bè, tránh cô lập xã hội.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 💊 5. Theo dõi -->
+      <section id="monitoring" class="card section-card mb-4">
+        <div class="card-body p-4 p-md-5">
+          <h4 class="fw-semibold text-warning mb-3">
+            💊 Theo dõi & phòng ngừa bệnh tim mạch
+          </h4>
+          <div class="table-responsive">
+            <table
+              class="table table-bordered align-middle text-center shadow-sm rounded-3"
+            >
+              <thead class="table-light">
+                <tr>
+                  <th>Hạng mục</th>
+                  <th>Tần suất kiểm tra</th>
+                  <th>Gợi ý</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Huyết áp</td>
+                  <td>1 lần / tuần</td>
+                  <td>Duy trì dưới 130/80 mmHg.</td>
+                </tr>
+                <tr>
+                  <td>Cholesterol</td>
+                  <td>6 tháng / lần</td>
+                  <td>
+                    Giảm thực phẩm nhiều mỡ động vật, ăn nhiều cá và rau xanh.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Đường huyết</td>
+                  <td>3 tháng / lần</td>
+                  <td>
+                    Kiểm tra khi đói và sau ăn, hạn chế ăn đường tinh luyện.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Khám tim mạch tổng quát</td>
+                  <td>1 năm / lần</td>
+                  <td>
+                    Nên khám định kỳ, đặc biệt nếu có tiền sử gia đình mắc bệnh
+                    tim.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 📚 6. Tham khảo -->
+      <section
+        id="references"
+        class="alert alert-light border-0 shadow-sm mt-4 rounded-4"
+      >
+        <p class="mb-2"><b>📚 Nguồn tham khảo đáng tin cậy:</b></p>
+        <ul class="mb-0 custom-list">
           <li>
-            Rau xanh, trái cây tươi, đặc biệt là táo, bưởi, cam, việt quất.
+            <a
+              href="https://www.who.int/health-topics/cardiovascular-diseases"
+              target="_blank"
+              >Tổ chức Y tế Thế giới (WHO)</a
+            >
           </li>
-          <li>Ngũ cốc nguyên hạt, hạt óc chó, hạnh nhân.</li>
-          <li>Dầu ô liu, sữa chua không đường, thực phẩm ít béo.</li>
+          <li>
+            <a href="https://suckhoedoisong.vn/tim-mach.htm" target="_blank"
+              >Báo Sức khỏe & Đời sống</a
+            >
+          </li>
+          <li>
+            <a href="https://vinmec.com/vi/tim-mach/" target="_blank"
+              >Bệnh viện Đa khoa Quốc tế Vinmec</a
+            >
+          </li>
+          <li>
+            <a href="https://vnexpress.net/suc-khoe/tim-mach" target="_blank"
+              >Chuyên mục Tim mạch - VNExpress</a
+            >
+          </li>
         </ul>
-      </div>
-      <div class="col-md-6">
-        <h6 class="fw-bold">Hạn chế ăn:</h6>
-        <ul>
-          <li>Thức ăn chiên rán, nhiều dầu mỡ động vật.</li>
-          <li>Nhiều muối, đường, đồ ăn nhanh (fast food).</li>
-          <li>Nước ngọt có gas, bia rượu, thuốc lá.</li>
-        </ul>
+      </section>
+    </div>
+
+    <!-- 📑 CỘT PHỤ: MỤC LỤC NHANH -->
+    <div class="col-lg-3 d-none d-lg-block">
+      <div class="sticky-top" style="top: 250px">
+        <div class="card shadow-sm border-0 rounded-4 p-3 toc-card">
+          <h6 class="fw-bold text-primary mb-3 d-flex align-items-center">
+            <i class="bi bi-list-check me-2 text-primary"></i> Mục lục nhanh
+          </h6>
+          <ul class="list-unstyled small mb-0">
+            <li><a href="#overview" class="toc-link">🫀 Tổng quan</a></li>
+            <li>
+              <a href="#causes" class="toc-link"
+                >❤️ Nguyên nhân & Triệu chứng</a
+              >
+            </li>
+            <li><a href="#diet" class="toc-link">🥗 Chế độ ăn</a></li>
+            <li><a href="#lifestyle" class="toc-link">🏃‍♀️ Lối sống</a></li>
+            <li>
+              <a href="#monitoring" class="toc-link">💊 Theo dõi sức khỏe</a>
+            </li>
+            <li><a href="#references" class="toc-link">📚 Tham khảo</a></li>
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
-
-  <!-- ====== 4. Lối sống & vận động ====== -->
-  <div class="card border-0 shadow-sm mb-4 rounded-4 p-4">
-    <h4 class="fw-semibold text-info mb-3">
-      🏃‍♀️ Lối sống & thói quen tốt cho tim
-    </h4>
-    <ul>
-      <li>Tập thể dục đều đặn ít nhất 150 phút/tuần (đi bộ, bơi, yoga,...).</li>
-      <li>Giảm căng thẳng bằng thiền, nghe nhạc, ngủ đủ 7–8 giờ mỗi ngày.</li>
-      <li>Không hút thuốc lá, hạn chế rượu bia và cà phê đặc.</li>
-      <li>Giữ cân nặng hợp lý (BMI < 25), kiểm tra huyết áp định kỳ.</li>
-      <li>Dành thời gian thư giãn, gặp gỡ bạn bè, tránh cô lập xã hội.</li>
-    </ul>
-  </div>
-
-  <!-- ====== 5. Theo dõi & kiểm tra sức khỏe ====== -->
-  <div class="card border-0 shadow-sm mb-4 rounded-4 p-4">
-    <h4 class="fw-semibold text-warning mb-3">
-      💊 Theo dõi & phòng ngừa bệnh tim mạch
-    </h4>
-    <table class="table table-bordered align-middle text-center shadow-sm">
-      <thead class="table-light">
-        <tr>
-          <th>Hạng mục</th>
-          <th>Tần suất kiểm tra</th>
-          <th>Gợi ý</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Huyết áp</td>
-          <td>1 lần / tuần</td>
-          <td>Duy trì dưới 130/80 mmHg.</td>
-        </tr>
-        <tr>
-          <td>Cholesterol</td>
-          <td>6 tháng / lần</td>
-          <td>Giảm thực phẩm nhiều mỡ động vật, ăn nhiều cá và rau xanh.</td>
-        </tr>
-        <tr>
-          <td>Đường huyết</td>
-          <td>3 tháng / lần</td>
-          <td>Kiểm tra khi đói và sau ăn, hạn chế ăn đường tinh luyện.</td>
-        </tr>
-        <tr>
-          <td>Khám tim mạch tổng quát</td>
-          <td>1 năm / lần</td>
-          <td>
-            Nên khám định kỳ, đặc biệt nếu có tiền sử gia đình mắc bệnh tim.
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- ====== 6. Nguồn tham khảo ====== -->
-  <div class="alert alert-light border-0 shadow-sm mt-4">
-    <p class="mb-1"><b>📚 Nguồn tham khảo đáng tin cậy:</b></p>
-    <ul class="mb-0">
-      <li>
-        <a
-          href="https://www.who.int/health-topics/cardiovascular-diseases"
-          target="_blank"
-          >Tổ chức Y tế Thế giới (WHO)</a
-        >
-      </li>
-      <li>
-        <a href="https://suckhoedoisong.vn/tim-mach.htm" target="_blank"
-          >Báo Sức khỏe & Đời sống</a
-        >
-      </li>
-      <li>
-        <a href="https://vinmec.com/vi/tim-mach/" target="_blank"
-          >Bệnh viện Đa khoa Quốc tế Vinmec</a
-        >
-      </li>
-      <li>
-        <a href="https://vnexpress.net/suc-khoe/tim-mach" target="_blank"
-          >Chuyên mục Tim mạch - VNExpress</a
-        >
-      </li>
-    </ul>
   </div>
 </div>
+
+<!-- 🎨 STYLE NÂNG CẤP GIAO DIỆN CHUYÊN NGHIỆP (giữ font gốc Bootstrap) -->
+<style>
+  /* ====== Tổng thể ====== */
+  body {
+    background-color: #f9fbfd;
+    line-height: 1.7;
+    color: #333;
+  }
+
+  /* ====== Card Section ====== */
+  .section-card {
+    border: none;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    text-align: justify;
+  }
+  .section-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  }
+  .section-card h4 {
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: #0d47a1;
+  }
+  .section-card p,
+  .section-card ul,
+  .section-card li {
+    font-size: 15.5px;
+    color: #444;
+    text-align: justify;
+  }
+
+  /* ====== Danh sách ====== */
+  .custom-list {
+    padding-left: 20px;
+  }
+  .custom-list li {
+    margin-bottom: 6px;
+    line-height: 1.6;
+  }
+  .custom-list li::marker {
+    color: #0d6efd;
+  }
+
+  /* ====== Tiêu đề trang ====== */
+  header h2 {
+    font-size: 1.9rem;
+    color: #1b3b8b;
+    background: linear-gradient(90deg, #1e90ff, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  header p {
+    font-size: 15px;
+    color: #666;
+    line-height: 1.6;
+  }
+
+  /* ====== Bảng ====== */
+  .table {
+    font-size: 15px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .table th {
+    background-color: #f2f6fc !important;
+    color: #0d47a1;
+    font-weight: 600;
+  }
+  .table td {
+    background-color: #fff !important;
+  }
+
+  /* ====== Mục lục nhanh ====== */
+  .toc-card {
+    background: #f9fafc;
+    border-left: 4px solid #0d6efd;
+    animation: fadeInRight 0.6s ease both;
+    font-size: 14.5px;
+  }
+  .toc-card ul {
+    margin: 0;
+    padding-left: 5px;
+  }
+  .toc-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 8px;
+    color: #0d6efd;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 500;
+    transition: all 0.25s ease;
+  }
+  .toc-link:hover {
+    color: #084298;
+    background-color: rgba(13, 110, 253, 0.08);
+    padding-left: 10px;
+  }
+  .toc-link.active {
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(90deg, #0d6efd, #6610f2);
+    border-radius: 5px;
+    padding-left: 10px;
+  }
+  .toc-link.active::before {
+    color: #fff;
+  }
+  @keyframes fadeInRight {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+</style>
+
+<!-- ⚡ SCRIPT: cuộn mượt & highlight mục lục (fix highlight phần cuối) -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const navbar =
+      document.querySelector(".navbar") || document.querySelector("nav");
+    const offset = navbar ? navbar.offsetHeight + 15 : 80;
+
+    // Cuộn mượt có offset
+    document.querySelectorAll(".toc-link").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const target = document.querySelector(link.getAttribute("href"));
+        if (target) {
+          const targetPosition =
+            target.getBoundingClientRect().top + window.scrollY - offset;
+          window.scrollTo({ top: targetPosition, behavior: "smooth" });
+        }
+      });
+    });
+
+    // Highlight khi cuộn
+    const sections = document.querySelectorAll("section[id]");
+    window.addEventListener("scroll", () => {
+      let current = "";
+      const scrollY = window.scrollY + offset + 5;
+      const bottomY = window.innerHeight + window.scrollY;
+      const pageHeight = document.documentElement.scrollHeight;
+
+      sections.forEach((sec) => {
+        const sectionTop = sec.offsetTop;
+        const sectionHeight = sec.offsetHeight;
+        if (
+          scrollY >= sectionTop &&
+          scrollY < sectionTop + sectionHeight - 50
+        ) {
+          current = sec.getAttribute("id");
+        }
+      });
+
+      // Nếu đang gần cuối trang => luôn highlight "references"
+      if (bottomY >= pageHeight - 10) current = "references";
+
+      document.querySelectorAll(".toc-link").forEach((link) => {
+        link.classList.remove("active");
+        if (link.getAttribute("href") === `#${current}`)
+          link.classList.add("active");
+      });
+    });
+  });
+</script>
 
 {% endblock %}

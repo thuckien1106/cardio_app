@@ -1,85 +1,81 @@
 {% extends 'base.html' %} {% block content %}
-<div class="container mt-5 pt-4">
-  <!-- Tiêu đề -->
-  <h2
-    class="fw-bold text-center mb-4"
-    style="
-      background: linear-gradient(45deg, #d6336c, #6f42c1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    "
-  >
-    🫀 Ứng dụng hỗ trợ chẩn đoán bệnh tim mạch
-  </h2>
 
-  <!-- Phần giới thiệu -->
-  <div class="row align-items-center mb-5 p-4 bg-light rounded-4 shadow-sm">
-    <!-- Ảnh minh họa -->
-    <div class="col-lg-6 mb-3 mb-lg-0">
+<div class="container mt-3 pt-3">
+  <!-- 🌟 Tiêu đề thống nhất -->
+  <div class="text-center mb-5">
+    <h2 class="fw-bold text-gradient">
+      🫀 Ứng dụng hỗ trợ chẩn đoán bệnh tim mạch
+    </h2>
+    <p class="text-muted small mt-2" style="max-width: 650px; margin: auto">
+      Giúp người dùng và bác sĩ dự đoán nguy cơ bệnh tim mạch bằng trí tuệ nhân
+      tạo, cung cấp lời khuyên sức khỏe và phân tích y học chính xác, dễ hiểu.
+    </p>
+  </div>
+
+  <!-- 💡 Phần giới thiệu -->
+  <div
+    class="row align-items-center mb-5 p-4 bg-white rounded-4 shadow-sm intro-card"
+  >
+    <div class="col-lg-6 mb-3 mb-lg-0 text-center">
       <img
         src="{{ url_for('static', filename='images/heart-health.webp') }}"
         alt="Heart Health"
         class="img-fluid rounded-4 shadow-lg"
-        style="transition: transform 0.3s ease-in-out"
-        onmouseover="this.style.transform='scale(1.03)';"
+        style="transition: transform 0.4s ease-in-out"
+        onmouseover="this.style.transform='scale(1.05)';"
         onmouseout="this.style.transform='scale(1)';"
       />
     </div>
 
-    <!-- Nội dung giới thiệu -->
     <div class="col-lg-6">
-      <h3 class="fw-semibold text-primary mb-3">
+      <h4 class="fw-semibold text-primary mb-3">
         💡 Vì sao nên theo dõi sức khỏe tim mạch?
-      </h3>
-      <p class="text-secondary" style="font-size: 1rem">
-        Bệnh tim mạch là nguyên nhân tử vong hàng đầu trên thế giới. Việc nhận
-        diện sớm các yếu tố nguy cơ như:
-        <strong>huyết áp cao</strong>, <strong>cholesterol</strong>,
-        <strong>thừa cân</strong>, <strong>hút thuốc</strong> và
-        <strong>lối sống ít vận động</strong> đóng vai trò quan trọng trong
-        phòng ngừa.
+      </h4>
+      <p class="text-secondary text-justify" style="font-size: 1rem">
+        Bệnh tim mạch là nguyên nhân tử vong hàng đầu trên toàn cầu. Việc phát
+        hiện sớm
+        <b>huyết áp cao</b>, <b>rối loạn mỡ máu</b>, <b>thừa cân</b> hay
+        <b>thói quen xấu</b>
+        giúp ngăn ngừa biến chứng nguy hiểm như đột quỵ hoặc suy tim.
       </p>
-      <p class="text-secondary" style="font-size: 1rem">
-        Ứng dụng CVD-App giúp bạn dễ dàng theo dõi và đánh giá nguy cơ bệnh tim
-        mạch, cung cấp thông tin y tế đáng tin cậy và hỗ trợ bác sĩ chẩn đoán.
+      <p class="text-secondary text-justify" style="font-size: 1rem">
+        Ứng dụng <b>CVD-App</b> sử dụng công nghệ <b>AI - Machine Learning</b>
+        để phân tích dữ liệu sức khỏe, cung cấp kết quả dự đoán nguy cơ và lời
+        khuyên y khoa chính xác.
       </p>
 
-      <!-- Nút chẩn đoán -->
       <a
         href="{{ url_for('diagnose') }}"
-        class="btn btn-gradient px-4 py-2 mt-2 shadow"
+        class="btn btn-gradient px-4 py-2 mt-2 shadow-sm"
       >
         🩺 Bắt đầu chẩn đoán
       </a>
     </div>
   </div>
 
-  <!-- Tin tức nổi bật -->
-  <h3 class="fw-bold text-primary text-center mt-5 mb-4">
+  <!-- 📰 Tin tức nổi bật -->
+  <h4 class="fw-bold text-primary text-center mt-5 mb-4">
     📰 Những điều có thể bạn đã biết
-  </h3>
+  </h4>
 
   <div class="row g-4">
     <!-- Tin 1 -->
     <div class="col-md-4">
-      <div class="card h-100 border-0 shadow-lg rounded-4 news-card">
+      <div class="card h-100 border-0 shadow-sm rounded-4 news-card">
         <div class="overflow-hidden rounded-top-4">
           <img
             src="{{ url_for('static', filename='images/news1.jpg') }}"
             class="card-img-top"
             alt="Tin 1"
-            style="transition: transform 0.3s ease"
-            onmouseover="this.style.transform='scale(1.1)';"
-            onmouseout="this.style.transform='scale(1)';"
           />
         </div>
         <div class="card-body">
-          <h5 class="card-title fw-semibold text-primary">
+          <h6 class="fw-semibold text-primary mb-2">
             Lối sống lành mạnh giúp giảm nguy cơ tim mạch
-          </h5>
-          <p class="card-text text-muted">
-            Duy trì cân nặng hợp lý và tập thể dục đều đặn giúp giảm nguy cơ mắc
-            bệnh tim mạch đáng kể.
+          </h6>
+          <p class="card-text text-muted text-justify small">
+            Duy trì cân nặng hợp lý, tập thể dục đều đặn và ngủ đủ giấc giúp
+            giảm nguy cơ mắc bệnh tim mạch tới 50%.
           </p>
         </div>
       </div>
@@ -87,24 +83,19 @@
 
     <!-- Tin 2 -->
     <div class="col-md-4">
-      <div class="card h-100 border-0 shadow-lg rounded-4 news-card">
+      <div class="card h-100 border-0 shadow-sm rounded-4 news-card">
         <div class="overflow-hidden rounded-top-4">
           <img
             src="{{ url_for('static', filename='images/news2.webp') }}"
             class="card-img-top"
             alt="Tin 2"
-            style="transition: transform 0.3s ease"
-            onmouseover="this.style.transform='scale(1.1)';"
-            onmouseout="this.style.transform='scale(1)';"
           />
         </div>
         <div class="card-body">
-          <h5 class="card-title fw-semibold text-success">
-            Chế độ ăn uống khoa học
-          </h5>
-          <p class="card-text text-muted">
-            Ăn nhiều rau xanh, trái cây, giảm muối và đường giúp kiểm soát huyết
-            áp và cholesterol.
+          <h6 class="fw-semibold text-success mb-2">Chế độ ăn uống khoa học</h6>
+          <p class="card-text text-muted text-justify small">
+            Ăn nhiều rau xanh, trái cây tươi và cá biển giúp ổn định huyết áp,
+            giảm cholesterol, bảo vệ tim mạch khỏe mạnh.
           </p>
         </div>
       </div>
@@ -112,24 +103,19 @@
 
     <!-- Tin 3 -->
     <div class="col-md-4">
-      <div class="card h-100 border-0 shadow-lg rounded-4 news-card">
+      <div class="card h-100 border-0 shadow-sm rounded-4 news-card">
         <div class="overflow-hidden rounded-top-4">
           <img
             src="{{ url_for('static', filename='images/news3.png') }}"
             class="card-img-top"
             alt="Tin 3"
-            style="transition: transform 0.3s ease"
-            onmouseover="this.style.transform='scale(1.1)';"
-            onmouseout="this.style.transform='scale(1)';"
           />
         </div>
         <div class="card-body">
-          <h5 class="card-title fw-semibold text-danger">
-            Khám sức khỏe định kỳ
-          </h5>
-          <p class="card-text text-muted">
-            Phát hiện sớm các yếu tố nguy cơ như tăng huyết áp và rối loạn lipid
-            máu giúp phòng tránh biến chứng tim mạch.
+          <h6 class="fw-semibold text-danger mb-2">Khám sức khỏe định kỳ</h6>
+          <p class="card-text text-muted text-justify small">
+            Khám tim mạch định kỳ giúp phát hiện sớm tăng huyết áp, tiểu đường
+            hoặc rối loạn lipid máu — yếu tố nguy cơ hàng đầu gây bệnh tim.
           </p>
         </div>
       </div>
@@ -137,10 +123,26 @@
   </div>
 </div>
 
-<!-- CSS tùy chỉnh -->
+<!-- 🎨 CSS -->
 <style>
+  body {
+    background-color: #f8faff;
+    color: #333;
+    line-height: 1.7;
+  }
+
+  .text-gradient {
+    background: linear-gradient(45deg, #d6336c, #6f42c1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .intro-card {
+    border-left: 4px solid #d6336c;
+  }
+
   .btn-gradient {
-    background: linear-gradient(45deg, #ff6b6b, #d6336c);
+    background: linear-gradient(90deg, #ff6b6b, #d6336c);
     border: none;
     color: #fff;
     font-weight: 500;
@@ -155,11 +157,19 @@
 
   .news-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border-radius: 12px;
+  }
+  .news-card img {
+    height: 220px;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  .news-card:hover img {
+    transform: scale(1.07);
   }
   .news-card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
   }
 </style>
+
 {% endblock %}
