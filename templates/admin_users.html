@@ -125,10 +125,10 @@
           <td>{{ u.DiaChi or '—' }}</td>
           <td class="text-center">
             <!-- Xem -->
-            <button class="btn btn-sm btn-outline-info me-1 rounded-pill px-3" data-bs-toggle="modal"
+            <button class="btn btn-sm btn-outline-info me-0 rounded-pill px-3" data-bs-toggle="modal"
               data-bs-target="#viewUserModal{{ u.ID }}">👁 Xem</button>
             <!-- Sửa -->
-            <button class="btn btn-sm btn-primary me-1 rounded-pill px-3" data-bs-toggle="modal"
+            <button class="btn btn-sm btn-primary me-0 rounded-pill px-3" data-bs-toggle="modal"
               data-bs-target="#editUserModal{{ u.ID }}">✏️ Sửa</button>
             <!-- Xóa -->
             <form method="post" class="d-inline">
@@ -155,7 +155,6 @@
 
           </td>
         </tr>
-
         <!-- Modal Xem chi tiết -->
         <div class="modal fade" id="viewUserModal{{ u.ID }}" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered">

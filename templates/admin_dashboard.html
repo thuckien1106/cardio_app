@@ -20,13 +20,18 @@
     </form>
   </div>
 
-  <!-- ========== KHU 1: THỐNG KÊ CHUNG (3 CARD CÂN ĐỐI) ========== -->
+  <!-- ========== KHU 1: THỐNG KÊ CHUNG (COUNTER) ========== -->
   <div class="row text-center justify-content-center g-4 mb-5">
     <div class="col-md-4 col-sm-6">
       <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-light">
         <div class="card-body">
           <h5 class="fw-semibold text-primary mb-2">👨‍⚕️ Bác sĩ</h5>
-          <h2 class="fw-bold text-dark">{{ total_doctors }}</h2>
+          <h2
+            class="fw-bold text-dark counter"
+            data-target="{{ total_doctors }}"
+          >
+            0
+          </h2>
           <p class="text-muted small">Tài khoản bác sĩ</p>
         </div>
       </div>
@@ -36,7 +41,12 @@
       <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-light">
         <div class="card-body">
           <h5 class="fw-semibold text-success mb-2">🧑‍🤝‍🧑 Bệnh nhân</h5>
-          <h2 class="fw-bold text-dark">{{ total_patients }}</h2>
+          <h2
+            class="fw-bold text-dark counter"
+            data-target="{{ total_patients }}"
+          >
+            0
+          </h2>
           <p class="text-muted small">Tài khoản bệnh nhân</p>
         </div>
       </div>
@@ -46,14 +56,19 @@
       <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-light">
         <div class="card-body">
           <h5 class="fw-semibold text-warning mb-2">🩺 Lượt chẩn đoán</h5>
-          <h2 class="fw-bold text-dark">{{ total_diagnoses }}</h2>
+          <h2
+            class="fw-bold text-dark counter"
+            data-target="{{ total_diagnoses }}"
+          >
+            0
+          </h2>
           <p class="text-muted small">Tổng lượt chẩn đoán trên hệ thống</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ========== KHU 2: BIỂU ĐỒ CHÍNH ========== -->
+  <!-- ========== DỮ LIỆU ========== -->
   <div
     id="chartData"
     data-doctors="{{ total_doctors }}"
@@ -71,10 +86,10 @@
     data-active="{{ active_percent }}"
   ></div>
 
+  <!-- ========== KHU 2: BIỂU ĐỒ CHÍNH ========== -->
   <div class="row g-4 mb-4">
-    <!-- Pie -->
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-4">
+      <div class="card border-0 shadow-sm rounded-4 chart-card">
         <div class="card-body">
           <h6 class="text-center fw-semibold text-primary mb-3">
             👩‍⚕️ Tỷ lệ Bác sĩ / Bệnh nhân
@@ -84,9 +99,8 @@
       </div>
     </div>
 
-    <!-- Risk -->
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-4">
+      <div class="card border-0 shadow-sm rounded-4 chart-card">
         <div class="card-body">
           <h6 class="text-center fw-semibold text-danger mb-3">
             ⚠️ Tỷ lệ Nguy cơ Cao / Thấp
@@ -96,9 +110,8 @@
       </div>
     </div>
 
-    <!-- Behavior -->
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-4">
+      <div class="card border-0 shadow-sm rounded-4 chart-card">
         <div class="card-body">
           <h6 class="text-center fw-semibold text-success mb-3">
             💪 Hành vi sức khỏe (Radar)
@@ -112,7 +125,7 @@
   <!-- ========== KHU 3: XU HƯỚNG & TOP DOCTOR ========== -->
   <div class="row g-4 mb-5">
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm rounded-4">
+      <div class="card border-0 shadow-sm rounded-4 chart-card">
         <div class="card-body">
           <h6 class="text-center fw-semibold text-info mb-3">
             📈 Xu hướng chẩn đoán & nguy cơ cao theo tháng
@@ -123,7 +136,7 @@
     </div>
 
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm rounded-4">
+      <div class="card border-0 shadow-sm rounded-4 chart-card">
         <div class="card-body">
           <h6 class="text-center fw-semibold text-secondary mb-3">
             🏆 Top 5 bác sĩ có nhiều ca nhất
@@ -135,7 +148,7 @@
   </div>
 
   <!-- ========== KHU 4: HIỆU SUẤT BÁC SĨ ========== -->
-  <div class="card border-0 shadow-sm rounded-4 mb-5">
+  <div class="card border-0 shadow-sm rounded-4 mb-5 chart-card">
     <div class="card-body">
       <h5 class="card-title text-center fw-semibold text-dark mb-4">
         🧠 Hiệu suất chẩn đoán theo bác sĩ
@@ -145,7 +158,7 @@
   </div>
 </div>
 
-<!-- ========== DỮ LIỆU ========== -->
+<!-- ========== DỮ LIỆU HIỆU SUẤT ========== -->
 <div
   id="perfData"
   data-names="{{ perf_names | join(',') }}"
@@ -157,7 +170,66 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 
+<!-- ========== HIỆU ỨNG ========== -->
+<style>
+  /* ✨ Hiệu ứng xuất hiện card biểu đồ */
+  .chart-card {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: all 0.6s ease;
+  }
+  .chart-card.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+</style>
+
 <script>
+  // 🧮 Counter đếm số
+  document.addEventListener("DOMContentLoaded", () => {
+    const counters = document.querySelectorAll(".counter");
+    counters.forEach((counter) => {
+      const target = +counter.getAttribute("data-target");
+      const updateCount = () => {
+        const speed = 40; // tốc độ tăng
+        const increment = Math.ceil(target / 100);
+        const current = +counter.innerText;
+        if (current < target) {
+          counter.innerText = Math.min(current + increment, target);
+          setTimeout(updateCount, speed);
+        } else {
+          counter.innerText = target;
+        }
+      };
+      updateCount();
+    });
+  });
+
+  // Hiệu ứng hiện biểu đồ chuyên nghiệp
+  document.addEventListener("DOMContentLoaded", () => {
+    const chartCards = document.querySelectorAll(".chart-card");
+
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.15,
+        rootMargin: "0px 0px -50px 0px",
+      }
+    );
+
+    chartCards.forEach((card) => observer.observe(card));
+  });
+
+  // ================================
+  // 📊 CÁC BIỂU ĐỒ CHÍNH
+  // ================================
   const d = document.getElementById("chartData");
   const months = d.dataset.months.split(",");
   const counts = d.dataset.counts.split(",").map(Number);
@@ -178,28 +250,27 @@
   const perfCases = perf.dataset.cases.split(",").map(Number);
   const perfRates = perf.dataset.rates.split(",").map(Number);
 
-  // ===== 1️⃣ Pie: Bác sĩ / Bệnh nhân =====
+  const commonAnim = { duration: 1200, easing: "easeOutQuart" };
+
+  // 1️⃣ Pie: Bác sĩ / Bệnh nhân
   new Chart(document.getElementById("pieChart"), {
     type: "pie",
     data: {
       labels: ["Bác sĩ", "Bệnh nhân"],
       datasets: [
-        {
-          data: [doctors, patients],
-          backgroundColor: ["#36A2EB", "#4CAF50"],
-        },
+        { data: [doctors, patients], backgroundColor: ["#36A2EB", "#4CAF50"] },
       ],
     },
     options: {
+      animation: commonAnim,
       plugins: {
         legend: { position: "bottom" },
         datalabels: {
           color: "#fff",
           font: { weight: "bold" },
-          formatter: (value, ctx) => {
+          formatter: (v, ctx) => {
             const total = ctx.chart._metasets[0].total;
-            const percentage = ((value / total) * 100).toFixed(1);
-            return `${value} (${percentage}%)`;
+            return `${v} (${((v / total) * 100).toFixed(1)}%)`;
           },
         },
       },
@@ -207,28 +278,23 @@
     plugins: [ChartDataLabels],
   });
 
-  // ===== 2️⃣ Pie: Tỷ lệ Nguy cơ =====
+  // 2️⃣ Pie: Nguy cơ cao / thấp
   new Chart(document.getElementById("riskChart"), {
     type: "pie",
     data: {
       labels: riskLabels,
-      datasets: [
-        {
-          data: riskValues,
-          backgroundColor: ["#dc3545", "#198754"],
-        },
-      ],
+      datasets: [{ data: riskValues, backgroundColor: ["#dc3545", "#198754"] }],
     },
     options: {
+      animation: commonAnim,
       plugins: {
         legend: { position: "bottom" },
         datalabels: {
           color: "#fff",
           font: { weight: "bold" },
-          formatter: (value, ctx) => {
+          formatter: (v, ctx) => {
             const total = ctx.chart._metasets[0].total;
-            const percentage = ((value / total) * 100).toFixed(1);
-            return `${value} (${percentage}%)`;
+            return `${v} (${((v / total) * 100).toFixed(1)}%)`;
           },
         },
       },
@@ -236,7 +302,7 @@
     plugins: [ChartDataLabels],
   });
 
-  // ===== 3️⃣ Radar: Hành vi sức khỏe =====
+  // 3️⃣ Radar: Hành vi sức khỏe
   new Chart(document.getElementById("behaviorChart"), {
     type: "radar",
     data: {
@@ -252,6 +318,7 @@
       ],
     },
     options: {
+      animation: commonAnim,
       scales: { r: { suggestedMin: 0, suggestedMax: 100 } },
       plugins: {
         legend: { display: false },
@@ -265,7 +332,7 @@
     plugins: [ChartDataLabels],
   });
 
-  // ===== 4️⃣ Line: Xu hướng =====
+  // 4️⃣ Line: Xu hướng chẩn đoán
   new Chart(document.getElementById("trendChart"), {
     type: "line",
     data: {
@@ -289,10 +356,13 @@
         },
       ],
     },
-    options: { plugins: { legend: { position: "bottom" } } },
+    options: {
+      animation: commonAnim,
+      plugins: { legend: { position: "bottom" } },
+    },
   });
 
-  // ===== 5️⃣ Bar + Line: Top bác sĩ =====
+  // 5️⃣ Bar + Line: Top bác sĩ
   new Chart(document.getElementById("topDoctorsChart"), {
     type: "bar",
     data: {
@@ -315,6 +385,7 @@
       ],
     },
     options: {
+      animation: commonAnim,
       responsive: true,
       interaction: { mode: "index", intersect: false },
       stacked: false,
@@ -331,7 +402,7 @@
     },
   });
 
-  // ===== 6️⃣ Hiệu suất bác sĩ =====
+  // 6️⃣ Hiệu suất bác sĩ
   new Chart(document.getElementById("doctorPerformanceChart"), {
     type: "bar",
     data: {
@@ -357,6 +428,7 @@
       ],
     },
     options: {
+      animation: commonAnim,
       interaction: { mode: "index", intersect: false },
       stacked: false,
       scales: {
@@ -373,3 +445,52 @@
   });
 </script>
 {% endblock %}
+<style>
+  /* 🌟 Hiệu ứng xuất hiện biểu đồ */
+  .chart-card {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+    filter: blur(4px);
+    transition: all 0.9s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+
+  .chart-card.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+
+  /* ⏱️ Hiệu ứng trễ nhẹ cho từng phần */
+  .chart-card:nth-child(1) {
+    transition-delay: 0.1s;
+  }
+  .chart-card:nth-child(2) {
+    transition-delay: 0.2s;
+  }
+  .chart-card:nth-child(3) {
+    transition-delay: 0.3s;
+  }
+  .chart-card:nth-child(4) {
+    transition-delay: 0.4s;
+  }
+  .chart-card:nth-child(5) {
+    transition-delay: 0.5s;
+  }
+
+  /* Tạo hiệu ứng “bounce” nhẹ khi đã xuất hiện */
+  @keyframes popIn {
+    0% {
+      transform: scale(0.96);
+    }
+    60% {
+      transform: scale(1.03);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .chart-card.visible {
+    animation: popIn 0.6s ease-in-out;
+  }
+</style>

@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <title>{{ title if title else "CVD-App" }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Preload ảnh slider để chuyển mượt hơn -->
+    <link
+      rel="preload"
+      as="image"
+      href="{{ url_for('static', filename='images/slide1.jpg') }}"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="{{ url_for('static', filename='images/slide2.jpg') }}"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="{{ url_for('static', filename='images/slide3.jpg') }}"
+    />
 
     <link
       rel="icon"
@@ -41,36 +57,67 @@
         font-family: "Poppins", sans-serif;
       }
 
+      /* 🎨 Navbar với hiệu ứng gradient nhẹ */
+      .navbar {
+        background: linear-gradient(90deg, #1e63c6, #453baf);
+        background-size: 200% 200%;
+        animation: navFlow 10s ease infinite;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+      }
+
+      @keyframes navFlow {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
       .navbar-nav .nav-link {
         color: #fff !important;
         font-weight: 500;
         margin: 0 6px;
         padding: 8px 14px;
         border-radius: 20px;
-        transition: background 0.3s ease, color 0.3s ease;
+        transition: all 0.3s ease;
         display: flex;
         align-items: center;
       }
 
+      /* ✨ Hover: sáng nhẹ + nổi */
       .navbar-nav .nav-link:hover {
         background: rgba(255, 255, 255, 0.12);
         color: #ffc107 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(255, 193, 7, 0.3);
       }
 
+      /* 🌟 Active: vàng nổi bật + viền gradient */
       .navbar-nav .nav-link.active {
         color: #ffc107 !important;
         font-weight: 600;
-        border-bottom: 3px solid #ffc107;
+        border-bottom: 3px solid transparent;
+        background-image: linear-gradient(to right, #ffc107, #ff80ab);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
       }
 
       .navbar-nav .logout-link {
         color: #ffc107 !important;
         font-weight: 600;
+        transition: all 0.3s ease;
       }
 
       .navbar-nav .logout-link:hover {
         background: rgba(255, 193, 7, 0.12);
         color: #ffe082 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(255, 235, 59, 0.2);
       }
 
       .navbar-text.user-name {
@@ -79,6 +126,7 @@
         margin-left: 10px;
         display: flex;
         align-items: center;
+        opacity: 0.9;
       }
 
       .navbar-nav {
@@ -625,6 +673,14 @@
             typing.innerHTML = `<div class="bubble text-danger">⚠️ Lỗi kết nối đến AI. Thử lại sau.</div>`;
           }
         });
+      });
+    </script>
+    <script>
+      // 🌀 Navbar đổi màu khi cuộn xuống
+      window.addEventListener("scroll", () => {
+        const navbar = document.querySelector(".navbar");
+        if (window.scrollY > 30) navbar.classList.add("scrolled");
+        else navbar.classList.remove("scrolled");
       });
     </script>
   </body>

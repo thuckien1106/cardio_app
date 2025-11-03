@@ -1,134 +1,180 @@
 {% extends 'base.html' %} {% block content %}
 
-<div class="container mt-3 pt-3">
-  <!-- 🌟 Tiêu đề thống nhất -->
-  <div class="text-center mb-5">
-    <h2 class="fw-bold text-gradient">
-      🫀 Ứng dụng hỗ trợ chẩn đoán bệnh tim mạch
-    </h2>
-    <p class="text-muted small mt-2" style="max-width: 650px; margin: auto">
-      Giúp người dùng và bác sĩ dự đoán nguy cơ bệnh tim mạch bằng trí tuệ nhân
-      tạo, cung cấp lời khuyên sức khỏe và phân tích y học chính xác, dễ hiểu.
-    </p>
-  </div>
+<!-- 🌈 TIÊU ĐỀ TRANG -->
+<section class="text-center mb-3 pt-3">
+  <h2 class="fw-bold text-gradient">🫀 Ứng dụng chẩn đoán bệnh tim mạch</h2>
+  <p class="text-muted mt-0 mx-auto" style="max-width: 640px">
+    Hỗ trợ bác sĩ và người dùng dự đoán nguy cơ tim mạch, phân tích dữ liệu sức
+    khỏe và đưa ra khuyến nghị y khoa chính xác.
+  </p>
+</section>
 
-  <!-- 💡 Phần giới thiệu -->
+<!-- 💡 GIỚI THIỆU -->
+<section class="container mb-5">
   <div
-    class="row align-items-center mb-5 p-4 bg-white rounded-4 shadow-sm intro-card"
+    class="row align-items-center rounded-4 shadow-sm bg-white p-4 intro-card"
   >
-    <div class="col-lg-6 mb-3 mb-lg-0 text-center">
+    <div class="col-lg-6 text-center mb-3 mb-lg-0">
       <img
         src="{{ url_for('static', filename='images/heart-health.webp') }}"
         alt="Heart Health"
-        class="img-fluid rounded-4 shadow-lg"
-        style="transition: transform 0.4s ease-in-out"
-        onmouseover="this.style.transform='scale(1.05)';"
-        onmouseout="this.style.transform='scale(1)';"
+        class="img-fluid rounded-4 shadow-lg intro-img"
       />
     </div>
-
-    <div class="col-lg-6">
+    <div class="col-lg-6 ps-lg-4">
       <h4 class="fw-semibold text-primary mb-3">
         💡 Vì sao nên theo dõi sức khỏe tim mạch?
       </h4>
-      <p class="text-secondary text-justify" style="font-size: 1rem">
+      <p class="text-secondary text-justify mb-3">
         Bệnh tim mạch là nguyên nhân tử vong hàng đầu trên toàn cầu. Việc phát
-        hiện sớm
-        <b>huyết áp cao</b>, <b>rối loạn mỡ máu</b>, <b>thừa cân</b> hay
-        <b>thói quen xấu</b>
-        giúp ngăn ngừa biến chứng nguy hiểm như đột quỵ hoặc suy tim.
+        hiện sớm <b>huyết áp cao</b>, <b>rối loạn mỡ máu</b>,
+        <b>thừa cân</b> hay <b>thói quen xấu</b> giúp ngăn ngừa biến chứng nguy
+        hiểm như đột quỵ hoặc suy tim.
       </p>
-      <p class="text-secondary text-justify" style="font-size: 1rem">
-        Ứng dụng <b>CVD-App</b> sử dụng công nghệ <b>AI - Machine Learning</b>
+      <p class="text-secondary text-justify mb-4">
+        Ứng dụng <b>CVD-App</b> sử dụng công nghệ <b>AI – Machine Learning</b>
         để phân tích dữ liệu sức khỏe, cung cấp kết quả dự đoán nguy cơ và lời
-        khuyên y khoa chính xác.
+        khuyên y khoa phù hợp từng người.
       </p>
 
       <a
         href="{{ url_for('diagnose') }}"
-        class="btn btn-gradient px-4 py-2 mt-2 shadow-sm"
+        class="btn btn-gradient px-4 py-2 shadow-sm"
       >
         🩺 Bắt đầu chẩn đoán
       </a>
     </div>
   </div>
+</section>
 
-  <!-- 📰 Tin tức nổi bật -->
-  <h4 class="fw-bold text-primary text-center mt-5 mb-4">
-    📰 Những điều có thể bạn đã biết
-  </h4>
+<!-- 🌟 SLIDER (Hero Section minh họa) -->
+<section id="heroSection" class="mb-5">
+  <div
+    id="heroCarousel"
+    class="carousel slide carousel-fade"
+    data-bs-ride="carousel"
+    data-bs-interval="3000"
+  >
+    <div class="carousel-inner rounded-4 shadow-lg">
+      <!-- Slide 1 -->
+      <div class="carousel-item active">
+        <img
+          src="{{ url_for('static', filename='images/slide1.jpg') }}"
+          class="d-block w-100 hero-img"
+          alt="Healthy Heart"
+        />
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption d-none d-md-block text-center">
+          <h2 class="fw-bold text-gradient display-6">
+            🫀 Bảo vệ trái tim – Bảo vệ cuộc sống
+          </h2>
+          <p class="text-light mb-3">
+            CVD-App hỗ trợ dự đoán nguy cơ bệnh tim bằng trí tuệ nhân tạo hiện
+            đại.
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 2 -->
+      <div class="carousel-item">
+        <img
+          src="{{ url_for('static', filename='images/slide2.jpg') }}"
+          class="d-block w-100 hero-img"
+          alt="Healthy Lifestyle"
+        />
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption d-none d-md-block text-center">
+          <h2 class="fw-bold text-gradient display-6">
+            💪 Sống khỏe – Sống an vui
+          </h2>
+          <p class="text-light mb-3">
+            Theo dõi sức khỏe tim mạch dễ dàng, chính xác và đáng tin cậy.
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 3 -->
+      <div class="carousel-item">
+        <img
+          src="{{ url_for('static', filename='images/slide3.jpg') }}"
+          class="d-block w-100 hero-img"
+          alt="AI Analysis"
+        />
+        <div class="carousel-overlay"></div>
+        <div class="carousel-caption d-none d-md-block text-center">
+          <h2 class="fw-bold text-gradient display-6">
+            🤖 Phân tích thông minh từ AI
+          </h2>
+          <p class="text-light mb-3">
+            Đưa ra kết quả dự đoán nguy cơ và lời khuyên cá nhân hóa.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <button
+      class="carousel-control-prev"
+      type="button"
+      data-bs-target="#heroCarousel"
+      data-bs-slide="prev"
+    >
+      <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button
+      class="carousel-control-next"
+      type="button"
+      data-bs-target="#heroCarousel"
+      data-bs-slide="next"
+    >
+      <span class="carousel-control-next-icon"></span>
+    </button>
+  </div>
+</section>
+
+<!-- 📰 TIN TỨC NỔI BẬT -->
+<section class="container pb-5">
+  <div class="text-center mb-4">
+    <h4 class="fw-bold text-primary">📰 Những điều có thể bạn đã biết</h4>
+  </div>
 
   <div class="row g-4">
-    <!-- Tin 1 -->
+    {% set news_items = [ ('news1.jpg', 'Lối sống lành mạnh giúp giảm nguy cơ
+    tim mạch', 'Duy trì cân nặng hợp lý, tập thể dục đều đặn và ngủ đủ giấc giúp
+    giảm nguy cơ mắc bệnh tim mạch tới 50%.', 'text-primary'), ('news2.webp',
+    'Chế độ ăn uống khoa học', 'Ăn nhiều rau xanh, trái cây tươi và cá biển giúp
+    ổn định huyết áp, giảm cholesterol, bảo vệ tim mạch khỏe mạnh.',
+    'text-success'), ('news3.png', 'Khám sức khỏe định kỳ', 'Khám tim mạch định
+    kỳ giúp phát hiện sớm tăng huyết áp, tiểu đường hoặc rối loạn lipid máu –
+    yếu tố nguy cơ hàng đầu gây bệnh tim.', 'text-danger') ] %} {% for img,
+    title, desc, color in news_items %}
     <div class="col-md-4">
       <div class="card h-100 border-0 shadow-sm rounded-4 news-card">
         <div class="overflow-hidden rounded-top-4">
           <img
-            src="{{ url_for('static', filename='images/news1.jpg') }}"
+            src="{{ url_for('static', filename='images/' + img) }}"
             class="card-img-top"
-            alt="Tin 1"
+            alt="{{ title }}"
           />
         </div>
         <div class="card-body">
-          <h6 class="fw-semibold text-primary mb-2">
-            Lối sống lành mạnh giúp giảm nguy cơ tim mạch
-          </h6>
-          <p class="card-text text-muted text-justify small">
-            Duy trì cân nặng hợp lý, tập thể dục đều đặn và ngủ đủ giấc giúp
-            giảm nguy cơ mắc bệnh tim mạch tới 50%.
-          </p>
+          <h6 class="fw-semibold {{ color }} mb-2">{{ title }}</h6>
+          <p class="card-text text-muted text-justify small">{{ desc }}</p>
         </div>
       </div>
     </div>
-
-    <!-- Tin 2 -->
-    <div class="col-md-4">
-      <div class="card h-100 border-0 shadow-sm rounded-4 news-card">
-        <div class="overflow-hidden rounded-top-4">
-          <img
-            src="{{ url_for('static', filename='images/news2.webp') }}"
-            class="card-img-top"
-            alt="Tin 2"
-          />
-        </div>
-        <div class="card-body">
-          <h6 class="fw-semibold text-success mb-2">Chế độ ăn uống khoa học</h6>
-          <p class="card-text text-muted text-justify small">
-            Ăn nhiều rau xanh, trái cây tươi và cá biển giúp ổn định huyết áp,
-            giảm cholesterol, bảo vệ tim mạch khỏe mạnh.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tin 3 -->
-    <div class="col-md-4">
-      <div class="card h-100 border-0 shadow-sm rounded-4 news-card">
-        <div class="overflow-hidden rounded-top-4">
-          <img
-            src="{{ url_for('static', filename='images/news3.png') }}"
-            class="card-img-top"
-            alt="Tin 3"
-          />
-        </div>
-        <div class="card-body">
-          <h6 class="fw-semibold text-danger mb-2">Khám sức khỏe định kỳ</h6>
-          <p class="card-text text-muted text-justify small">
-            Khám tim mạch định kỳ giúp phát hiện sớm tăng huyết áp, tiểu đường
-            hoặc rối loạn lipid máu — yếu tố nguy cơ hàng đầu gây bệnh tim.
-          </p>
-        </div>
-      </div>
-    </div>
+    {% endfor %}
   </div>
-</div>
+</section>
 
-<!-- 🎨 CSS -->
+<!-- 🎨 CSS  -->
 <style>
+  /* 🌼 TOÀN CỤC */
   body {
     background-color: #f8faff;
     color: #333;
     line-height: 1.7;
+    font-family: "Poppins", sans-serif;
   }
 
   .text-gradient {
@@ -137,38 +183,155 @@
     -webkit-text-fill-color: transparent;
   }
 
+  /* 💡 INTRO SECTION */
   .intro-card {
     border-left: 4px solid #d6336c;
+    background: #fff;
   }
 
+  .intro-img {
+    max-height: 360px;
+    transition: transform 0.4s ease;
+  }
+
+  .intro-img:hover {
+    transform: scale(1.04);
+  }
+
+  /* 🔘 BUTTON – nút gradient chính */
   .btn-gradient {
     background: linear-gradient(90deg, #ff6b6b, #d6336c);
     border: none;
     color: #fff;
     font-weight: 500;
-    transition: all 0.3s ease-in-out;
     border-radius: 30px;
+    transition: all 0.3s ease-in-out;
   }
+
   .btn-gradient:hover {
     background: linear-gradient(45deg, #d6336c, #6f42c1);
     transform: translateY(-3px);
     box-shadow: 0 6px 15px rgba(214, 51, 108, 0.3);
   }
 
+  /* 📰 NEWS CARD – mục tin tức */
   .news-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.3s ease;
+    background: #fff;
   }
+
   .news-card img {
     height: 220px;
     object-fit: cover;
     transition: transform 0.4s ease;
   }
+
   .news-card:hover img {
-    transform: scale(1.07);
+    transform: scale(1.08);
   }
+
   .news-card:hover {
     transform: translateY(-6px);
     box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  /* ================================
+     🌅 SLIDER – MỨC 1 (NHẸ & MƯỢT)
+  ================================= */
+  .hero-img {
+    height: 450px;
+    object-fit: cover;
+    transform: scale(1.01);
+    transition: transform 3s ease, opacity 1s ease;
+    will-change: transform, opacity;
+  }
+
+  .carousel-fade .carousel-item {
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+  }
+
+  .carousel-fade .carousel-item.active {
+    opacity: 1;
+    transform: scale(1);
+    z-index: 2;
+  }
+
+  .carousel-inner {
+    overflow: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  /* ✨ Caption xuất hiện nhẹ */
+  .carousel-caption {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80%;
+    transform: translate(-50%, -45%);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .carousel-item.active .carousel-caption {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+    transition-delay: 0.2s;
+  }
+
+  .carousel-caption h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #fff;
+    text-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+  }
+
+  .carousel-caption p {
+    font-size: 1.1rem;
+    color: #f8f9fa;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Overlay mờ mịn */
+  .carousel-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.25),
+      rgba(0, 0, 0, 0.6)
+    );
+    pointer-events: none;
+    border-radius: 0.75rem;
+  }
+
+  /* Nút điều khiển */
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.4));
+    transition: transform 0.3s ease;
+  }
+
+  .carousel-control-prev-icon:hover,
+  .carousel-control-next-icon:hover {
+    transform: scale(1.2);
+  }
+
+  /* 🧩 Tinh chỉnh hiển thị */
+  section {
+    scroll-margin-top: 80px;
+  }
+
+  h2,
+  h4 {
+    font-weight: 600;
+  }
+
+  p {
+    font-size: 1rem;
   }
 </style>
 
