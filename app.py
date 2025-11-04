@@ -246,6 +246,7 @@ def diagnose():
     risk_percent = None
     risk_level = None
     shap_file = None
+    results = []      
     threshold = float(request.form.get('threshold', 0.5))
 
     # ======================
