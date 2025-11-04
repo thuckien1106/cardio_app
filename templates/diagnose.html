@@ -241,17 +241,77 @@
                 </form>
 
                 {% if file_result %}
-                <div class="mt-3">
-                    <h5 class="fw-semibold">📊 Kết quả từ file:</h5>
-                    <div class="table-responsive">{{ file_result|safe }}</div>
+                <div class="mt-4">
+                    <!-- Tiêu đề -->
+                    <div class="text-center mb-3">
+                        <div
+                            class="d-inline-flex align-items-center justify-content-center px-3 py-2 bg-light rounded-pill shadow-sm">
+                            <i class="bi bi-file-earmark-spreadsheet text-success me-2 fs-5"></i>
+                            <h5 class="fw-bold text-success mb-0">Kết quả chẩn đoán từ file dữ liệu</h5>
+                        </div>
+                    </div>
+
+                    <!-- Bảng kết quả -->
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="card-body p-0">
+                            <div class="table-scroll-container table-responsive animate-fade-in"
+                                style="overflow-x:auto; overflow-y:auto; max-height:400px;">
+                                <table class="table table-hover align-middle text-center small shadow-sm rounded-3">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Tuổi</th>
+                                            <th>Giới tính</th>
+                                            <th>Huyết áp</th>
+                                            <th>Cholesterol</th>
+                                            <th>Đường huyết</th>
+                                            <th>BMI</th>
+                                            <th>Hút thuốc</th>
+                                            <th>Rượu/Bia</th>
+                                            <th>Tập thể dục</th>
+                                            <th>Nguy cơ</th>
+                                            <th>Xác suất (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in results %}
+                                        <tr
+                                            class="{% if row['Nguy cơ'] == 'Nguy cơ cao' %}table-danger{% else %}table-success{% endif %}">
+                                            <td>{{ row['Tuổi'] }}</td>
+                                            <td>{{ row['Giới tính'] }}</td>
+                                            <td>{{ row['Huyết áp'] }}</td>
+                                            <td>{{ row['Cholesterol'] }}</td>
+                                            <td>{{ row['Đường huyết'] }}</td>
+                                            <td>{{ row['BMI'] }}</td>
+                                            <td>{{ row['Hút thuốc'] }}</td>
+                                            <td>{{ row['Rượu/Bia'] }}</td>
+                                            <td>{{ row['Tập thể dục'] }}</td>
+                                            <td><strong>{{ row['Nguy cơ'] }}</strong></td>
+                                            <td class="fw-semibold text-primary">{{ row['Xác suất (%)'] }}%</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+
+                        </div>
+
+                        <!-- Gợi ý -->
+                        <div class="card-footer bg-light text-center small text-muted">
+                            <i class="bi bi-info-circle text-primary me-1"></i>
+                            Các giá trị nguy cơ được tính dựa trên mô hình học máy AI.
+                            Kết quả chỉ mang tính tham khảo, không thay thế tư vấn y khoa.
+                        </div>
+                    </div>
                 </div>
                 {% endif %}
+
             </div>
             {% endif %}
 
             <!-- 💡 Lời khuyên & SHAP hoặc khung gợi ý mặc định -->
             <div class="card shadow-sm border-0 rounded-4 p-4">
-                {% if ai_advice or shap_file %}
+                {% if ai_advice or shap_file or file_result %}
                 {% if ai_advice %}
                 <div class="card border-0 shadow-sm rounded-4 p-4 mt-3"
                     style="background-color:#eaf4ff; border-left:5px solid #0d6efd;">
@@ -293,6 +353,33 @@
 
     </div>
 </div>
+<style>
+    /* Thanh cuộn cho bảng kết quả */
+    .table-scroll-container {
+        max-height: 360px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #adb5bd #f8f9fa;
+    }
+
+    .table-scroll-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .table-scroll-container::-webkit-scrollbar-track {
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .table-scroll-container::-webkit-scrollbar-thumb {
+        background-color: #adb5bd;
+        border-radius: 8px;
+    }
+
+    .table-scroll-container::-webkit-scrollbar-thumb:hover {
+        background-color: #868e96;
+    }
+</style>
 
 <!-- Script tính BMI & xử lý hiển thị kết quả -->
 <script>
@@ -313,31 +400,31 @@
     }
 
     function hideResults() {
-  // Ẩn phần lời khuyên + SHAP nếu có
-  const adviceCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.border-0.shadow-sm.rounded-4.p-4.mt-3');
-  const shapCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.mt-3.shadow-sm.p-3');
-  if (adviceCard) adviceCard.remove();
-  if (shapCard) shapCard.remove();
+        // Ẩn phần lời khuyên + SHAP nếu có
+        const adviceCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.border-0.shadow-sm.rounded-4.p-4.mt-3');
+        const shapCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.mt-3.shadow-sm.p-3');
+        if (adviceCard) adviceCard.remove();
+        if (shapCard) shapCard.remove();
 
-  // Xóa thông báo cũ (nếu có)
-  const oldNotice = document.querySelector('.col-lg-6:nth-of-type(2) .data-changed-notice');
-  if (oldNotice) oldNotice.remove();
+        // Xóa thông báo cũ (nếu có)
+        const oldNotice = document.querySelector('.col-lg-6:nth-of-type(2) .data-changed-notice');
+        if (oldNotice) oldNotice.remove();
 
-  // Xác định vùng card hiển thị lời khuyên / SHAP (ở cột phải)
-  const rightCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.shadow-sm.border-0.rounded-4.p-4');
-  if (rightCard) {
-    const notice = document.createElement('div');
-    notice.className = 'data-changed-notice text-center py-5 text-muted fade-in';
-    notice.innerHTML = `
+        // Xác định vùng card hiển thị lời khuyên / SHAP (ở cột phải)
+        const rightCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.shadow-sm.border-0.rounded-4.p-4');
+        if (rightCard) {
+            const notice = document.createElement('div');
+            notice.className = 'data-changed-notice text-center py-5 text-muted fade-in';
+            notice.innerHTML = `
       <i class="bi bi-info-circle text-primary fs-1 mb-3"></i>
       <h6 class="fw-semibold text-secondary">Dữ liệu đã thay đổi</h6>
       <p class="small mb-0">
         🔄 Vui lòng nhấn <b>“Dự đoán & Nhận lời khuyên”</b><br>
         để cập nhật lại kết quả, lời khuyên và biểu đồ mới.
       </p>`;
-    rightCard.appendChild(notice);
-  }
-}
+            rightCard.appendChild(notice);
+        }
+    }
 
     inputs.forEach(input => {
         input.addEventListener('input', () => {
@@ -425,6 +512,45 @@
         font-weight: 600;
         color: #0d6efd;
         font-size: 1.1rem;
+    }
+
+    /* Hiệu ứng xuất hiện mượt */
+    .animate-fade-in {
+        animation: fadeIn 0.7s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Tùy chỉnh bảng kết quả */
+    .table.table-hover th {
+        background-color: #f8f9fa;
+        color: #333;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .table.table-hover td {
+        vertical-align: middle;
+    }
+
+    .table.table-hover tr:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+        transition: background-color 0.2s ease;
+    }
+
+    /* Viền + bóng bảng */
+    .card.shadow-sm {
+        border-radius: 1rem !important;
     }
 </style>
 

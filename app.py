@@ -362,31 +362,39 @@ def diagnose():
         except Exception as e:
             flash(f"Lỗi nhập liệu: {e}", "danger")
 
-    # ======================
-    # 🔹 XỬ LÝ FILE EXCEL
-    # ======================
+        # ======================
+        # 🔹 XỬ LÝ FILE CSV / EXCEL
+        # ======================
     if request.method == 'POST' and 'data_file' in request.files:
         try:
             file = request.files['data_file']
             if not file:
-                flash("⚠️ Vui lòng chọn file Excel trước khi tải lên.", "warning")
+                flash("⚠️ Vui lòng chọn file CSV hoặc Excel trước khi tải lên.", "warning")
                 return redirect(url_for('diagnose'))
 
             filename = file.filename.lower()
-            if not filename.endswith(('.xls', '.xlsx')):
-                flash("❌ Chỉ hỗ trợ định dạng Excel (.xls, .xlsx)", "danger")
+            if not filename.endswith(('.csv', '.xls', '.xlsx')):
+                flash("❌ Chỉ hỗ trợ định dạng CSV, XLS hoặc XLSX", "danger")
                 return redirect(url_for('diagnose'))
 
-            df = pd.read_excel(file)
+            # Đọc file theo định dạng
+            if filename.endswith('.csv'):
+                df = pd.read_csv(file)
+            else:
+                df = pd.read_excel(file)
+
+            # Chuẩn hóa tên cột
             df.columns = [c.strip().lower() for c in df.columns]
 
+            # Các cột bắt buộc
             required_cols = ['age', 'gender', 'ap_hi', 'ap_lo', 'cholesterol',
-                             'gluc', 'smoke', 'alco', 'active', 'weight', 'height']
+                            'gluc', 'smoke', 'alco', 'active', 'weight', 'height']
             missing = [c for c in required_cols if c not in df.columns]
             if missing:
                 flash(f"⚠️ File thiếu các cột: {', '.join(missing)}", "danger")
                 return redirect(url_for('diagnose'))
 
+            # Tính BMI
             df['bmi'] = (df['weight'] / ((df['height'] / 100) ** 2)).round(2)
 
             results = []
@@ -403,10 +411,10 @@ def diagnose():
                 exercise = int(row['active'])
                 bmi = float(row['bmi'])
 
+                # Dự đoán
                 if xgb_model:
                     X = np.array([[age, gender, systolic, diastolic,
-                                   chol, gluc, smoking, alcohol, exercise, bmi]],
-                                 dtype=float)
+                                chol, gluc, smoking, alcohol, exercise, bmi]], dtype=float)
                     prob = float(xgb_model.predict_proba(X)[0, 1])
                 else:
                     prob = 0.5
@@ -433,10 +441,11 @@ def diagnose():
                 classes="table table-hover table-striped text-center align-middle small shadow-sm rounded-3"
             )
 
-            flash("✅ Dự đoán từ file Excel đã hoàn tất!", "success")
+            flash("✅ Dự đoán từ file CSV/Excel đã hoàn tất!", "success")
 
         except Exception as e:
-            flash(f"❌ Lỗi khi xử lý file Excel: {e}", "danger")
+            flash(f"❌ Lỗi khi xử lý file CSV/Excel: {e}", "danger")
+
 
     conn.close()
     return render_template(
@@ -448,7 +457,8 @@ def diagnose():
         threshold=threshold,
         ai_advice=ai_advice,
         file_result=file_result,
-        shap_file=shap_file
+        shap_file=shap_file ,
+        results=results 
     )
 
 # ==========================================

@@ -8,17 +8,17 @@
     <link
       rel="preload"
       as="image"
-      href="{{ url_for('static', filename='images/slide1.jpg') }}"
+      href="{{ url_for('static', filename='images/slide1.webp') }}"
     />
     <link
       rel="preload"
       as="image"
-      href="{{ url_for('static', filename='images/slide2.jpg') }}"
+      href="{{ url_for('static', filename='images/slide2.webp') }}"
     />
     <link
       rel="preload"
       as="image"
-      href="{{ url_for('static', filename='images/slide3.jpg') }}"
+      href="{{ url_for('static', filename='images/slide3.webp') }}"
     />
 
     <link
@@ -63,6 +63,7 @@
         background-size: 200% 200%;
         animation: navFlow 10s ease infinite;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+        white-space: nowrap; /* ✅ Giữ menu trên 1 dòng */
       }
 
       @keyframes navFlow {
@@ -77,26 +78,34 @@
         }
       }
 
+      .navbar-nav {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap; /* ✅ Không cho các item xuống hàng */
+        gap: 4px; /* Khoảng cách đều và gọn */
+      }
+
       .navbar-nav .nav-link {
         color: #fff !important;
         font-weight: 500;
-        margin: 0 6px;
-        padding: 8px 14px;
+        padding: 6px 10px; /* ✅ giảm padding cho gọn */
         border-radius: 20px;
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
+        letter-spacing: 0.2px;
+        font-size: 0.95rem;
       }
 
       /* ✨ Hover: sáng nhẹ + nổi */
       .navbar-nav .nav-link:hover {
         background: rgba(255, 255, 255, 0.12);
         color: #ffc107 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 3px 10px rgba(255, 193, 7, 0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(255, 193, 7, 0.25);
       }
 
-      /* 🌟 Active: vàng nổi bật + viền gradient */
+      /* 🌟 Active */
       .navbar-nav .nav-link.active {
         color: #ffc107 !important;
         font-weight: 600;
@@ -107,6 +116,7 @@
         -webkit-text-fill-color: transparent;
       }
 
+      /* 👤 Logout link */
       .navbar-nav .logout-link {
         color: #ffc107 !important;
         font-weight: 600;
@@ -117,7 +127,6 @@
         background: rgba(255, 193, 7, 0.12);
         color: #ffe082 !important;
         transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(255, 235, 59, 0.2);
       }
 
       .navbar-text.user-name {
@@ -127,11 +136,7 @@
         display: flex;
         align-items: center;
         opacity: 0.9;
-      }
-
-      .navbar-nav {
-        display: flex;
-        align-items: center;
+        white-space: nowrap; /* ✅ Giữ “Xin chào, ...” cùng hàng */
       }
 
       .main-content {
@@ -151,6 +156,27 @@
 
       footer.footer a:hover {
         color: #ffe082;
+      }
+
+      /* ✅ Responsive: Khi thu nhỏ hơn 1200px, giảm khoảng cách chữ */
+      @media (max-width: 1200px) {
+        .navbar-nav .nav-link {
+          padding: 5px 8px;
+          font-size: 0.9rem;
+          margin: 0 2px;
+        }
+      }
+
+      /* ✅ Khi thu nhỏ hơn 992px (tablet), menu tự collapse */
+      @media (max-width: 992px) {
+        .navbar-nav {
+          flex-wrap: wrap; /* cho phép xuống hàng sau khi thu gọn */
+          gap: 2px;
+        }
+        .navbar-nav .nav-link {
+          padding: 5px 10px;
+          font-size: 0.9rem;
+        }
       }
     </style>
   </head>
