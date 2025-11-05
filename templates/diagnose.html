@@ -380,65 +380,57 @@
         background-color: #868e96;
     }
 </style>
-
-<!-- Script tính BMI & xử lý hiển thị kết quả -->
-<script>
-    const weight = document.getElementById('weight');
-    const height = document.getElementById('height');
-    const uploadForm = document.getElementById('uploadForm');
-    const inputs = document.querySelectorAll('#predictForm input, #predictForm select');
-    const resultElements = document.querySelectorAll('.alert, .card.mt-3');
-
-    function calcBMI() {
-        const w = parseFloat(weight.value);
-        const h = parseFloat(height.value);
-        if (w > 0 && h > 0) {
-            document.getElementById('bmi').value = (w / ((h / 100) ** 2)).toFixed(2);
-        } else {
-            document.getElementById('bmi').value = '';
-        }
-    }
-
-    function hideResults() {
-        // Ẩn phần lời khuyên + SHAP nếu có
-        const adviceCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.border-0.shadow-sm.rounded-4.p-4.mt-3');
-        const shapCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.mt-3.shadow-sm.p-3');
-        if (adviceCard) adviceCard.remove();
-        if (shapCard) shapCard.remove();
-
-        // Xóa thông báo cũ (nếu có)
-        const oldNotice = document.querySelector('.col-lg-6:nth-of-type(2) .data-changed-notice');
-        if (oldNotice) oldNotice.remove();
-
-        // Xác định vùng card hiển thị lời khuyên / SHAP (ở cột phải)
-        const rightCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.shadow-sm.border-0.rounded-4.p-4');
-        if (rightCard) {
-            const notice = document.createElement('div');
-            notice.className = 'data-changed-notice text-center py-5 text-muted fade-in';
-            notice.innerHTML = `
-      <i class="bi bi-info-circle text-primary fs-1 mb-3"></i>
-      <h6 class="fw-semibold text-secondary">Dữ liệu đã thay đổi</h6>
-      <p class="small mb-0">
-        🔄 Vui lòng nhấn <b>“Dự đoán & Nhận lời khuyên”</b><br>
-        để cập nhật lại kết quả, lời khuyên và biểu đồ mới.
-      </p>`;
-            rightCard.appendChild(notice);
-        }
-    }
-
-    inputs.forEach(input => {
-        input.addEventListener('input', () => {
-            calcBMI();
-            hideResults();
-        });
-    });
-
-    if (uploadForm) {
-        uploadForm.addEventListener('submit', () => hideResults());
-    }
-
-    calcBMI();
+<script type="application/json" id="pageState">
+  {{ {"hasResult": has_result} | tojson }}
 </script>
+<script>
+  const state = JSON.parse(document.getElementById("pageState").textContent);
+  const hasResult = !!state.hasResult;   
+
+  const weight = document.getElementById('weight');
+  const height = document.getElementById('height');
+  const uploadForm = document.getElementById('uploadForm');
+  const inputs = document.querySelectorAll('#predictForm input, #predictForm select');
+  const resultElements = document.querySelectorAll('.alert, .card.mt-3');
+
+  function calcBMI() {
+    const w = parseFloat(weight.value);
+    const h = parseFloat(height.value);
+    document.getElementById('bmi').value = (w > 0 && h > 0) ? (w / ((h / 100) ** 2)).toFixed(2) : '';
+  }
+
+  function hideResults() {
+    // Chỉ show thông báo khi ĐÃ có kết quả trước đó
+    if (!hasResult) return;
+
+    const adviceCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.border-0.shadow-sm.rounded-4.p-4.mt-3');
+    const shapCard   = document.querySelector('.col-lg-6:nth-of-type(2) .card.mt-3.shadow-sm.p-3');
+    if (adviceCard) adviceCard.remove();
+    if (shapCard)   shapCard.remove();
+
+    const oldNotice = document.querySelector('.col-lg-6:nth-of-type(2) .data-changed-notice');
+    if (oldNotice) oldNotice.remove();
+
+    const rightCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.shadow-sm.border-0.rounded-4.p-4');
+    if (rightCard) {
+      const notice = document.createElement('div');
+      notice.className = 'data-changed-notice text-center py-5 text-muted fade-in';
+      notice.innerHTML = `
+        <i class="bi bi-info-circle text-primary fs-1 mb-3"></i>
+        <h6 class="fw-semibold text-secondary">Dữ liệu đã thay đổi</h6>
+        <p class="small mb-0">
+          🔄 Vui lòng nhấn <b>“Dự đoán & Nhận lời khuyên”</b><br>
+          để cập nhật lại kết quả, lời khuyên và biểu đồ mới.
+        </p>`;
+      rightCard.appendChild(notice);
+    }
+  }
+
+  inputs.forEach(i => i.addEventListener('input', () => { calcBMI(); hideResults(); }));
+  if (uploadForm) uploadForm.addEventListener('submit', hideResults);
+  calcBMI();
+</script>
+
 <!-- Biểu đồ tròn phần trăm nguy cơ -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% if result %}

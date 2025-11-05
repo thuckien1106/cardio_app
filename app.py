@@ -449,6 +449,7 @@ def diagnose():
 
 
     conn.close()
+    has_result = bool(result or ai_advice or shap_file or file_result)
     return render_template(
         'diagnose.html',
         benhnhans=benhnhans,
@@ -459,7 +460,8 @@ def diagnose():
         ai_advice=ai_advice,
         file_result=file_result,
         shap_file=shap_file ,
-        results=results 
+        results=results,
+        has_result=has_result 
     )
 
 # ==========================================
