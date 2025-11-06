@@ -124,21 +124,26 @@
           <td class="text-center">{{ u.DienThoai or '—' }}</td>
           <td>{{ u.DiaChi or '—' }}</td>
           <td class="text-center">
-            <!-- Xem -->
-            <button class="btn btn-sm btn-outline-info me-0 rounded-pill px-3" data-bs-toggle="modal"
-              data-bs-target="#viewUserModal{{ u.ID }}">👁 Xem</button>
-            <!-- Sửa -->
-            <button class="btn btn-sm btn-primary me-0 rounded-pill px-3" data-bs-toggle="modal"
-              data-bs-target="#editUserModal{{ u.ID }}">✏️ Sửa</button>
-            <!-- Xóa -->
-            <form method="post" class="d-inline">
-              <input type="hidden" name="id" value="{{ u.ID }}">
-              <button type="submit" name="delete_user"
-                class="btn btn-sm btn-outline-danger rounded-pill px-3 delete-btn"
-                data-role="{{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}">
-                🗑 Xóa
+            <div class="action-buttons">
+              <!-- Xem -->
+              <button class="btn btn-outline-info rounded-pill" data-bs-toggle="modal"
+                data-bs-target="#viewUserModal{{ u.ID }}">
+                👁 Xem
               </button>
-            </form>
+              <!-- Sửa -->
+              <button class="btn btn-primary rounded-pill" data-bs-toggle="modal"
+                data-bs-target="#editUserModal{{ u.ID }}">
+                ✏️ Sửa
+              </button>
+              <!-- Xóa -->
+              <form method="post" class="d-inline">
+                <input type="hidden" name="id" value="{{ u.ID }}">
+                <button type="submit" name="delete_user" class="btn btn-outline-danger rounded-pill delete-btn"
+                  data-role="{{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}">
+                  🗑 Xóa
+                </button>
+              </form>
+            </div>
 
             <script>
               document.addEventListener('DOMContentLoaded', () => {
@@ -146,7 +151,7 @@
                   btn.addEventListener('click', e => {
                     const role = btn.dataset.role;
                     if (!confirm(`Bạn có chắc chắn muốn xóa ${role} này?`)) {
-                      e.preventDefault(); 
+                      e.preventDefault();
                     }
                   });
                 });
@@ -249,4 +254,41 @@
     </table>
   </div>
 </div>
+<style>
+  /* Giữ tất cả nút hành động trên cùng một hàng, căn giữa */
+  .action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    /* Khoảng cách giữa các nút */
+    flex-wrap: nowrap;
+  }
+
+  /* Thu nhỏ kích thước nút cho hài hòa */
+  .action-buttons .btn {
+    white-space: nowrap;
+    font-size: 0.85rem;
+    padding: 4px 10px;
+  }
+
+  /* Khi màn hình nhỏ hơn 992px */
+  @media (max-width: 992px) {
+    .action-buttons {
+      gap: 0.3rem;
+    }
+
+    .action-buttons .btn {
+      font-size: 0.8rem;
+      padding: 3px 8px;
+    }
+  }
+
+  /* Hiệu ứng hover tinh tế */
+  .action-buttons .btn:hover {
+    transform: translateY(-1px);
+    transition: all 0.15s ease;
+  }
+</style>
+
 {% endblock %}
