@@ -235,19 +235,19 @@
   }
 
   /* ================================
-     🌅 SLIDER – Smooth Professional 3s
-  ================================= */
+   SLIDER – Smooth Professional Optimized
+================================ */
   .carousel-inner {
     overflow: hidden;
     backface-visibility: hidden;
     transform: translateZ(0);
   }
 
-  /* Fade chuyển slide nhẹ */
+  /* Hiệu ứng fade + scale dịu hơn */
   .carousel-fade .carousel-item {
     opacity: 0;
-    transition: opacity 1s ease-in-out, transform 3s ease-out;
-    transform: scale(1.02);
+    transition: opacity 0.8s ease-in-out, transform 2.5s ease-out;
+    transform: scale(1.01);
   }
 
   .carousel-fade .carousel-item.active {
@@ -256,23 +256,24 @@
     z-index: 2;
   }
 
-  /* Ken Burns dịu hơn, 3 giây */
+  /* Ken Burns mượt, ít giật hơn */
   .carousel-item.active .hero-img {
-    animation: kenburns 3s ease-in-out forwards;
+    animation: kenburnsSoft 4s ease-in-out forwards;
   }
 
-  @keyframes kenburns {
+  @keyframes kenburnsSoft {
     0% {
       transform: scale(1) translate(0, 0);
     }
     50% {
-      transform: scale(1.03) translate(-5px, -3px);
+      transform: scale(1.015) translate(-2px, -1px);
     }
     100% {
-      transform: scale(1.05) translate(5px, 3px);
+      transform: scale(1.01) translate(2px, 1px);
     }
   }
 
+  /* Hình ảnh slider */
   .hero-img {
     height: 450px;
     object-fit: cover;
@@ -281,22 +282,22 @@
     will-change: transform, opacity;
   }
 
-  /* ✨ Caption blend nhẹ hơn */
+  /* Caption fade & move nhẹ hơn */
   .carousel-caption {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 80%;
     text-align: center;
-    transform: translate(-50%, -45%) scale(0.97);
+    transform: translate(-50%, -45%) scale(0.98);
     opacity: 0;
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition: opacity 0.7s ease, transform 0.7s ease;
   }
 
   .carousel-item.active .carousel-caption {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
-    transition-delay: 0.2s;
+    transition-delay: 0.1s;
   }
 
   .carousel-caption h2 {
@@ -304,20 +305,20 @@
     font-weight: 700;
     color: #fff;
     text-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
-    animation: fadeDown 0.9s ease both;
+    animation: fadeDownSoft 0.8s ease both;
   }
 
   .carousel-caption p {
     font-size: 1.05rem;
     color: #f8f9fa;
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    animation: fadeUp 1s ease both;
+    animation: fadeUpSoft 0.9s ease both;
   }
 
-  @keyframes fadeDown {
+  @keyframes fadeDownSoft {
     from {
       opacity: 0;
-      transform: translateY(-10px);
+      transform: translateY(-8px);
     }
     to {
       opacity: 1;
@@ -325,17 +326,16 @@
     }
   }
 
-  @keyframes fadeUp {
+  @keyframes fadeUpSoft {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
-
   /* Overlay dịu nhẹ */
   .carousel-overlay {
     position: absolute;
@@ -343,12 +343,11 @@
     background: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0.25),
-      rgba(0, 0, 0, 0.55)
+      rgba(0, 0, 0, 0.5)
     );
     pointer-events: none;
     border-radius: 0.75rem;
   }
-
   /* Nút điều khiển */
   .carousel-control-prev-icon,
   .carousel-control-next-icon {
@@ -358,7 +357,7 @@
 
   .carousel-control-prev-icon:hover,
   .carousel-control-next-icon:hover {
-    transform: scale(1.15);
+    transform: scale(1.1);
   }
 
   section {
@@ -373,7 +372,7 @@
   p {
     font-size: 1rem;
   }
-  /* 🌟 Hiệu ứng xuất hiện khi cuộn (Scroll FadeUp) */
+  /* Hiệu ứng xuất hiện khi cuộn (Scroll FadeUp) */
   .fade-up {
     opacity: 0;
     transform: translateY(25px);
@@ -386,7 +385,7 @@
     transform: translateY(0);
   }
 
-  /* 💫 Tùy chỉnh hiệu ứng theo từng loại phần tử */
+  /* Tùy chỉnh hiệu ứng theo từng loại phần tử */
   .intro-card,
   .news-card,
   #heroSection,

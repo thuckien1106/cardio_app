@@ -453,12 +453,6 @@
         <div class="text-center text-muted small mt-3">
           👋 Xin chào! Tôi là <b>Trợ lý CVD-AI</b>. Bạn có thể hỏi tôi về:
         </div>
-        <div class="sample-questions mt-3 text-center">
-          <span class="sample">Cách giảm huyết áp</span>
-          <span class="sample">Ăn gì tốt cho tim mạch</span>
-          <span class="sample">Tập thể dục thế nào</span>
-          <span class="sample">Dấu hiệu đau tim</span>
-        </div>
       </div>
 
       <div class="chat-footer">
@@ -647,6 +641,19 @@
           height: 420px;
         }
       }
+      #restoreQuickMenu {
+        animation: fadeInUp 0.5s ease;
+      }
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
     </style>
 
     <script>
@@ -657,14 +664,19 @@
         const form = document.getElementById("chatForm");
         const input = document.getElementById("chatInput");
         const chatBody = document.getElementById("chatBody");
+        const quickMenu = document.getElementById("chatQuickMenu");
+        const closeQuickMenu = document.getElementById("closeQuickMenu");
 
-        document.querySelectorAll(".sample").forEach((el) => {
-          el.addEventListener("click", () => {
-            input.value = el.textContent;
-            input.focus();
-          });
-        });
+        // KIỂM TRA TRẠNG THÁI LƯU (localStorage)
+        const quickMenuHidden =
+          localStorage.getItem("quickMenuHidden") === "true";
 
+        if (quickMenuHidden && quickMenu) {
+          quickMenu.style.display = "none";
+          showRestoreButton(); // Hiển thị nút "Hiện gợi ý lại"
+        }
+
+        // XỬ LÝ CHAT CƠ BẢN
         bubble.addEventListener("click", () => {
           windowEl.style.display = "flex";
           bubble.style.display = "none";
@@ -685,11 +697,12 @@
                 chatBody.insertAdjacentHTML(
                   "beforeend",
                   `<div class='msg-user'><div class='bubble'>${m.user}</div></div>
-                   <div class='msg-ai'><div class='bubble'>${m.ai}</div></div>`
+               <div class='msg-ai'><div class='bubble'>${m.ai}</div></div>`
                 );
               });
             } else {
-              chatBody.innerHTML = `<div class='text-center text-muted small mt-3'>👋 Xin chào! Tôi là <b>Trợ lý CVD-AI</b>. Hãy hỏi tôi về tim mạch nhé 💓</div>`;
+              chatBody.innerHTML =
+                "<div class='text-center text-muted small mt-3'>👋 Xin chào! Tôi là <b>Trợ lý CVD-AI</b>. Hãy hỏi tôi về tim mạch nhé 💓</div>";
             }
             chatBody.scrollTop = chatBody.scrollHeight;
           } catch (e) {
@@ -734,38 +747,51 @@
           }
         });
 
-        // Xử lý các nút gợi ý nổi ngoài chat
+        // XỬ LÝ NÚT GỢI Ý NHANH
         document.querySelectorAll(".quick-btn").forEach((btn) => {
           btn.addEventListener("click", () => {
             const text = btn.dataset.msg;
-            const chatWindow = document.getElementById("chatWindow");
-            const chatBubble = document.getElementById("chatBubble");
-            const input = document.getElementById("chatInput");
-
-            // Mở chat nếu đang ẩn
-            if (
-              chatWindow.style.display === "none" ||
-              !chatWindow.style.display
-            ) {
-              chatWindow.style.display = "flex";
-              chatBubble.style.display = "none";
+            if (windowEl.style.display === "none" || !windowEl.style.display) {
+              windowEl.style.display = "flex";
+              bubble.style.display = "none";
             }
-
-            // Gán nội dung vào ô nhập
             input.value = text;
             input.focus();
           });
         });
-        // ❌ Ẩn toàn bộ gợi ý khi bấm dấu X
-        const closeQuickMenu = document.getElementById("closeQuickMenu");
+
+        // ẨN VĨNH VIỄN CÁC GỢI Ý
         if (closeQuickMenu) {
           closeQuickMenu.addEventListener("click", () => {
-            const quickMenu = document.getElementById("chatQuickMenu");
             quickMenu.style.display = "none";
+            localStorage.setItem("quickMenuHidden", "true"); // lưu trạng thái
+            showRestoreButton();
           });
+        }
+
+        // HIỂN THỊ LẠI GỢI Ý (nút nhỏ nổi)
+        function showRestoreButton() {
+          const existing = document.getElementById("restoreQuickMenu");
+          if (existing) return; // tránh trùng
+
+          const restoreBtn = document.createElement("button");
+          restoreBtn.id = "restoreQuickMenu";
+          restoreBtn.innerHTML = "📎 Hiện gợi ý lại";
+          restoreBtn.className = "btn btn-light border position-fixed";
+          restoreBtn.style.cssText =
+            "bottom:100px; right:25px; z-index:2200; font-size:0.85rem; border-radius:20px; padding:4px 12px; box-shadow:0 2px 6px rgba(0,0,0,0.2);";
+
+          restoreBtn.addEventListener("click", () => {
+            quickMenu.style.display = "flex";
+            localStorage.setItem("quickMenuHidden", "false");
+            restoreBtn.remove();
+          });
+
+          document.body.appendChild(restoreBtn);
         }
       });
     </script>
+
     {% endif %}
 
     <script>

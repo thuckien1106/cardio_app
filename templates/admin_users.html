@@ -1,14 +1,18 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-3 pt-3">
-  <h2 class="fw-bold text-gradient mb-4">👤 {{ page_title }}</h2>
-  <p class="text-muted mb-3">
-    Admin có thể thêm, xem, sửa hoặc xóa tài khoản
+<div class="container mt-3 pt-3 fade-section">
+
+  <!-- Tiêu đề -->
+  <h2 class="fw-bold text-gradient mb-4 fade-section fade-delayed-1">
+    👤 {{ page_title }}
+  </h2>
+  <p class="text-muted mb-3 fade-section fade-delayed-2">
+    Quản trị viên có thể thêm, xem, sửa hoặc xóa tài khoản
     <b>{{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}</b>.
   </p>
 
   <!-- Nút chuyển đổi -->
-  <div class="mb-3">
+  <div class="mb-3 fade-section fade-delayed-2">
     <a href="{{ url_for('admin_manage_users', type='doctor') }}"
       class="btn {% if role_type == 'doctor' %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill me-2">
       👨‍⚕️ Quản lý Bác sĩ
@@ -19,20 +23,22 @@
     </a>
   </div>
 
-  <!-- 🔔 Thông báo -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-  {% for cat, msg in messages %}
-  <div class="alert alert-{{ 'success' if cat == 'success' else 'danger' }} alert-dismissible fade show shadow-sm">
-    {{ msg }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  <!--Thông báo -->
+  <div class="fade-section fade-delayed-2">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'success' if cat == 'success' else 'danger' }} alert-dismissible fade show shadow-sm">
+      {{ msg }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
   </div>
-  {% endfor %}
-  {% endif %}
-  {% endwith %}
 
   <!-- ======================= FORM THÊM NGƯỜI DÙNG ======================= -->
-  <div class="card shadow-sm border-0 rounded-4 mb-4">
+  <div class="card shadow-sm border-0 rounded-4 mb-4 fade-section fade-delayed-3">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center rounded-top-4">
       <h5 class="mb-0">➕ Thêm {{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }} mới</h5>
       <button class="btn btn-light btn-sm fw-semibold rounded-pill" type="button" data-bs-toggle="collapse"
@@ -97,198 +103,209 @@
   </div>
 
   <!-- ======================= DANH SÁCH NGƯỜI DÙNG ======================= -->
-  <div class="table-responsive shadow-sm rounded-4">
-    <table class="table table-bordered align-middle">
-      <thead class="table-light text-center">
-        <tr>
-          <th>Họ tên</th>
-          <th>Email</th>
-          <th>Giới tính</th>
-          <th>Ngày sinh</th>
-          <th>Điện thoại</th>
-          <th>Địa chỉ</th>
-          <th>Hành động</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for u in users %}
-        <tr>
-          <td>{{ u.HoTen }}</td>
-          <td>{{ u.Email }}</td>
-          <td class="text-center">{{ u.GioiTinh or '—' }}</td>
-          <td class="text-center">
-            {% if u.NgaySinh %}
-            {{ u.NgaySinh.strftime('%d/%m/%Y') }}
-            {% else %} — {% endif %}
-          </td>
-          <td class="text-center">{{ u.DienThoai or '—' }}</td>
-          <td>{{ u.DiaChi or '—' }}</td>
-          <td class="text-center">
-            <div class="action-buttons">
-              <!-- Xem -->
-              <button class="btn btn-outline-info rounded-pill" data-bs-toggle="modal"
-                data-bs-target="#viewUserModal{{ u.ID }}">
-                👁 Xem
-              </button>
-              <!-- Sửa -->
-              <button class="btn btn-primary rounded-pill" data-bs-toggle="modal"
-                data-bs-target="#editUserModal{{ u.ID }}">
-                ✏️ Sửa
-              </button>
-              <!-- Xóa -->
-              <form method="post" class="d-inline">
-                <input type="hidden" name="id" value="{{ u.ID }}">
-                <button type="submit" name="delete_user" class="btn btn-outline-danger rounded-pill delete-btn"
-                  data-role="{{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}">
-                  🗑 Xóa
+  <div class="table-wrapper fade-up-section">
+    <div class="table-responsive shadow-sm rounded-4">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light text-center">
+          <tr>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th>Giới tính</th>
+            <th>Ngày sinh</th>
+            <th>Điện thoại</th>
+            <th>Địa chỉ</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>{{ u.HoTen }}</td>
+            <td>{{ u.Email }}</td>
+            <td class="text-center">{{ u.GioiTinh or '—' }}</td>
+            <td class="text-center">
+              {% if u.NgaySinh %}
+              {{ u.NgaySinh.strftime('%d/%m/%Y') }}
+              {% else %} — {% endif %}
+            </td>
+            <td class="text-center">{{ u.DienThoai or '—' }}</td>
+            <td>{{ u.DiaChi or '—' }}</td>
+            <td class="text-center">
+              <div class="action-buttons">
+                <!-- Xem -->
+                <button class="btn btn-outline-info rounded-pill" data-bs-toggle="modal"
+                  data-bs-target="#viewUserModal{{ u.ID }}">
+                  👁 Xem
                 </button>
-              </form>
-            </div>
-
-            <script>
-              document.addEventListener('DOMContentLoaded', () => {
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                  btn.addEventListener('click', e => {
-                    const role = btn.dataset.role;
-                    if (!confirm(`Bạn có chắc chắn muốn xóa ${role} này?`)) {
-                      e.preventDefault();
-                    }
-                  });
-                });
-              });
-            </script>
-
-          </td>
-        </tr>
-        <!-- Modal Xem chi tiết -->
-        <div class="modal fade" id="viewUserModal{{ u.ID }}" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-3 shadow-lg border-0">
-              <div class="modal-header bg-info text-white">
-                <h5 class="modal-title">👁 Thông tin {{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <!-- Sửa -->
+                <button class="btn btn-primary rounded-pill" data-bs-toggle="modal"
+                  data-bs-target="#editUserModal{{ u.ID }}">
+                  ✏️ Sửa
+                </button>
+                <!-- Xóa -->
+                <form method="post" class="d-inline">
+                  <input type="hidden" name="id" value="{{ u.ID }}">
+                  <button type="submit" name="delete_user" class="btn btn-outline-danger rounded-pill delete-btn"
+                    data-role="{{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}">
+                    🗑 Xóa
+                  </button>
+                </form>
               </div>
-              <div class="modal-body">
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item"><b>Họ tên:</b> {{ u.HoTen }}</li>
-                  <li class="list-group-item"><b>Giới tính:</b> {{ u.GioiTinh or '—' }}</li>
-                  <li class="list-group-item"><b>Ngày sinh:</b> {{ u.NgaySinh.strftime('%d/%m/%Y') if u.NgaySinh else
-                    '—' }}</li>
-                  <li class="list-group-item"><b>Email:</b> {{ u.Email }}</li>
-                  <li class="list-group-item"><b>Điện thoại:</b> {{ u.DienThoai or '—' }}</li>
-                  <li class="list-group-item"><b>Địa chỉ:</b> {{ u.DiaChi or '—' }}</li>
-                  <li class="list-group-item"><b>Ngày tạo:</b> {{ u.NgayTao.strftime('%d/%m/%Y') if u.NgayTao else '—'
-                    }}</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
+            </td>
+          </tr>
 
-        <!-- Modal Sửa -->
-        <div class="modal fade" id="editUserModal{{ u.ID }}" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-3 shadow">
-              <form method="post">
-                <input type="hidden" name="id" value="{{ u.ID }}" />
-                <input type="hidden" name="edit_user" value="1" />
-                <div class="modal-header bg-primary text-white">
-                  <h5 class="modal-title">✏️ Cập nhật thông tin {{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}
-                  </h5>
+          <!-- Modal Xem -->
+          <div class="modal fade" id="viewUserModal{{ u.ID }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content rounded-3 shadow-lg border-0">
+                <div class="modal-header bg-info text-white">
+                  <h5 class="modal-title">👁 Thông tin {{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}</h5>
                   <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-
                 <div class="modal-body">
-                  <div class="row g-3">
-                    <div class="col-md-6">
-                      <label class="form-label fw-semibold">Họ tên</label>
-                      <input type="text" name="ho_ten" class="form-control" value="{{ u.HoTen }}" required />
-                    </div>
-
-                    <div class="col-md-6">
-                      <label class="form-label fw-semibold">Giới tính</label>
-                      <select name="gioi_tinh" class="form-select">
-                        <option value="Nam" {% if u.GioiTinh=='Nam' %}selected{% endif %}>Nam</option>
-                        <option value="Nữ" {% if u.GioiTinh=='Nữ' %}selected{% endif %}>Nữ</option>
-                      </select>
-                    </div>
-
-                    <div class="col-md-6">
-                      <label class="form-label fw-semibold">Ngày sinh</label>
-                      <input type="date" name="ngay_sinh" class="form-control"
-                        value="{{ u.NgaySinh.strftime('%Y-%m-%d') if u.NgaySinh else '' }}" />
-                    </div>
-
-                    <div class="col-md-6">
-                      <label class="form-label fw-semibold">Email</label>
-                      <input type="email" name="email" class="form-control" value="{{ u.Email }}" required />
-                    </div>
-
-                    <div class="col-md-6">
-                      <label class="form-label fw-semibold">Mật khẩu (để trống nếu không đổi)</label>
-                      <input type="password" name="mat_khau" class="form-control" placeholder="••••••" />
-                    </div>
-
-                    <div class="col-md-6">
-                      <label class="form-label fw-semibold">Điện thoại</label>
-                      <input type="text" name="dien_thoai" class="form-control" value="{{ u.DienThoai or '' }}" />
-                    </div>
-
-                    <div class="col-12">
-                      <label class="form-label fw-semibold">Địa chỉ</label>
-                      <input type="text" name="dia_chi" class="form-control" value="{{ u.DiaChi or '' }}" />
-                    </div>
-                  </div>
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><b>Họ tên:</b> {{ u.HoTen }}</li>
+                    <li class="list-group-item"><b>Giới tính:</b> {{ u.GioiTinh or '—' }}</li>
+                    <li class="list-group-item"><b>Ngày sinh:</b> {{ u.NgaySinh.strftime('%d/%m/%Y') if u.NgaySinh else '—' }}</li>
+                    <li class="list-group-item"><b>Email:</b> {{ u.Email }}</li>
+                    <li class="list-group-item"><b>Điện thoại:</b> {{ u.DienThoai or '—' }}</li>
+                    <li class="list-group-item"><b>Địa chỉ:</b> {{ u.DiaChi or '—' }}</li>
+                    <li class="list-group-item"><b>Ngày tạo:</b> {{ u.NgayTao.strftime('%d/%m/%Y') if u.NgayTao else '—' }}</li>
+                  </ul>
                 </div>
-
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                  <button type="submit" class="btn btn-success">💾 Lưu thay đổi</button>
-                </div>
-              </form>
+              </div>
             </div>
           </div>
-        </div>
-        {% endfor %}
-      </tbody>
-    </table>
+
+          <!-- Modal Sửa -->
+          <div class="modal fade" id="editUserModal{{ u.ID }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content rounded-3 shadow">
+                <form method="post">
+                  <input type="hidden" name="id" value="{{ u.ID }}" />
+                  <input type="hidden" name="edit_user" value="1" />
+                  <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">✏️ Cập nhật thông tin {{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label fw-semibold">Họ tên</label>
+                        <input type="text" name="ho_ten" class="form-control" value="{{ u.HoTen }}" required />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-semibold">Giới tính</label>
+                        <select name="gioi_tinh" class="form-select">
+                          <option value="Nam" {% if u.GioiTinh=='Nam' %}selected{% endif %}>Nam</option>
+                          <option value="Nữ" {% if u.GioiTinh=='Nữ' %}selected{% endif %}>Nữ</option>
+                        </select>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-semibold">Ngày sinh</label>
+                        <input type="date" name="ngay_sinh" class="form-control"
+                          value="{{ u.NgaySinh.strftime('%Y-%m-%d') if u.NgaySinh else '' }}" />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ u.Email }}" required />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-semibold">Mật khẩu (để trống nếu không đổi)</label>
+                        <input type="password" name="mat_khau" class="form-control" placeholder="••••••" />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-semibold">Điện thoại</label>
+                        <input type="text" name="dien_thoai" class="form-control" value="{{ u.DienThoai or '' }}" />
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label fw-semibold">Địa chỉ</label>
+                        <input type="text" name="dia_chi" class="form-control" value="{{ u.DiaChi or '' }}" />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success">💾 Lưu thay đổi</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
+
+<!-- ================== CSS HIỆU ỨNG ================== -->
 <style>
-  /* Giữ tất cả nút hành động trên cùng một hàng, căn giữa */
+  .fade-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.8s ease-out;
+  }
+  .fade-section.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .fade-delayed-1 { transition-delay: 0.1s; }
+  .fade-delayed-2 { transition-delay: 0.2s; }
+  .fade-delayed-3 { transition-delay: 0.3s; }
+
+  /* Bảng xuất hiện từ dưới lên */
+  .fade-up-section {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 1s ease-out;
+    will-change: opacity, transform;
+  }
+  .fade-up-section.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Căn chỉnh nút hành động */
   .action-buttons {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 0.4rem;
-    /* Khoảng cách giữa các nút */
-    flex-wrap: nowrap;
   }
-
-  /* Thu nhỏ kích thước nút cho hài hòa */
   .action-buttons .btn {
     white-space: nowrap;
     font-size: 0.85rem;
     padding: 4px 10px;
+    transition: all 0.15s ease;
   }
-
-  /* Khi màn hình nhỏ hơn 992px */
-  @media (max-width: 992px) {
-    .action-buttons {
-      gap: 0.3rem;
-    }
-
-    .action-buttons .btn {
-      font-size: 0.8rem;
-      padding: 3px 8px;
-    }
-  }
-
-  /* Hiệu ứng hover tinh tế */
   .action-buttons .btn:hover {
     transform: translateY(-1px);
-    transition: all 0.15s ease;
   }
 </style>
 
+<!-- ================== SCRIPT ================== -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Hiệu ứng fade + bảng trượt lên
+    const fadeEls = document.querySelectorAll(".fade-section, .fade-up-section");
+    const revealOnScroll = () => {
+      const trigger = window.innerHeight * 0.85;
+      fadeEls.forEach(el => {
+        if (el.getBoundingClientRect().top < trigger) el.classList.add("show");
+      });
+    };
+    window.addEventListener("scroll", revealOnScroll);
+    revealOnScroll();
+
+    // Xác nhận xoá
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const role = btn.dataset.role;
+        if (!confirm(`Bạn có chắc chắn muốn xóa ${role} này?`)) e.preventDefault();
+      });
+    });
+  });
+</script>
 {% endblock %}

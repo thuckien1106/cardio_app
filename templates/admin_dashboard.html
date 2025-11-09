@@ -172,7 +172,7 @@
 
 <!-- ========== HIỆU ỨNG ========== -->
 <style>
-  /* ✨ Hiệu ứng xuất hiện card biểu đồ */
+  /* Hiệu ứng xuất hiện card biểu đồ */
   .chart-card {
     opacity: 0;
     transform: scale(0.95);
@@ -185,7 +185,7 @@
 </style>
 
 <script>
-  // 🧮 Counter đếm số
+  // Counter đếm số
   document.addEventListener("DOMContentLoaded", () => {
     const counters = document.querySelectorAll(".counter");
     counters.forEach((counter) => {
@@ -228,7 +228,7 @@
   });
 
   // ================================
-  // 📊 CÁC BIỂU ĐỒ CHÍNH
+  // CÁC BIỂU ĐỒ CHÍNH
   // ================================
   const d = document.getElementById("chartData");
   const months = d.dataset.months.split(",");
@@ -252,7 +252,7 @@
 
   const commonAnim = { duration: 1200, easing: "easeOutQuart" };
 
-  // 1️⃣ Pie: Bác sĩ / Bệnh nhân
+  // Pie: Bác sĩ / Bệnh nhân
   new Chart(document.getElementById("pieChart"), {
     type: "pie",
     data: {
@@ -278,7 +278,7 @@
     plugins: [ChartDataLabels],
   });
 
-  // 2️⃣ Pie: Nguy cơ cao / thấp
+  // Pie: Nguy cơ cao / thấp
   new Chart(document.getElementById("riskChart"), {
     type: "pie",
     data: {
@@ -302,7 +302,7 @@
     plugins: [ChartDataLabels],
   });
 
-  // 3️⃣ Radar: Hành vi sức khỏe
+  // Radar: Hành vi sức khỏe
   new Chart(document.getElementById("behaviorChart"), {
     type: "radar",
     data: {
@@ -332,7 +332,7 @@
     plugins: [ChartDataLabels],
   });
 
-  // 4️⃣ Line: Xu hướng chẩn đoán
+  // Line: Xu hướng chẩn đoán
   new Chart(document.getElementById("trendChart"), {
     type: "line",
     data: {
@@ -362,7 +362,7 @@
     },
   });
 
-  // 5️⃣ Bar + Line: Top bác sĩ
+  // Bar + Line: Top bác sĩ
   new Chart(document.getElementById("topDoctorsChart"), {
     type: "bar",
     data: {
@@ -402,7 +402,7 @@
     },
   });
 
-  // 6️⃣ Hiệu suất bác sĩ
+  // Hiệu suất bác sĩ
   new Chart(document.getElementById("doctorPerformanceChart"), {
     type: "bar",
     data: {
@@ -446,7 +446,7 @@
 </script>
 {% endblock %}
 <style>
-  /* 🌟 Hiệu ứng xuất hiện biểu đồ */
+  /* Hiệu ứng xuất hiện biểu đồ */
   .chart-card {
     opacity: 0;
     transform: translateY(40px) scale(0.95);
