@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-3 pt-3">
+<div class="container mt-3 pt-3 fade-section ">
 
     <!-- Tiêu đề -->
-    <div class="text-center mb-4">
+    <div class="text-center mb-4 fade-section fade-delayed-1">
         <h2 class="fw-bold text-gradient">🩺 Chẩn đoán bệnh tim mạch</h2>
         <p class="text-muted mb-0">
             {% if session['role'] == 'doctor' %}
@@ -16,7 +16,7 @@
 
     <div class="row g-3 align-items-start">
         <!-- ======== Form nhập liệu + kết quả ======== -->
-        <div class="col-lg-6">
+        <div class="col-lg-6 fade-section fade-delayed-2">
             <div class="card shadow-sm p-4 border-0 rounded-4">
                 <h4 class="text-primary mb-3">📋 Nhập dữ liệu thủ công</h4>
 
@@ -228,7 +228,7 @@
         </div>
 
         <!-- ======== Upload file + lời khuyên + SHAP ======== -->
-        <div class="col-lg-6">
+        <div class="col-lg-6 fade-section fade-delayed-3">
             {% if session['role'] == 'doctor' %}
             <!-- 📂 Upload file cho bác sĩ -->
             <div class="card shadow-sm p-4 border-0 rounded-4 mb-3">
@@ -544,6 +544,30 @@
     .card.shadow-sm {
         border-radius: 1rem !important;
     }
+    /* 🌟 Hiệu ứng xuất hiện khi load trang */
+    .fade-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.8s ease-out;
+    will-change: opacity, transform;
+    }
+
+    .fade-section.show {
+    opacity: 1;
+    transform: translateY(0);
+    }
+
+    /* 💫 Các hiệu ứng riêng */
+    .fade-delayed-1 {
+    transition-delay: 0.1s;
+    }
+    .fade-delayed-2 {
+    transition-delay: 0.2s;
+    }
+    .fade-delayed-3 {
+    transition-delay: 0.3s;
+    }
+
 </style>
 
 <div id="loadingOverlay">
@@ -553,66 +577,73 @@
 
 <!-- Script hiển thị overlay khi gửi form -->
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const predictForm = document.getElementById("predictForm");
-        const uploadForm = document.getElementById("uploadForm");
-        const overlay = document.getElementById("loadingOverlay");
+document.addEventListener("DOMContentLoaded", () => {
+  // 1️⃣ Loading overlay
+  const predictForm = document.getElementById("predictForm");
+  const uploadForm = document.getElementById("uploadForm");
+  const overlay = document.getElementById("loadingOverlay");
+  const showOverlay = () => (overlay.style.display = "flex");
+  if (predictForm) predictForm.addEventListener("submit", showOverlay);
+  if (uploadForm) uploadForm.addEventListener("submit", showOverlay);
 
-        function showOverlay() {
-            overlay.style.display = "flex";
-        }
-
-        if (predictForm) {
-            predictForm.addEventListener("submit", () => showOverlay());
-        }
-        if (uploadForm) {
-            uploadForm.addEventListener("submit", () => showOverlay());
-        }
-    });
-    document.addEventListener("DOMContentLoaded", () => {
-        const selectPatient = document.querySelector('select[name="benhnhan_id"]');
-        const inputAge = document.getElementById("age");
-        const selectGender = document.getElementById("gender");
-
-        if (selectPatient) {
-            selectPatient.addEventListener("change", async () => {
-                const benhnhanId = selectPatient.value;
-                if (!benhnhanId) return;
-
-                try {
-                    const res = await fetch(`/get_patient_info/${benhnhanId}`);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const data = await res.json();
-
-                    if (data.tuoi) inputAge.value = data.tuoi;
-                    if (data.gioitinh) selectGender.value = data.gioitinh;
-
-                    // Hiệu ứng nhẹ khi auto-fill
-                    [inputAge, selectGender].forEach(el => {
-                        el.classList.add("border-success", "bg-light");
-                        setTimeout(() => el.classList.remove("border-success", "bg-light"), 1200);
-                    });
-
-                } catch (err) {
-                    console.error("⚠️ Lỗi khi lấy thông tin bệnh nhân:", err);
-                }
-            });
-        }
-
-    });
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Kích hoạt tất cả tooltip trên trang
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (el) {
-            return new bootstrap.Tooltip(el, {
-                trigger: 'hover focus',   // hover + giữ chuột / chạm
-                delay: { "show": 200, "hide": 100 },
-                placement: 'top'
-            });
+  // 2️⃣ Fetch thông tin bệnh nhân
+  const selectPatient = document.querySelector('select[name="benhnhan_id"]');
+  const inputAge = document.getElementById("age");
+  const selectGender = document.getElementById("gender");
+  if (selectPatient) {
+    selectPatient.addEventListener("change", async () => {
+      const benhnhanId = selectPatient.value;
+      if (!benhnhanId) return;
+      try {
+        const res = await fetch(`/get_patient_info/${benhnhanId}`);
+        const data = await res.json();
+        if (data.tuoi) inputAge.value = data.tuoi;
+        if (data.gioitinh) selectGender.value = data.gioitinh;
+        [inputAge, selectGender].forEach(el => {
+          el.classList.add("border-success", "bg-light");
+          setTimeout(() => el.classList.remove("border-success", "bg-light"), 1200);
         });
+      } catch (err) {
+        console.error("⚠️ Lỗi khi lấy thông tin bệnh nhân:", err);
+      }
     });
+  }
+
+  // 3️⃣ Tooltip Bootstrap
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(el => new bootstrap.Tooltip(el, { trigger: 'hover focus', delay: { show: 200, hide: 100 } }));
+
+  // 4️⃣ Hiệu ứng xuất hiện (fade-section)
+  const fadeEls = document.querySelectorAll(".fade-section");
+  const revealOnScroll = () => {
+    const triggerBottom = window.innerHeight * 0.85;
+    fadeEls.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < triggerBottom) el.classList.add("show");
+    });
+  };
+  window.addEventListener("scroll", revealOnScroll);
+  revealOnScroll();
+});
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const fadeEls = document.querySelectorAll(".fade-section");
+
+    function revealOnScroll() {
+      const triggerBottom = window.innerHeight * 0.85;
+      fadeEls.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < triggerBottom) {
+          el.classList.add("show");
+        }
+      });
+    }
+
+    window.addEventListener("scroll", revealOnScroll);
+    revealOnScroll(); // chạy ngay khi load
+  });
 </script>
 
 {% endblock %}

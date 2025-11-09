@@ -24,6 +24,15 @@ app.secret_key = os.getenv("SECRET_KEY", "cvdapp-secret-key")
 # ==========================================
 # Kết nối SQL Server
 # ==========================================
+# def get_connection():
+#     return pyodbc.connect(
+#         'DRIVER={ODBC Driver 18 for SQL Server};'
+#         'SERVER=127.0.0.1,1433;'
+#         'DATABASE=CVD_App;'
+#         'UID=sa;PWD=123;'
+#         'Encrypt=no;TrustServerCertificate=yes;'
+#         'Timeout=10;'
+#     )
 def get_connection():
     return pyodbc.connect(
         "DRIVER={SQL Server};"

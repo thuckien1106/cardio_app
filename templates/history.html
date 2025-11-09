@@ -269,12 +269,103 @@
   </div>
   {% endif %}
 </div>
+<style>
+  /* 🌈 Hiệu ứng bảng và hàng */
+  .table-hover tbody tr {
+    transition: background-color 0.25s ease, transform 0.25s ease;
+  }
+  .table-hover tbody tr:hover {
+    background-color: #f8fbff !important;
+    transform: scale(1.01);
+  }
+
+  /* 💡 Thẻ "Lời khuyên" mềm mại hơn */
+  .card[style*="background-color:#eaf4ff"] {
+    animation: fadeInUp 0.6s ease;
+    border-left: 4px solid #0d6efd;
+  }
+
+  /* 🎞️ Hiệu ứng xuất hiện khi mở hàng chi tiết */
+  .detail-row {
+    animation: fadeInUp 0.4s ease;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 🧭 Nút toggle chi tiết */
+  .toggle-detail {
+    transition: all 0.25s ease;
+  }
+  .toggle-detail:hover {
+    transform: scale(1.05);
+    background-color: #e9f3ff !important;
+  }
+
+  /* 🔍 Badge nguy cơ giữ màu cũ nhưng nổi bật hơn */
+  .badge.bg-danger {
+    background-color: #dc3545 !important; /* đỏ chuẩn Bootstrap */
+    color: #fff !important;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+  }
+  .badge.bg-success {
+    background-color: #198754 !important; /* xanh chuẩn Bootstrap */
+    color: #fff !important;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(25, 135, 84, 0.3);
+  }
+
+  /* 📋 Hàng chi tiết đẹp hơn */
+  .detail-row td {
+    border-top: 2px solid #dee2e6 !important;
+    background: #f9fbfd !important;
+  }
+
+  /* 🕊️ Thêm animation nhẹ khi load bảng */
+  tbody tr {
+    animation: fadeIn 0.35s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ✨ Highlight nhẹ cho dòng đang mở chi tiết */
+  .detail-row.showing td {
+    animation: highlightRow 1s ease;
+  }
+
+  @keyframes highlightRow {
+    0% { background-color: #e9f5ff; }
+    100% { background-color: #f9fbfd; }
+  }
+</style>
 
 <!-- JS toggle hàng chi tiết (accordion ổn định) -->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // Ẩn tất cả hàng chi tiết ngay khi load
-    document.querySelectorAll(".detail-row").forEach(r => (r.style.display = "none"));
+    // Ẩn tất cả hàng chi tiết
+    document.querySelectorAll(".detail-row").forEach(r => {
+      r.style.display = "none";
+      r.style.opacity = "0";
+      r.style.transition = "all 0.3s ease";
+    });
 
     const buttons = document.querySelectorAll(".toggle-detail");
     let openRow = null;
@@ -284,24 +375,26 @@
       btn.addEventListener("click", () => {
         const target = document.querySelector(btn.dataset.target);
 
-        // Nếu có dòng đang mở và không phải dòng hiện tại → đóng dòng cũ
+        // Nếu có dòng đang mở và không phải dòng hiện tại
         if (openRow && openRow !== target) {
-          openRow.style.display = "none";
-          if (openBtn) openBtn.textContent = "🔍 Xem chi tiết";
+          openRow.style.opacity = "0";
+          setTimeout(() => (openRow.style.display = "none"), 200);
+          if (openBtn) openBtn.innerHTML = "🔍 Xem chi tiết";
           openRow = null;
           openBtn = null;
         }
 
-        // Toggle dòng hiện tại
         const isOpen = target.style.display === "table-row";
         if (isOpen) {
-          target.style.display = "none";
-          btn.textContent = "🔍 Xem chi tiết";
+          target.style.opacity = "0";
+          setTimeout(() => (target.style.display = "none"), 200);
+          btn.innerHTML = "🔍 Xem chi tiết";
           openRow = null;
           openBtn = null;
         } else {
           target.style.display = "table-row";
-          btn.textContent = "⬆️ Thu gọn";
+          setTimeout(() => (target.style.opacity = "1"), 50);
+          btn.innerHTML = "⬆️ Thu gọn";
           openRow = target;
           openBtn = btn;
         }
@@ -309,5 +402,6 @@
     });
   });
 </script>
+
 
 {% endblock %}

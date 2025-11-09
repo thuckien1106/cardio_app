@@ -373,6 +373,60 @@
   p {
     font-size: 1rem;
   }
+  /* 🌟 Hiệu ứng xuất hiện khi cuộn (Scroll FadeUp) */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(25px);
+    transition: all 0.8s ease-out;
+    will-change: opacity, transform;
+  }
+
+  .fade-up.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* 💫 Tùy chỉnh hiệu ứng theo từng loại phần tử */
+  .intro-card,
+  .news-card,
+  #heroSection,
+  .text-center h2,
+  .text-center p {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.8s ease-in-out;
+  }
+
+  .intro-card.show,
+  .news-card.show,
+  #heroSection.show,
+  .text-center h2.show,
+  .text-center p.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
 </style>
+<script>
+  // Hiệu ứng xuất hiện khi cuộn
+  document.addEventListener("DOMContentLoaded", () => {
+    const elements = document.querySelectorAll(
+      ".intro-card, .news-card, #heroSection, .text-center h2, .text-center p"
+    );
+
+    const revealOnScroll = () => {
+      const triggerBottom = window.innerHeight * 0.85;
+      elements.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < triggerBottom) {
+          el.classList.add("show");
+        }
+      });
+    };
+
+    // Gọi khi load và khi cuộn
+    window.addEventListener("scroll", revealOnScroll);
+    revealOnScroll();
+  });
+</script>
 
 {% endblock %}

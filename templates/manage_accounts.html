@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="container mt-3 pt-3">
-  <h2 class="fw-bold text-gradient mb-4">👩‍⚕️ Quản lý tài khoản & hồ sơ bệnh nhân</h2>
-  <p class="text-muted">Bác sĩ có thể thêm, tìm kiếm, xem, sửa hoặc xóa thông tin bệnh nhân tại đây.</p>
+<div class="container mt-3 pt-3 fade-section">
+  <h2 class="fw-bold text-gradient mb-4 fade-section fade-delayed-1">👩‍⚕️ Quản lý tài khoản & hồ sơ bệnh nhân</h2>
+  <p class="text-muted fade-section fade-delayed-2">Bác sĩ có thể thêm, tìm kiếm, xem, sửa hoặc xóa thông tin bệnh nhân tại đây.</p>
 
   <!-- Thông báo -->
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -18,7 +18,7 @@
   {% endwith %}
 
   <!-- 🔹 Khu vực thêm bệnh nhân -->
-  <div class="card shadow-sm border-0 rounded-4 mb-4">
+  <div class="card shadow-sm border-0 rounded-4 mb-4 fade-section fade-delayed-3">
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="text-primary fw-bold mb-0">➕ Thêm bệnh nhân mới</h5>
@@ -81,7 +81,7 @@
   </div>
 
   <!-- 🔎 Thanh tìm kiếm -->
-  <form method="get" class="row mb-4 align-items-center">
+  <form method="get" class="row mb-4 align-items-center fade-section fade-delayed-2">
     <div class="col-md-7 col-lg-5">
       <input type="text" name="search" class="form-control rounded-pill shadow-sm"
         placeholder="🔍 Nhập tên hoặc email bệnh nhân..." value="{{ request.args.get('search', '') }}">
@@ -102,7 +102,7 @@
 
   <!-- 🧾 Bảng danh sách bệnh nhân -->
   {% if patients and patients|length > 0 %}
-  <div class="table-responsive mt-4 shadow-sm rounded-4">
+  <div class="table-responsive mt-4 shadow-sm rounded-4 fade-section fade-delayed-3">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-primary text-center">
         <tr>
@@ -199,10 +199,42 @@
   </div>
 
   {% else %}
-  <div class="alert alert-info mt-4 text-center rounded-4 shadow-sm">
+  <div class="alert alert-info mt-4 text-center rounded-4 shadow-sm fade-section fade-delayed-3">
     Không tìm thấy bệnh nhân nào.
   </div>
   {% endif %}
 </div>
+<style>
+  /* 🌟 Hiệu ứng xuất hiện khi load hoặc cuộn */
+  .fade-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.8s ease-out;
+    will-change: opacity, transform;
+  }
+  .fade-section.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .fade-delayed-1 { transition-delay: 0.1s; }
+  .fade-delayed-2 { transition-delay: 0.2s; }
+  .fade-delayed-3 { transition-delay: 0.3s; }
+</style>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const fadeEls = document.querySelectorAll(".fade-section");
+
+    function revealOnScroll() {
+      const triggerBottom = window.innerHeight * 0.85;
+      fadeEls.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < triggerBottom) el.classList.add("show");
+      });
+    }
+
+    window.addEventListener("scroll", revealOnScroll);
+    revealOnScroll();
+  });
+</script>
 
 {% endblock %}
