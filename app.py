@@ -27,7 +27,7 @@ app.secret_key = os.getenv("SECRET_KEY", "cvdapp-secret-key")
 # def get_connection():
 #     return pyodbc.connect(
 #         'DRIVER={ODBC Driver 18 for SQL Server};'
-#         'SERVER=127.0.0.1,1433;'
+#         'SERVER=localhost,1433;'
 #         'DATABASE=CVD_App;'
 #         'UID=sa;PWD=123;'
 #         'Encrypt=no;TrustServerCertificate=yes;'
@@ -940,26 +940,51 @@ def profile():
 
     conn = get_connection()
     cur = conn.cursor()
+
+    # --- Khi người dùng cập nhật hồ sơ ---
     if request.method == 'POST':
         cur.execute("""
             UPDATE NguoiDung
             SET HoTen=?, DienThoai=?, NgaySinh=?, GioiTinh=?, DiaChi=?
             WHERE ID=?
-        """, (request.form.get('ho_ten'),
-              request.form.get('dien_thoai'),
-              request.form.get('ngay_sinh'),
-              request.form.get('gioi_tinh'),
-              request.form.get('dia_chi'),
-              session['user_id']))
+        """, (
+            request.form.get('ho_ten'),
+            request.form.get('dien_thoai'),
+            request.form.get('ngay_sinh'),
+            request.form.get('gioi_tinh'),
+            request.form.get('dia_chi'),
+            session['user_id']
+        ))
         conn.commit()
 
+        # Lưu thời gian cập nhật tạm vào session
+        from datetime import datetime
+        update_time = datetime.now().strftime("%d/%m/%Y %H:%M")
+        if 'timeline' not in session:
+            session['timeline'] = []
+        session['timeline'].insert(0, f"Cập nhật hồ sơ - {update_time}")
+
+        flash("Cập nhật hồ sơ thành công!", "success")
+
+    # --- Lấy thông tin người dùng (bao gồm ngày tạo tài khoản) ---
     cur.execute("""
-        SELECT HoTen, Email, Role, DienThoai, NgaySinh, GioiTinh, DiaChi
+        SELECT HoTen, Email, Role, DienThoai, NgaySinh, GioiTinh, DiaChi, NgayTao
         FROM NguoiDung WHERE ID=?
     """, (session['user_id'],))
     user_info = cur.fetchone()
     conn.close()
-    return render_template('profile.html', user_info=user_info)
+
+    # --- Chuẩn bị timeline hiển thị ---
+    timeline = []
+    if user_info and user_info[-1]:
+        # user_info[-1] = NgayTao
+        created_at = user_info[-1].strftime("%d/%m/%Y %H:%M")
+        timeline.append(f"Tạo tài khoản - {created_at}")
+    if 'timeline' in session:
+        timeline = session['timeline'] + timeline
+
+    return render_template('profile.html', user_info=user_info, user_timeline=timeline)
+
 # ==========================================
 # 📤 Xuất báo cáo kết quả chẩn đoán ra Excel 
 # ==========================================
@@ -1773,5 +1798,6 @@ def chat_ai_history():
 # ==========================================
 # Main
 # ==========================================
-if __name__ == '__main__':
+if __name__ == "__main__":
+    # app.run(host="0.0.0.0", port=8080)
     app.run(debug=True)

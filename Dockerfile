@@ -1,47 +1,40 @@
-# ========== STAGE 1: SQL Server ==========
+# =========================================================
+# 🫀 CARDIO-APP (Flask + SQL Server) - 2025 SAFE VERSION
+# =========================================================
 FROM mcr.microsoft.com/mssql/server:2022-latest AS mssqlbase
-ENV ACCEPT_EULA=Y
 ENV SA_PASSWORD=123
+ENV ACCEPT_EULA=Y
 ENV MSSQL_PID=Express
-ENV MSSQL_TCP_PORT=1433
+COPY CVD.sql /tmp/CVD.sql
 
-# ========== STAGE 2: Python + Flask App ==========
+# =========================================================
 FROM python:3.11-slim
-
-# ---- Thiết lập cơ bản ----
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# ---- Cài công cụ hệ thống và ODBC driver ----
+# --- Cài đặt thư viện hệ thống ---
 RUN apt-get update && apt-get install -y \
-    netcat-openbsd wget curl gnupg ca-certificates unixodbc unixodbc-dev \
-    libssl3 libcurl4 libkrb5-3 && \
-    mkdir -p /etc/apt/keyrings && \
-    curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg && \
-    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" > /etc/apt/sources.list.d/mssql-release.list && \
+    curl gnupg2 ca-certificates unixodbc unixodbc-dev libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- Thêm Microsoft repo bằng keyrings (fix lỗi apt-key) ---
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | \
+        gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg && \
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" \
+        > /etc/apt/sources.list.d/mssql-release.list && \
     apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql18 mssql-tools18 && \
-    echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*
 
-# ---- Copy SQL Server từ stage 1 ----
-COPY --from=mssqlbase /var/opt/mssql /var/opt/mssql
-COPY --from=mssqlbase /opt/mssql /opt/mssql
+# --- Cài thư viện Python ---
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
-# ---- Copy code dự án ----
-COPY . /app
+# --- Copy source ---
+COPY . .
 
-# ---- Cài Python packages ----
-RUN pip install --upgrade pip && pip install -r requirements.txt && pip install gunicorn
-
-# ---- Cấu hình môi trường ----
-ENV ACCEPT_EULA=Y \
-    SA_PASSWORD=123
+# --- Cấp quyền script ---
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8080
-
-# ---- Entrypoint ----
-RUN chmod +x /app/entrypoint.sh
-CMD ["/app/entrypoint.sh"]
+CMD ["bash", "/app/entrypoint.sh"]

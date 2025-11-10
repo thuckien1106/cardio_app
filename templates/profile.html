@@ -10,26 +10,27 @@
 
   <!-- 🔔 Thông báo -->
   {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, msg in messages %}
-        <div class="alert alert-{{ category }} text-center rounded-pill shadow-sm fade-in small py-2">
-          {{ msg }}
-        </div>
-      {% endfor %}
-    {% endif %}
+  {% if messages %}
+  {% for category, msg in messages %}
+  <div class="alert alert-{{ category }} text-center rounded-pill shadow-sm fade-in small py-2">
+    {{ msg }}
+  </div>
+  {% endfor %}
+  {% endif %}
   {% endwith %}
 
   <!-- 📋 Form hồ sơ -->
   <div class="row justify-content-center">
     <div class="col-lg-7 col-md-9 fade-in">
-      <form method="post" class="card shadow-sm border-0 rounded-4 p-4 bg-white">
+      <form method="post" class="card shadow-sm border-0 rounded-4 p-4 bg-white profile-card"
+        data-role="{{ user_info[2] }}">
 
         <!-- Họ tên & Giới tính -->
         <div class="row g-3 mb-3">
           <div class="col-md-6">
             <label class="form-label fw-semibold text-secondary">Họ tên</label>
-            <input type="text" name="ho_ten" class="form-control rounded-pill shadow-sm"
-                   value="{{ user_info[0] }}" required>
+            <input type="text" name="ho_ten" class="form-control rounded-pill shadow-sm" value="{{ user_info[0] }}"
+              required>
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold text-secondary">Giới tính</label>
@@ -44,13 +45,12 @@
         <div class="row g-3 mb-3">
           <div class="col-md-6">
             <label class="form-label fw-semibold text-secondary">Email</label>
-            <input type="email" class="form-control rounded-pill shadow-sm bg-light"
-                   value="{{ user_info[1] }}" readonly>
+            <input type="email" class="form-control rounded-pill shadow-sm bg-light" value="{{ user_info[1] }}"
+              readonly>
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold text-secondary">Vai trò</label>
-            <input type="text" class="form-control rounded-pill shadow-sm bg-light"
-                   value="{{ user_info[2] }}" readonly>
+            <input type="text" class="form-control rounded-pill shadow-sm bg-light" value="{{ user_info[2] }}" readonly>
           </div>
         </div>
 
@@ -59,12 +59,12 @@
           <div class="col-md-6">
             <label class="form-label fw-semibold text-secondary">Ngày sinh</label>
             <input type="date" name="ngay_sinh" class="form-control rounded-pill shadow-sm"
-                   value="{{ user_info[4]|default('', true) }}">
+              value="{{ user_info[4]|default('', true) }}">
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold text-secondary">Số điện thoại</label>
             <input type="text" name="dien_thoai" class="form-control rounded-pill shadow-sm"
-                   value="{{ user_info[3] or '' }}">
+              value="{{ user_info[3] or '' }}">
           </div>
         </div>
 
@@ -72,7 +72,7 @@
         <div class="mb-3">
           <label class="form-label fw-semibold text-secondary">Địa chỉ</label>
           <input type="text" name="dia_chi" class="form-control rounded-pill shadow-sm"
-                 value="{{ user_info[6] or '' }}">
+            value="{{ user_info[6] or '' }}">
         </div>
 
         <!-- Nút lưu và đổi mật khẩu -->
@@ -82,11 +82,32 @@
           </button>
 
           <button type="button" class="btn btn-outline-warning rounded-pill px-4 fw-semibold shadow-sm"
-                  data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+            data-bs-toggle="modal" data-bs-target="#changePasswordModal">
             🔒 Đổi mật khẩu
           </button>
         </div>
       </form>
+
+      <!-- Timeline cập nhật hồ sơ -->
+      <div class="timeline mt-4">
+        <h6 class="text-primary fw-bold mb-3">
+          <i class="bi bi-clock-history me-1"></i> Lịch sử cập nhật hồ sơ
+        </h6>
+
+        {% if user_timeline and user_timeline|length > 0 %}
+        <ul class="timeline-list">
+          {% for event in user_timeline %}
+          <li>
+            <span class="time-dot {% if 'Tạo tài khoản' in event %}bg-info{% else %}bg-success{% endif %}"></span>
+            {{ event }}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted fst-italic small">Chưa có dữ liệu lịch sử cập nhật.</p>
+        {% endif %}
+      </div>
+
     </div>
   </div>
 </div>
@@ -124,13 +145,35 @@
   </div>
 </div>
 
-<!-- 🌈 CSS đồng bộ phong cách CVD-App -->
+<!-- 🌈 CSS nâng cấp -->
 <style>
   body {
-    font-family: "Poppins", sans-serif;
     background-color: #f8faff;
+    font-family: "Poppins", sans-serif;
   }
 
+  /* Card đổi màu theo vai trò */
+  .profile-card[data-role="Admin"] {
+    background: rgba(230, 220, 255, 0.85);
+  }
+
+  .profile-card[data-role="Doctor"] {
+    background: rgba(220, 235, 255, 0.85);
+  }
+
+  .profile-card[data-role="Patient"] {
+    background: rgba(220, 255, 230, 0.85);
+  }
+
+  /* Hiệu ứng hover input */
+  input:hover,
+  select:hover {
+    border-image: linear-gradient(90deg, #0d6efd, #6f42c1) 1;
+    border-width: 1.5px;
+    transition: 0.25s ease;
+  }
+
+  /* Button gradient */
   .btn-gradient {
     background: linear-gradient(90deg, #007bff, #6610f2);
     color: #fff;
@@ -143,62 +186,86 @@
     box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3);
   }
 
+  /* Timeline lịch sử */
+  .timeline {
+    border-left: 3px solid rgba(13, 110, 253, 0.2);
+    padding-left: 20px;
+  }
+
+  .timeline-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .timeline-list li {
+    position: relative;
+    padding-left: 25px;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    color: #555;
+  }
+
+  .time-dot {
+    position: absolute;
+    left: -13px;
+    top: 3px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  /* Fade animation */
   .fade-in {
     animation: fadeIn 0.6s ease-in-out;
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
 
-  input:focus, select:focus {
-    border-color: #6f42c1 !important;
-    box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.2) !important;
-  }
-
-  .card {
-    border-radius: 20px !important;
-  }
-
-  label.form-label {
-    font-size: 0.95rem;
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 </style>
 
 <!-- 🔁 Script đổi mật khẩu -->
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("changePasswordForm");
-  const msg = document.getElementById("pwMessage");
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("changePasswordForm");
+    const msg = document.getElementById("pwMessage");
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    msg.innerHTML = "<span class='text-info'>⏳ Đang xử lý...</span>";
-    const res = await fetch("/change_password", { method: "POST", body: new FormData(form) });
-    const data = await res.json();
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.innerHTML = "<span class='text-info'>⏳ Đang xử lý...</span>";
+      const res = await fetch("/change_password", { method: "POST", body: new FormData(form) });
+      const data = await res.json();
 
-    if (data.success) {
-      msg.innerHTML = "<span class='text-success fw-semibold'>✅ " + data.message + "</span>";
-      form.reset();
-      setTimeout(() => location.reload(), 1000);
-    } else {
-      msg.innerHTML = "<span class='text-danger fw-semibold'>❌ " + data.message + "</span>";
-    }
+      if (data.success) {
+        msg.innerHTML = "<span class='text-success fw-semibold'>✅ " + data.message + "</span>";
+        form.reset();
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        msg.innerHTML = "<span class='text-danger fw-semibold'>❌ " + data.message + "</span>";
+      }
+    });
+
+    const newPw = form.querySelector("input[name='new_password']");
+    newPw.addEventListener("input", () => {
+      const val = newPw.value;
+      let strength = 0;
+      if (val.length >= 8) strength++;
+      if (/[A-Z]/.test(val)) strength++;
+      if (/\d/.test(val)) strength++;
+      if (/[@$!%*?&]/.test(val)) strength++;
+      if (strength <= 1) msg.innerHTML = "<span class='text-danger'>🔴 Mật khẩu yếu</span>";
+      else if (strength <= 3) msg.innerHTML = "<span class='text-warning'>🟡 Trung bình</span>";
+      else msg.innerHTML = "<span class='text-success'>🟢 Mạnh</span>";
+    });
   });
-
-  const newPw = form.querySelector("input[name='new_password']");
-  newPw.addEventListener("input", () => {
-    const val = newPw.value;
-    let strength = 0;
-    if (val.length >= 8) strength++;
-    if (/[A-Z]/.test(val)) strength++;
-    if (/\d/.test(val)) strength++;
-    if (/[@$!%*?&]/.test(val)) strength++;
-    if (strength <= 1) msg.innerHTML = "<span class='text-danger'>🔴 Mật khẩu yếu</span>";
-    else if (strength <= 3) msg.innerHTML = "<span class='text-warning'>🟡 Trung bình</span>";
-    else msg.innerHTML = "<span class='text-success'>🟢 Mạnh</span>";
-  });
-});
 </script>
 {% endblock %}

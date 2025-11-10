@@ -1,6 +1,6 @@
 {% extends 'base.html' %} {% block content %}
 
-<!-- 🌈 TIÊU ĐỀ TRANG -->
+<!-- TIÊU ĐỀ TRANG -->
 <section class="text-center mb-3 pt-3">
   <h2 class="fw-bold text-gradient">🫀 Ứng dụng chẩn đoán bệnh tim mạch</h2>
   <p class="text-muted mt-0 mx-auto" style="max-width: 640px">
@@ -9,16 +9,19 @@
   </p>
 </section>
 
-<!-- 💡 GIỚI THIỆU -->
-<section class="container mb-5">
+<!-- GIỚI THIỆU -->
+<section class="container mb-5 position-relative overflow-hidden">
+  <div class="soft-bg"></div>
   <div
     class="row align-items-center rounded-4 shadow-sm bg-white p-4 intro-card"
+    data-aos="fade-up"
   >
     <div class="col-lg-6 text-center mb-3 mb-lg-0">
       <img
         src="{{ url_for('static', filename='images/heart-health.webp') }}"
         alt="Heart Health"
         class="img-fluid rounded-4 shadow-lg intro-img"
+        loading="lazy"
       />
     </div>
     <div class="col-lg-6 ps-lg-4">
@@ -47,8 +50,8 @@
   </div>
 </section>
 
-<!-- 🌟 SLIDER (Hero Section minh họa) -->
-<section id="heroSection" class="mb-5">
+<!-- SLIDER -->
+<section id="heroSection" class="mb-5" data-aos="zoom-in">
   <div
     id="heroCarousel"
     class="carousel slide carousel-fade"
@@ -62,16 +65,13 @@
           src="{{ url_for('static', filename='images/slide1.webp') }}"
           class="d-block w-100 hero-img"
           alt="Healthy Heart"
+          loading="lazy"
         />
         <div class="carousel-overlay"></div>
         <div class="carousel-caption d-none d-md-block text-center">
           <h2 class="fw-bold text-gradient display-6">
             🫀 Bảo vệ trái tim – Bảo vệ cuộc sống
           </h2>
-          <p class="text-light mb-3">
-            CVD-App hỗ trợ dự đoán nguy cơ bệnh tim bằng trí tuệ nhân tạo hiện
-            đại.
-          </p>
         </div>
       </div>
 
@@ -81,15 +81,13 @@
           src="{{ url_for('static', filename='images/slide2.webp') }}"
           class="d-block w-100 hero-img"
           alt="Healthy Lifestyle"
+          loading="lazy"
         />
         <div class="carousel-overlay"></div>
         <div class="carousel-caption d-none d-md-block text-center">
           <h2 class="fw-bold text-gradient display-6">
             💪 Sống khỏe – Sống an vui
           </h2>
-          <p class="text-light mb-3">
-            Theo dõi sức khỏe tim mạch dễ dàng, chính xác và đáng tin cậy.
-          </p>
         </div>
       </div>
 
@@ -99,15 +97,13 @@
           src="{{ url_for('static', filename='images/slide3.webp') }}"
           class="d-block w-100 hero-img"
           alt="AI Analysis"
+          loading="lazy"
         />
         <div class="carousel-overlay"></div>
         <div class="carousel-caption d-none d-md-block text-center">
           <h2 class="fw-bold text-gradient display-6">
             🤖 Phân tích thông minh từ AI
           </h2>
-          <p class="text-light mb-3">
-            Đưa ra kết quả dự đoán nguy cơ và lời khuyên cá nhân hóa.
-          </p>
         </div>
       </div>
     </div>
@@ -132,8 +128,8 @@
   </div>
 </section>
 
-<!-- 📰 TIN TỨC NỔI BẬT -->
-<section class="container pb-5">
+<!-- TIN TỨC NỔI BẬT -->
+<section class="container pb-5" data-aos="fade-up">
   <div class="text-center mb-4">
     <h4 class="fw-bold text-primary">📰 Những điều có thể bạn đã biết</h4>
   </div>
@@ -155,6 +151,7 @@
             src="{{ url_for('static', filename='images/' + img) }}"
             class="card-img-top"
             alt="{{ title }}"
+            loading="lazy"
           />
         </div>
         <div class="card-body">
@@ -167,13 +164,79 @@
   </div>
 </section>
 
+<!-- TESTIMONIALS -->
+<section class="py-5 bg-light" data-aos="fade-up">
+  <div class="container text-center">
+    <h4 class="fw-bold text-gradient mb-4">💬 Ý kiến từ người dùng & bác sĩ</h4>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="p-4 rounded-4 shadow-sm bg-white">
+          <i class="bi bi-heart-pulse-fill fs-2 text-danger mb-2"></i>
+          <p class="text-muted fst-italic">
+            "Ứng dụng CVD-App giúp tôi theo dõi sức khỏe bệnh nhân nhanh chóng
+            và hiệu quả hơn rất nhiều."
+          </p>
+          <h6 class="fw-semibold text-primary">BS. Nguyễn Thị Hồng</h6>
+          <p class="small text-secondary">Bệnh viện Tim Tâm Đức</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-4 rounded-4 shadow-sm bg-white">
+          <i class="bi bi-person-heart fs-2 text-success mb-2"></i>
+          <p class="text-muted fst-italic">
+            "Giao diện thân thiện, dễ hiểu. Tôi có thể biết ngay mức nguy cơ của
+            mình chỉ trong vài giây!"
+          </p>
+          <h6 class="fw-semibold text-success">Trần Minh Tài</h6>
+          <p class="small text-secondary">Người dùng cá nhân</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-4 rounded-4 shadow-sm bg-white">
+          <i class="bi bi-robot fs-2 text-primary mb-2"></i>
+          <p class="text-muted fst-italic">
+            "AI của CVD-App hoạt động cực kỳ chính xác. Đây là hướng đi tương
+            lai của y học số."
+          </p>
+          <h6 class="fw-semibold text-primary">TS. Lê Hữu Khoa</h6>
+          <p class="small text-secondary">Chuyên gia AI Y tế</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PARTNERS -->
+<section class="py-5" data-aos="zoom-in">
+  <div class="container text-center">
+    <h4 class="fw-bold text-gradient mb-4">🤝 Đối tác & Công nghệ sử dụng</h4>
+    <div class="row justify-content-center g-4">
+      {% set partners = [ ('flask.svg', 'Flask'), ('python.svg', 'Python'),
+      ('bootstrap.svg', 'Bootstrap'), ('xgboost.svg', 'XGBoost'), ('mysql.svg',
+      'MySQL') ] %} {% for img, name in partners %}
+      <div class="col-4 col-md-2">
+        <div class="partner-card p-3 bg-white rounded-4 shadow-sm">
+          <img
+            src="{{ url_for('static', filename='images/' + img) }}"
+            alt="{{ name }}"
+            class="img-fluid mb-2"
+            loading="lazy"
+          />
+          <p class="small text-secondary mb-0">{{ name }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- STYLE -->
 <style>
-  /* 🌼 TOÀN CỤC */
   body {
     background-color: #f8faff;
+    font-family: "Poppins", sans-serif;
     color: #333;
     line-height: 1.7;
-    font-family: "Poppins", sans-serif;
   }
 
   .text-gradient {
@@ -182,10 +245,27 @@
     -webkit-text-fill-color: transparent;
   }
 
-  /* 💡 INTRO SECTION */
+  .soft-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        circle at top left,
+        rgba(255, 107, 107, 0.08),
+        transparent 60%
+      ),
+      radial-gradient(
+        circle at bottom right,
+        rgba(111, 66, 193, 0.08),
+        transparent 60%
+      );
+    z-index: 0;
+  }
+
   .intro-card {
     border-left: 4px solid #d6336c;
     background: #fff;
+    position: relative;
+    z-index: 1;
   }
 
   .intro-img {
@@ -197,7 +277,6 @@
     transform: scale(1.04);
   }
 
-  /* 🔘 BUTTON */
   .btn-gradient {
     background: linear-gradient(90deg, #ff6b6b, #d6336c);
     border: none;
@@ -213,10 +292,8 @@
     box-shadow: 0 6px 15px rgba(214, 51, 108, 0.3);
   }
 
-  /* 📰 NEWS CARD */
   .news-card {
     transition: all 0.3s ease;
-    background: #fff;
   }
 
   .news-card img {
@@ -234,197 +311,55 @@
     box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
   }
 
-  /* ================================
-   SLIDER – Smooth Professional Optimized
-================================ */
-  .carousel-inner {
-    overflow: hidden;
-    backface-visibility: hidden;
-    transform: translateZ(0);
+  .carousel-caption {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 900px;
+    white-space: normal;
+    text-align: center;
   }
 
-  /* Hiệu ứng fade + scale dịu hơn */
-  .carousel-fade .carousel-item {
-    opacity: 0;
-    transition: opacity 0.8s ease-in-out, transform 2.5s ease-out;
-    transform: scale(1.01);
-  }
-
-  .carousel-fade .carousel-item.active {
-    opacity: 1;
-    transform: scale(1);
-    z-index: 2;
-  }
-
-  /* Ken Burns mượt, ít giật hơn */
-  .carousel-item.active .hero-img {
-    animation: kenburnsSoft 4s ease-in-out forwards;
-  }
-
-  @keyframes kenburnsSoft {
-    0% {
-      transform: scale(1) translate(0, 0);
-    }
-    50% {
-      transform: scale(1.015) translate(-2px, -1px);
-    }
-    100% {
-      transform: scale(1.01) translate(2px, 1px);
-    }
-  }
-
-  /* Hình ảnh slider */
   .hero-img {
     height: 450px;
     object-fit: cover;
-    opacity: 0.96;
-    transition: opacity 1s ease;
-    will-change: transform, opacity;
+    opacity: 0.98;
   }
 
-  /* Caption fade & move nhẹ hơn */
-  .carousel-caption {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 80%;
-    text-align: center;
-    transform: translate(-50%, -45%) scale(0.98);
-    opacity: 0;
-    transition: opacity 0.7s ease, transform 0.7s ease;
-  }
-
-  .carousel-item.active .carousel-caption {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-    transition-delay: 0.1s;
-  }
-
-  .carousel-caption h2 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #fff;
-    text-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
-    animation: fadeDownSoft 0.8s ease both;
-  }
-
-  .carousel-caption p {
-    font-size: 1.05rem;
-    color: #f8f9fa;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    animation: fadeUpSoft 0.9s ease both;
-  }
-
-  @keyframes fadeDownSoft {
-    from {
-      opacity: 0;
-      transform: translateY(-8px);
+  @media (max-width: 768px) {
+    .hero-img {
+      height: 320px;
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+    .intro-card {
+      text-align: center;
+    }
+    .carousel-caption {
+      top: 45%;
+      white-space: normal;
     }
   }
 
-  @keyframes fadeUpSoft {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  /* Overlay dịu nhẹ */
-  .carousel-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.25),
-      rgba(0, 0, 0, 0.5)
-    );
-    pointer-events: none;
-    border-radius: 0.75rem;
-  }
-  /* Nút điều khiển */
-  .carousel-control-prev-icon,
-  .carousel-control-next-icon {
-    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.4));
-    transition: transform 0.25s ease;
+  .partner-card img {
+    max-height: 50px;
+    opacity: 0.9;
+    transition: transform 0.3s ease;
   }
 
-  .carousel-control-prev-icon:hover,
-  .carousel-control-next-icon:hover {
+  .partner-card:hover img {
     transform: scale(1.1);
-  }
-
-  section {
-    scroll-margin-top: 80px;
-  }
-
-  h2,
-  h4 {
-    font-weight: 600;
-  }
-
-  p {
-    font-size: 1rem;
-  }
-  /* Hiệu ứng xuất hiện khi cuộn (Scroll FadeUp) */
-  .fade-up {
-    opacity: 0;
-    transform: translateY(25px);
-    transition: all 0.8s ease-out;
-    will-change: opacity, transform;
-  }
-
-  .fade-up.show {
     opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* Tùy chỉnh hiệu ứng theo từng loại phần tử */
-  .intro-card,
-  .news-card,
-  #heroSection,
-  .text-center h2,
-  .text-center p {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.8s ease-in-out;
-  }
-
-  .intro-card.show,
-  .news-card.show,
-  #heroSection.show,
-  .text-center h2.show,
-  .text-center p.show {
-    opacity: 1;
-    transform: translateY(0);
   }
 </style>
+
+<!-- (hiệu ứng cuộn nhẹ) -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-  // Hiệu ứng xuất hiện khi cuộn
-  document.addEventListener("DOMContentLoaded", () => {
-    const elements = document.querySelectorAll(
-      ".intro-card, .news-card, #heroSection, .text-center h2, .text-center p"
-    );
-
-    const revealOnScroll = () => {
-      const triggerBottom = window.innerHeight * 0.85;
-      elements.forEach((el) => {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < triggerBottom) {
-          el.classList.add("show");
-        }
-      });
-    };
-
-    // Gọi khi load và khi cuộn
-    window.addEventListener("scroll", revealOnScroll);
-    revealOnScroll();
+  AOS.init({
+    duration: 800,
+    once: true,
   });
 </script>
 
