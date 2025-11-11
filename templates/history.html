@@ -355,6 +355,105 @@
     0% { background-color: #e9f5ff; }
     100% { background-color: #f9fbfd; }
   }
+  @media (max-width: 992px) {
+  .container {
+    padding: 0 10px;
+  }
+
+  /* Giảm padding cho card lọc */
+  form.card.p-3 {
+    padding: 1rem !important;
+  }
+
+  /* Gộp các ô input filter thành hàng dọc */
+  form.card .row.g-3 > div {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  /* Nút lọc dữ liệu */
+  .btn.rounded-pill {
+    font-size: 0.9rem;
+    padding: 0.5rem 1.1rem;
+  }
+
+  /* Alert tổng kết */
+  .alert {
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+    font-size: 0.9rem;
+  }
+
+  /* Bảng cuộn ngang khi màn nhỏ */
+  .table-responsive {
+    border-radius: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table th,
+  .table td {
+    font-size: 0.88rem;
+    padding: 0.5rem;
+    white-space: nowrap;
+  }
+
+  /* Badge nguy cơ */
+  .badge {
+    font-size: 0.75rem !important;
+    padding: 0.35rem 0.6rem !important;
+  }
+
+  /* Nút Xem chi tiết */
+  .toggle-detail {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.8rem;
+  }
+
+  /* Giảm animation trên mobile (tối ưu hiệu năng) */
+  .table-hover tbody tr {
+    transform: none !important;
+  }
+
+  /* Lời khuyên */
+  .card[style*="background-color:#eaf4ff"] {
+    font-size: 0.9rem;
+    padding: 0.9rem;
+  }
+
+  /* Nút trong modal */
+  .modal .btn {
+    font-size: 0.9rem;
+    padding: 0.4rem 1rem;
+  }
+
+  /* Tiêu đề nhỏ hơn */
+  .fw-bold.text-gradient {
+    font-size: 1.4rem;
+  }
+
+  /* Padding tổng thể nhỏ hơn */
+  .pt-3 {
+    padding-top: 1rem !important;
+  }
+
+  .mt-3 {
+    margin-top: 0.8rem !important;
+  }
+
+  /* Tối ưu form trong modal */
+  textarea.form-control {
+    font-size: 0.9rem;
+  }
+
+  /* Ẩn emoji nếu quá nhỏ */
+  @media (max-width: 576px) {
+    h2.fw-bold.text-gradient::before {
+      content: none;
+    }
+  }
+}
 </style>
 
 <!-- JS toggle hàng chi tiết (accordion ổn định) -->

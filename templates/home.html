@@ -56,16 +56,16 @@
     id="heroCarousel"
     class="carousel slide carousel-fade"
     data-bs-ride="carousel"
-    data-bs-interval="3000"
+    data-bs-interval="4000"
   >
     <div class="carousel-inner rounded-4 shadow-lg">
       <!-- Slide 1 -->
-      <div class="carousel-item active">
+      <div class="carousel-item active" data-bs-interval="4000">
         <img
           src="{{ url_for('static', filename='images/slide1.webp') }}"
-          class="d-block w-100 hero-img"
+          class="d-block w-100 hero-img lazyload"
           alt="Healthy Heart"
-          loading="lazy"
+          loading="eager"
         />
         <div class="carousel-overlay"></div>
         <div class="carousel-caption d-none d-md-block text-center">
@@ -76,10 +76,10 @@
       </div>
 
       <!-- Slide 2 -->
-      <div class="carousel-item">
+      <div class="carousel-item" data-bs-interval="4000">
         <img
           src="{{ url_for('static', filename='images/slide2.webp') }}"
-          class="d-block w-100 hero-img"
+          class="d-block w-100 hero-img lazyload"
           alt="Healthy Lifestyle"
           loading="lazy"
         />
@@ -92,10 +92,10 @@
       </div>
 
       <!-- Slide 3 -->
-      <div class="carousel-item">
+      <div class="carousel-item" data-bs-interval="4000">
         <img
           src="{{ url_for('static', filename='images/slide3.webp') }}"
-          class="d-block w-100 hero-img"
+          class="d-block w-100 hero-img lazyload"
           alt="AI Analysis"
           loading="lazy"
         />
@@ -176,7 +176,7 @@
             "Ứng dụng CVD-App giúp tôi theo dõi sức khỏe bệnh nhân nhanh chóng
             và hiệu quả hơn rất nhiều."
           </p>
-          <h6 class="fw-semibold text-primary">BS. Nguyễn Thị Hồng</h6>
+          <h6 class="fw-semibold text-primary">BS. Nguyễn Văn A</h6>
           <p class="small text-secondary">Bệnh viện Tim Tâm Đức</p>
         </div>
       </div>
@@ -187,7 +187,7 @@
             "Giao diện thân thiện, dễ hiểu. Tôi có thể biết ngay mức nguy cơ của
             mình chỉ trong vài giây!"
           </p>
-          <h6 class="fw-semibold text-success">Trần Minh Tài</h6>
+          <h6 class="fw-semibold text-success">Nguyễn Thị Hồng</h6>
           <p class="small text-secondary">Người dùng cá nhân</p>
         </div>
       </div>
@@ -195,7 +195,7 @@
         <div class="p-4 rounded-4 shadow-sm bg-white">
           <i class="bi bi-robot fs-2 text-primary mb-2"></i>
           <p class="text-muted fst-italic">
-            "AI của CVD-App hoạt động cực kỳ chính xác. Đây là hướng đi tương
+            "AI của CVD-App hoạt động tương đối chính xác. Đây là hướng đi tương
             lai của y học số."
           </p>
           <h6 class="fw-semibold text-primary">TS. Lê Hữu Khoa</h6>
