@@ -21,18 +21,6 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "cvdapp-secret-key")
 
-# ==========================================
-# Kết nối SQL Server
-# ==========================================
-# def get_connection():
-#     return pyodbc.connect(
-#         'DRIVER={ODBC Driver 18 for SQL Server};'
-#         'SERVER=localhost,1433;'
-#         'DATABASE=CVD_App;'
-#         'UID=sa;PWD=123;'
-#         'Encrypt=no;TrustServerCertificate=yes;'
-#         'Timeout=10;'
-#     )
 def get_connection():
     return pyodbc.connect(
         "DRIVER={SQL Server};"
@@ -1799,5 +1787,4 @@ def chat_ai_history():
 # Main
 # ==========================================
 if __name__ == "__main__":
-    # app.run(host="0.0.0.0", port=8080)
     app.run(debug=True)
