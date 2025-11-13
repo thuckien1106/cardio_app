@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash,jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash,jsonify, abort
 import pandas as pd
 import os
 from werkzeug.utils import secure_filename
@@ -11,6 +11,13 @@ import numpy as np
 from datetime import date
 import shap
 import matplotlib
+import base64
+from email.message import EmailMessage
+from authlib.integrations.flask_client import OAuth
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from secrets import token_urlsafe
+import random
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
@@ -21,14 +28,71 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "cvdapp-secret-key")
 
+oauth = OAuth(app)
+SOCIAL_PROVIDERS = {"google": False}
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+
+if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+    oauth.register(
+        name="google",
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+        server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+        client_kwargs={"scope": "openid email profile"},
+    )
+    SOCIAL_PROVIDERS["google"] = True
+
+GMAIL_CLIENT_ID = os.getenv("GMAIL_CLIENT_ID_SEND")
+GMAIL_CLIENT_SECRET = os.getenv("GMAIL_CLIENT_SECRET_SEND")
+GMAIL_REFRESH_TOKEN = os.getenv("GMAIL_REFRESH_TOKEN")
+GMAIL_SENDER = os.getenv("GMAIL_SENDER")
+GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
+
+def _build_gmail_service():
+    if not (GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET and GMAIL_REFRESH_TOKEN and GMAIL_SENDER):
+        raise RuntimeError("Chua cau hinh Gmail API (client id/secret, refresh token, sender).")
+    creds = Credentials(
+        None,
+        refresh_token=GMAIL_REFRESH_TOKEN,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=GMAIL_CLIENT_ID,
+        client_secret=GMAIL_CLIENT_SECRET,
+        scopes=GMAIL_SCOPES,
+    )
+    return build("gmail", "v1", credentials=creds, cache_discovery=False)
+
+
+def send_email(to_email: str, subject: str, html_body: str):
+    """Gui email HTML thong qua Gmail API."""
+    service = _build_gmail_service()
+
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = GMAIL_SENDER
+    message["To"] = to_email
+    message.set_content("Trinh duyet email cua ban khong ho tro noi dung HTML.")
+    message.add_alternative(html_body, subtype="html")
+
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
+    service.users().messages().send(userId="me", body={"raw": raw}).execute()
+
 def get_connection():
     return pyodbc.connect(
-        "DRIVER={SQL Server};"
-        "SERVER=HKT;"
+        "DRIVER={ODBC Driver 18 for SQL Server};"
+        "SERVER=PC1\\LNTUANDAT;"
         "DATABASE=CVD_App;"
-        "UID=sa;"
-        "PWD=123"
+        "Trusted_Connection=yes;"
+        "Encrypt=yes;"
+        "TrustServerCertificate=yes;"
     )
+
+@app.context_processor
+def inject_social_flags():
+    return {
+        "social_google_enabled": SOCIAL_PROVIDERS.get("google", False),
+    }
 
 # ==========================================
 # Cấu hình Gemini AI
@@ -43,7 +107,7 @@ def get_ai_advice_cached(prompt: str) -> str:
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        return f"⚠️ Không thể lấy lời khuyên AI: {e}"
+        return f" Không thể lấy lời khuyên AI: {e}"
 
 # ==========================================
 # Load mô hình XGBoost
@@ -55,11 +119,11 @@ try:
     if os.path.exists(MODEL_PATH):
         xgb_model = xgb.XGBClassifier()
         xgb_model.load_model(MODEL_PATH)
-        print("✅ Mô hình XGBoost đã load thành công.")
+        print(" Mô hình XGBoost đã load thành công.")
     else:
-        print("⚠️ Không tìm thấy file mô hình, sẽ dùng heuristic.")
+        print(" Không tìm thấy file mô hình, sẽ dùng heuristic.")
 except Exception as e:
-    print(f"⚠️ Không thể load mô hình XGBoost: {e}")
+    print(f" Không thể load mô hình XGBoost: {e}")
     xgb_model = None
 # Warm up mô hình ngay khi Flask khởi động
 @app.before_request
@@ -71,10 +135,10 @@ def warmup_model():
             dummy = np.array([[50,1,120,80,2,1,0,0,1,25]])
             _ = xgb_model.predict_proba(dummy)
             shap.TreeExplainer(xgb_model)
-            print("✅ Warm-up hoàn tất, model & SHAP đã cache.")
+            print(" Warm-up hoàn tất, model & SHAP đã cache.")
             app._model_warmed = True  # đánh dấu đã warm-up rồi
         except Exception as e:
-            print(f"⚠️ Warm-up model lỗi: {e}")
+            print(f" Warm-up model lỗi: {e}")
 
 # ==========================================
 # Cấu hình upload
@@ -84,6 +148,23 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 import re
+
+def _clear_pending_registration():
+    session.pop('pending_registration', None)
+    session.pop('pending_registration_code', None)
+    session.pop('pending_registration_exp', None)
+
+def _send_verification_email(name, email, code):
+    html_body = render_template(
+        'emails/verification_code.html',
+        name=name or 'bạn',
+        code=code
+    )
+    send_email(
+        email,
+        "Mã xác nhận đăng ký CVD-App",
+        html_body
+    )
 
 # ==========================================
 # 🧾 Đăng ký tài khoản
@@ -98,45 +179,135 @@ def register():
         ngay_sinh = request.form.get('ngay_sinh')
         email = request.form.get('email').strip().lower()
         mat_khau = request.form.get('mat_khau')
-        role = 'patient'  # Mặc định là bệnh nhân
+        mat_khau_confirm = request.form.get('mat_khau_confirm')
 
-        # 🧩 Kiểm tra độ mạnh mật khẩu
+        if mat_khau != mat_khau_confirm:
+            flash('Mat khau khong khop.', 'warning')
+            return render_template('register.html', today=today)
+
+        role = 'patient'
+
+        if ngay_sinh:
+            try:
+                birth_date = datetime.datetime.strptime(ngay_sinh, "%Y-%m-%d").date()
+                age = (date.today() - birth_date).days // 365
+                if age < 16:
+                    flash("Tuổi phải từ 16 trở lên.", "warning")
+                    return render_template('register.html', today=today)
+            except ValueError:
+                flash("Ngày sinh không hợp lệ.", "warning")
+                return render_template('register.html', today=today)
+        else:
+            flash("Vui lòng nhập ngày sinh.", "warning")
+            return render_template('register.html', today=today)
+
         if not re.match(r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', mat_khau):
-            flash("⚠️ Mật khẩu phải ≥8 ký tự, chứa ít nhất 1 chữ hoa, 1 số và 1 ký tự đặc biệt.", "warning")
+            flash('Mat khau can it nhat 8 ky tu, gom chu hoa, so va ky tu dac biet.', 'warning')
             return render_template('register.html', today=today)
 
         conn = get_connection()
         cur = conn.cursor()
-
-        # Kiểm tra email trùng
-        cur.execute("SELECT ID FROM NguoiDung WHERE Email = ?", (email,))
+        cur.execute('SELECT ID FROM NguoiDung WHERE Email = ?', (email,))
         if cur.fetchone():
             conn.close()
-            flash("⚠️ Email đã được sử dụng! Vui lòng chọn email khác.", "warning")
+            flash('Email da ton tai! Vui long chon email khac.', 'warning')
             return render_template('register.html', today=today)
+        conn.close()
+
+        verification_code = f"{random.randint(100000, 999999)}"
+        session['pending_registration'] = {
+            'ho_ten': ho_ten,
+            'gioi_tinh': gioi_tinh,
+            'ngay_sinh': ngay_sinh or None,
+            'email': email,
+            'mat_khau': mat_khau,
+            'role': role
+        }
+        session['pending_registration_code'] = verification_code
+        session['pending_registration_exp'] = (
+            datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
+        ).isoformat()
 
         try:
-            cur.execute("""
-                INSERT INTO NguoiDung (HoTen, GioiTinh, NgaySinh, Email, MatKhau, Role)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (ho_ten, gioi_tinh, ngay_sinh, email, mat_khau, role))
-            conn.commit()
-            conn.close()
-
-            flash("🎉 Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.", "success")
-            return redirect(url_for('login'))
-
+            _send_verification_email(ho_ten, email, verification_code)
+            flash('Da gui ma xac nhan den email cua ban. Vui long kiem tra va nhap ma de hoan tat dang ky.', 'info')
+            return redirect(url_for('verify_email'))
         except Exception as e:
-            conn.rollback()
-            conn.close()
-            flash(f"❌ Lỗi khi đăng ký: {e}", "danger")
+            _clear_pending_registration()
+            flash(f'Khong the gui email xac nhan: {e}', 'danger')
             return render_template('register.html', today=today)
 
     return render_template('register.html', today=today)
 
 # ==========================================
-# 🔐 Đăng nhập hệ thống
+# Xac thuc email dang ky
 # ==========================================
+@app.route('/verify-email', methods=['GET', 'POST'])
+def verify_email():
+    pending = session.get('pending_registration')
+    if not pending:
+        flash('Khong tim thay thong tin dang ky. Vui long dang ky lai.', 'warning')
+        return redirect(url_for('register'))
+
+    if request.method == 'POST':
+        if request.form.get('action') == 'resend':
+            new_code = f"{random.randint(100000, 999999)}"
+            session['pending_registration_code'] = new_code
+            session['pending_registration_exp'] = (
+                datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
+            ).isoformat()
+            try:
+                _send_verification_email(pending.get('ho_ten'), pending.get('email'), new_code)
+                flash('Da gui lai ma xac nhan.', 'info')
+            except Exception as e:
+                flash(f'Khong the gui lai email: {e}', 'danger')
+            return redirect(url_for('verify_email'))
+
+        code = request.form.get('verification_code', '').strip()
+        stored_code = session.get('pending_registration_code')
+        expiry_str = session.get('pending_registration_exp')
+        expiry = datetime.datetime.fromisoformat(expiry_str) if expiry_str else None
+
+        if expiry and datetime.datetime.utcnow() > expiry:
+            flash('Ma xac nhan da het han. Vui long yeu cau ma moi.', 'warning')
+            return redirect(url_for('verify_email'))
+
+        if not code or code != stored_code:
+            flash('Ma xac nhan khong chinh xac.', 'danger')
+            return redirect(url_for('verify_email'))
+
+        try:
+            conn = get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO NguoiDung (HoTen, GioiTinh, NgaySinh, Email, MatKhau, Role)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    pending['ho_ten'],
+                    pending['gioi_tinh'],
+                    pending['ngay_sinh'],
+                    pending['email'],
+                    pending['mat_khau'],
+                    pending['role']
+                )
+            )
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            conn.close()
+            flash(f'Loi khi tao tai khoan: {e}', 'danger')
+            return redirect(url_for('register'))
+        else:
+            conn.close()
+            _clear_pending_registration()
+            flash('Dang ky thanh cong! Vui long dang nhap.', 'success')
+            return redirect(url_for('login'))
+
+    email = pending.get('email')
+    return render_template('verify_email.html', email=email)
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -178,6 +349,82 @@ def login():
 
     # GET request → hiển thị form
     return render_template('login.html')
+
+@app.route('/auth/<provider>')
+def oauth_login(provider):
+    provider = provider.lower()
+    if provider not in SOCIAL_PROVIDERS:
+        abort(404)
+    if not SOCIAL_PROVIDERS.get(provider):
+        flash("Chức năng đăng nhập này chưa được cấu hình.", "warning")
+        return redirect(url_for('login'))
+
+    client = oauth.create_client(provider)
+    if not client:
+        flash("Không tìm thấy cấu hình cho nhà cung cấp đăng nhập.", "danger")
+        return redirect(url_for('login'))
+
+    redirect_uri = url_for('oauth_callback', provider=provider, _external=True)
+    kwargs = {}
+    if provider == "google":
+        nonce = token_urlsafe(16)
+        session['oauth_nonce'] = nonce
+        kwargs['nonce'] = nonce
+    return client.authorize_redirect(redirect_uri, **kwargs)
+
+@app.route('/auth/callback/<provider>')
+def oauth_callback(provider):
+    provider = provider.lower()
+    if provider not in SOCIAL_PROVIDERS or not SOCIAL_PROVIDERS.get(provider):
+        flash("Nhà cung cấp đăng nhập chưa được kích hoạt.", "warning")
+        return redirect(url_for('login'))
+
+    client = oauth.create_client(provider)
+    if not client:
+        flash("Không thể khởi tạo nhà cung cấp đăng nhập.", "danger")
+        return redirect(url_for('login'))
+
+    try:
+        token = client.authorize_access_token()
+        nonce = session.pop('oauth_nonce', None)
+        user_info = client.parse_id_token(token, nonce=nonce)
+    except Exception as e:
+        flash(f"Không thể xác thực: {e}", "danger")
+        return redirect(url_for('login'))
+
+    email = user_info.get("email")
+    if not email:
+        flash("Không đọc được email từ tài khoản của bạn. Vui lòng cho phép truy cập email.", "warning")
+        return redirect(url_for('login'))
+    full_name = user_info.get("name") or user_info.get("given_name") or email.split("@")[0]
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT ID, HoTen, Role FROM NguoiDung WHERE Email = ?", (email,))
+    user = cur.fetchone()
+
+    if user:
+        user_id, ho_ten, role = user.ID, user.HoTen or full_name, user.Role or 'patient'
+    else:
+        cur.execute("""
+            INSERT INTO NguoiDung (HoTen, GioiTinh, NgaySinh, Email, MatKhau, Role)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (full_name, 'Nam', None, email, '', 'patient'))
+        conn.commit()
+        cur.execute("SELECT ID, HoTen, Role FROM NguoiDung WHERE Email = ?", (email,))
+        user = cur.fetchone()
+        user_id, ho_ten, role = user.ID, user.HoTen or full_name, user.Role or 'patient'
+
+    conn.close()
+
+    session['user_id'] = user_id
+    session['user'] = ho_ten
+    session['role'] = role
+    flash(f"🎉 Chào mừng {ho_ten} đăng nhập thành công!", "success")
+
+    if role == 'admin':
+        return redirect(url_for('history'))
+    return redirect(url_for('home'))
 
 # ==========================================
 # Trang chủ
@@ -460,6 +707,54 @@ def diagnose():
         results=results,
         has_result=has_result 
     )
+
+@app.route('/send-diagnosis-email', methods=['POST'])
+def send_diagnosis_email():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    risk_percent = request.form.get('risk_percent')
+    risk_level = request.form.get('risk_level', 'low')
+    threshold = request.form.get('threshold', '0.5')
+    ai_advice_plain = request.form.get('ai_advice_plain', '').strip()
+    benhnhan_id = request.form.get('benhnhan_id') or session.get('user_id')
+
+    if not risk_percent:
+        flash("Chưa có kết quả chẩn đoán để gửi email.", "warning")
+        return redirect(url_for('diagnose'))
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT HoTen, Email FROM NguoiDung WHERE ID = ?", (benhnhan_id,))
+    patient = cur.fetchone()
+    conn.close()
+
+    if not patient or not patient.Email:
+        flash("Không tìm thấy email người nhận.", "danger")
+        return redirect(url_for('diagnose'))
+
+    patient_name = patient.HoTen or "bạn"
+    risk_text = "Nguy cơ cao" if risk_level == 'high' else "Nguy cơ thấp"
+    try:
+        html_body = render_template(
+            'emails/diagnosis_email.html',
+            name=patient_name,
+            risk_percent=risk_percent,
+            risk_text=risk_text,
+            threshold=threshold,
+            ai_advice=ai_advice_plain,
+            doctor_name=session.get('user', 'CVD-App')
+        )
+        send_email(
+            patient.Email,
+            "Kết quả chẩn đoán tim mạch từ CVD-App",
+            html_body
+        )
+        flash("Đã gửi kết quả qua email. Cảm ơn bạn đã sử dụng dịch vụ!", "success")
+    except Exception as e:
+        flash(f"Không thể gửi email: {e}", "danger")
+
+    return redirect(url_for('diagnose'))
 
 # ==========================================
 # 🧠 Hàm tô đậm lời khuyên AI (1 màu nhấn - FIX BUG "600;'>")
@@ -1788,3 +2083,4 @@ def chat_ai_history():
 # ==========================================
 if __name__ == "__main__":
     app.run(debug=True)
+

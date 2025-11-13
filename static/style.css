@@ -18,6 +18,25 @@ body {
   line-height: 1.6;
 }
 
+body.auth-page {
+  display: block;
+  margin-top: 0;
+  min-height: 100vh;
+}
+
+body.auth-page .main-content {
+  margin-top: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+}
+
+body.auth-page .auth-content {
+  max-width: 100%;
+  padding: 0;
+  width: 100%;
+}
+
 /* Nội dung chính */
 .main-content {
   flex: 1 0 auto;
@@ -103,20 +122,22 @@ header p {
     rgba(30, 99, 198, 0.07),
     rgba(90, 79, 207, 0.07)
   );
-  min-height: calc(100vh - 60px);
+  min-height: 100vh;
+  width: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 25px;
+  padding: clamp(32px, 8vh, 72px) clamp(16px, 6vw, 64px);
+  overflow-y: auto;
 }
 
 .login-card {
-  max-width: 420px;
+  max-width: 460px;
   width: 100%;
   background: #fff;
   border-radius: 22px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  padding: 2.7rem 2rem;
+  padding: clamp(2rem, 3vw, 2.7rem) clamp(1.5rem, 4vw, 2.2rem);
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -135,6 +156,13 @@ header p {
   color: #666;
   font-size: 0.95rem;
   margin-bottom: 1.5rem;
+}
+
+@media (max-width: 576px) {
+  .login-card {
+    border-radius: 18px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  }
 }
 
 /* Logo tròn */

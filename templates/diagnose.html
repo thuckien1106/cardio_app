@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% block content %}
 <div class="container mt-3 pt-3 fade-section ">
 
@@ -200,27 +200,43 @@
                     </div>
 
                     <!-- ✅ Nút xuất file Excel -->
-                    <form method="post" action="{{ url_for('export_diagnosis') }}">
-                        <input type="hidden" name="benhnhan_id" value="{{ request.form.get('benhnhan_id', '') }}">
-                        <input type="hidden" name="age" value="{{ request.form.get('age') }}">
-                        <input type="hidden" name="gender" value="{{ request.form.get('gender') }}">
-                        <input type="hidden" name="bmi"
-                            value="{{ (request.form.get('weight')|float / ((request.form.get('height')|float / 100)**2))|round(2) if request.form.get('weight') and request.form.get('height') }}">
-                        <input type="hidden" name="systolic" value="{{ request.form.get('systolic') }}">
-                        <input type="hidden" name="diastolic" value="{{ request.form.get('diastolic') }}">
-                        <input type="hidden" name="cholesterol" value="{{ request.form.get('cholesterol') }}">
-                        <input type="hidden" name="glucose" value="{{ request.form.get('glucose') }}">
-                        <input type="hidden" name="smoking" value="{{ request.form.get('smoking') }}">
-                        <input type="hidden" name="alcohol" value="{{ request.form.get('alcohol') }}">
-                        <input type="hidden" name="exercise" value="{{ request.form.get('exercise') }}">
-                        <input type="hidden" name="risk_percent" value="{{ risk_percent }}">
-                        <input type="hidden" name="risk_level" value="{{ risk_level }}">
-                        <input type="hidden" name="ai_advice" value="{{ ai_advice }}">
-                        <input type="hidden" name="shap_file" value="{{ shap_file }}">
-                        <button type="submit" class="btn btn-outline-primary rounded-pill mt-2">
-                            ⬇️ Xuất file báo cáo Excel
-                        </button>
-                    </form>
+                    <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap mt-2">
+                        <form method="post" action="{{ url_for('export_diagnosis') }}" class="d-inline">
+                            <input type="hidden" name="benhnhan_id" value="{{ request.form.get('benhnhan_id', '') }}">
+                            <input type="hidden" name="age" value="{{ request.form.get('age') }}">
+                            <input type="hidden" name="gender" value="{{ request.form.get('gender') }}">
+                            <input type="hidden" name="bmi"
+                                value="{{ (request.form.get('weight')|float / ((request.form.get('height')|float / 100)**2))|round(2) if request.form.get('weight') and request.form.get('height') }}">
+                            <input type="hidden" name="systolic" value="{{ request.form.get('systolic') }}">
+                            <input type="hidden" name="diastolic" value="{{ request.form.get('diastolic') }}">
+                            <input type="hidden" name="cholesterol" value="{{ request.form.get('cholesterol') }}">
+                            <input type="hidden" name="glucose" value="{{ request.form.get('glucose') }}">
+                            <input type="hidden" name="smoking" value="{{ request.form.get('smoking') }}">
+                            <input type="hidden" name="alcohol" value="{{ request.form.get('alcohol') }}">
+                            <input type="hidden" name="exercise" value="{{ request.form.get('exercise') }}">
+                            <input type="hidden" name="risk_percent" value="{{ risk_percent }}">
+                            <input type="hidden" name="risk_level" value="{{ risk_level }}">
+                            <input type="hidden" name="ai_advice" value="{{ ai_advice }}">
+                            <input type="hidden" name="shap_file" value="{{ shap_file }}">
+                            <button type="submit" class="btn btn-outline-primary rounded-pill">
+                                📄 Xuất file báo cáo Excel
+                            </button>
+                        </form>
+
+                        <form method="post" action="{{ url_for('send_diagnosis_email') }}" class="d-inline">
+                            <input type="hidden" name="benhnhan_id"
+                                value="{{ request.form.get('benhnhan_id', session.get('user_id')) }}">
+                            <input type="hidden" name="risk_percent" value="{{ risk_percent }}">
+                            <input type="hidden" name="risk_level" value="{{ risk_level }}">
+                            <input type="hidden" name="threshold" value="{{ threshold }}">
+                            <textarea name="ai_advice_plain" hidden>{{ ai_advice | default('', true) | striptags }}</textarea>
+                            <button type="submit" class="btn btn-outline-secondary rounded-circle"
+                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                title="Gửi kết quả qua email và cảm ơn khách hàng">
+                                <i class="bi bi-envelope-paper-heart-fill"></i>
+                            </button>
+                        </form>
+                    </div>
 
                 </div>
                 {% endif %}

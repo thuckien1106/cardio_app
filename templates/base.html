@@ -167,7 +167,7 @@
     </style>
   </head>
 
-  <body>
+  <body class="{% if not session.get('user') %}auth-page{% endif %}">
     {% with messages = get_flashed_messages(with_categories=true) %} {% if
     messages %}
     <div
@@ -177,8 +177,9 @@
     >
       {% for category, msg in messages %}
       <div
-        class="alert alert-{{ category }} text-center rounded-pill shadow-sm mb-2 fade show"
+        class="alert alert-{{ category }} text-center rounded-pill shadow-sm mb-2 fade show auto-dismiss"
         role="alert"
+        data-timeout="3000"
         style="animation: fadeIn 0.4s ease"
       >
         {{ msg }}
@@ -314,7 +315,9 @@
     </nav>
     {% endif %}
 
-    <div class="container main-content">{% block content %}{% endblock %}</div>
+    <div class="{% if session.get('user') %}container main-content{% else %}main-content auth-content{% endif %}">
+      {% block content %}{% endblock %}
+    </div>
 
     <!-- Footer -->
     <footer class="footer text-center text-white py-3">
@@ -397,15 +400,13 @@
     </style>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const alerts = document.querySelectorAll("#flashContainer .alert");
-        if (alerts.length) {
+        document.querySelectorAll(".auto-dismiss").forEach((alertEl) => {
+          const timeout = parseInt(alertEl.dataset.timeout || "3000", 10);
           setTimeout(() => {
-            alerts.forEach((a) => {
-              a.style.animation = "fadeOut 0.5s forwards";
-              setTimeout(() => a.remove(), 600);
-            });
-          }, 2500);
-        }
+            alertEl.style.animation = "fadeOut 0.4s forwards";
+            setTimeout(() => alertEl.remove(), 450);
+          }, timeout);
+        });
       });
     </script>
 

@@ -26,17 +26,26 @@
         />
       </div>
 
-      <div class="mb-4 input-group rounded-pill shadow-sm login-input-group">
+      <div class="mb-4 input-group rounded-pill shadow-sm login-input-group password-toggle-group overflow-hidden">
         <span class="input-group-text"
           ><i class="bi bi-lock-fill text-primary"></i
         ></span>
         <input
           type="password"
           name="password"
+          id="loginPassword"
           class="form-control border-0 rounded-end rounded-pill"
           placeholder="Mật khẩu"
           required
         />
+        <button
+          class="btn btn-link border-0 text-muted toggle-password"
+          type="button"
+          data-target="loginPassword"
+          aria-label="Ẩn/hiện mật khẩu"
+        >
+          <i class="bi bi-eye-slash-fill"></i>
+        </button>
       </div>
 
       <button
@@ -46,6 +55,20 @@
         Đăng nhập
       </button>
     </form>
+
+    {% if social_google_enabled %}
+    <div class="mt-4 border-top pt-3">
+      <p class="text-center text-muted small mb-3">Hoặc truy cập Google</p>
+      <div class="d-grid gap-2">
+        <a
+          href="{{ url_for('oauth_login', provider='google') }}"
+          class="btn btn-outline-danger rounded-pill fw-semibold"
+        >
+          <i class="bi bi-google me-2"></i> Google
+        </a>
+      </div>
+    </div>
+    {% endif %}
 
     <p class="text-center mt-3 small text-muted">
       Chưa có tài khoản?
@@ -61,5 +84,23 @@
     </p>
   </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".toggle-password").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const target = document.getElementById(btn.dataset.target);
+        if (!target) return;
+        const isHidden = target.type === "password";
+        target.type = isHidden ? "text" : "password";
+        const icon = btn.querySelector("i");
+        if (icon) {
+          icon.classList.toggle("bi-eye-fill", isHidden);
+          icon.classList.toggle("bi-eye-slash-fill", !isHidden);
+        }
+      });
+    });
+  });
+</script>
 
 {% endblock %}

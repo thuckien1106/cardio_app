@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Kết quả chẩn đoán CVD-App</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #f6f8fb;
+        padding: 20px;
+        color: #1f2933;
+      }
+      .card {
+        max-width: 640px;
+        margin: auto;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+      }
+      .card-header {
+        background: linear-gradient(120deg, #2563eb, #14b8a6);
+        color: #fff;
+        padding: 24px;
+        text-align: center;
+      }
+      .card-body {
+        padding: 28px;
+        line-height: 1.7;
+      }
+      .pill {
+        display: inline-block;
+        padding: 6px 16px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .pill.high {
+        background: rgba(239, 68, 68, 0.12);
+        color: #b91c1c;
+      }
+      .pill.low {
+        background: rgba(16, 185, 129, 0.12);
+        color: #047857;
+      }
+      .footer {
+        font-size: 13px;
+        color: #6b7280;
+        text-align: center;
+        padding: 0 28px 28px;
+      }
+      ul {
+        padding-left: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="card-header">
+        <h2 style="margin: 0">Kết quả chẩn đoán tim mạch</h2>
+        <p style="margin: 8px 0 0">CVD-App xin gửi tới {{ name }}</p>
+      </div>
+      <div class="card-body">
+        <p>Chào {{ name }},</p>
+        <p>
+          Dưới đây là thông tin tóm tắt về lần chẩn đoán gần nhất của bạn trên
+          hệ thống CVD-App:
+        </p>
+        <ul>
+          <li>
+            <strong>Nguy cơ:</strong>
+            <span class="pill {{ 'high' if risk_text == 'Nguy cơ cao' else 'low' }}"
+              >{{ risk_text }} - {{ risk_percent }}%</span
+            >
+          </li>
+          <li><strong>Ngưỡng đánh giá:</strong> {{ threshold }}</li>
+        </ul>
+        {% if ai_advice %}
+        <p><strong>Lời khuyên dành cho bạn:</strong></p>
+        <p style="white-space: pre-line">{{ ai_advice }}</p>
+        {% endif %}
+        <p>
+          Nếu bạn cần hỗ trợ thêm, hãy phản hồi email này hoặc liên hệ bác sĩ
+          điều trị. Chúc bạn luôn mạnh khỏe!
+        </p>
+        <p>Trân trọng,<br />{{ doctor_name }} - CVD-App</p>
+      </div>
+      <div class="footer">
+        Cảm ơn bạn đã sử dụng dịch vụ của CVD-App. Hẹn gặp lại trong những lần
+        kiểm tra tiếp theo!
+      </div>
+    </div>
+  </body>
+</html>
