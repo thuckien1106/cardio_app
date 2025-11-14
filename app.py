@@ -103,16 +103,23 @@ def send_email(to_email: str, subject: str, html_body: str):
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
     service.users().messages().send(userId="me", body={"raw": raw}).execute()
 
+# def get_connection():
+#     return pyodbc.connect(
+#         "DRIVER={ODBC Driver 18 for SQL Server};"
+#         "SERVER=PC1\\LNTUANDAT;"
+#         "DATABASE=CVD_App;"
+#         "Trusted_Connection=yes;"
+#         "Encrypt=yes;"
+#         "TrustServerCertificate=yes;"
+#     )
 def get_connection():
     return pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};"
-        "SERVER=PC1\\LNTUANDAT;"
+        "DRIVER={SQL Server};"
+        "SERVER=HKT;"
         "DATABASE=CVD_App;"
-        "Trusted_Connection=yes;"
-        "Encrypt=yes;"
-        "TrustServerCertificate=yes;"
+        "UID=sa;"
+        "PWD=123"
     )
-
 @app.context_processor
 def inject_social_flags():
     return {
@@ -382,6 +389,7 @@ def confirm_patient_invite(token):
             conn.close()
 
         flash("Kích hoạt tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.", "success")
+        session.clear()
         return redirect(url_for('login'))
 
     return render_template('confirm_invite.html', email=data.get('email'), name=data.get('ho_ten'), token=token)
