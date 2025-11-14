@@ -554,6 +554,10 @@ def oauth_callback(provider):
         conn.close()
         login_link = url_for('login', _external=True)
 
+        session['user_id'] = user_id
+        session['user'] = ho_ten
+        session['role'] = role
+
         email_body = f"""
         <div style="font-family:Arial,sans-serif;line-height:1.6">
           <h2 style="color:#0d6efd">Chào {ho_ten},</h2>
