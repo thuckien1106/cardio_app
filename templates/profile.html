@@ -8,16 +8,6 @@
     <p class="text-muted mb-0">Cập nhật thông tin của bạn để quản lý hồ sơ sức khỏe chính xác hơn.</p>
   </div>
 
-  <!-- 🔔 Thông báo -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-  {% for category, msg in messages %}
-  <div class="alert alert-{{ category }} text-center rounded-pill shadow-sm fade-in small py-2">
-    {{ msg }}
-  </div>
-  {% endfor %}
-  {% endif %}
-  {% endwith %}
 
   <!-- 📋 Form hồ sơ -->
   <div class="row justify-content-center">
@@ -124,15 +114,30 @@
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label fw-semibold">Mật khẩu cũ</label>
-            <input type="password" name="old_password" class="form-control rounded-pill shadow-sm" required>
+            <div class="password-toggle-wrapper position-relative">
+              <input type="password" id="oldPassword" name="old_password" class="form-control rounded-pill shadow-sm password-toggle-input" required>
+              <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password" data-target="oldPassword" aria-label="Hien thi mat khau">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Mật khẩu mới</label>
-            <input type="password" name="new_password" class="form-control rounded-pill shadow-sm" required>
+            <div class="password-toggle-wrapper position-relative">
+              <input type="password" id="newPassword" name="new_password" class="form-control rounded-pill shadow-sm password-toggle-input" required>
+              <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password" data-target="newPassword" aria-label="Hien thi mat khau moi">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Xác nhận mật khẩu mới</label>
-            <input type="password" name="confirm_password" class="form-control rounded-pill shadow-sm" required>
+            <label class="form-label fw-semibold">Xác nhận lại mật khẩu mới</label>
+            <div class="password-toggle-wrapper position-relative">
+              <input type="password" id="confirmPassword" name="confirm_password" class="form-control rounded-pill shadow-sm password-toggle-input" required>
+              <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password" data-target="confirmPassword" aria-label="Hien thi lai mat khau">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
           </div>
           <div id="pwMessage" class="text-center small mt-2"></div>
         </div>
@@ -171,6 +176,17 @@
     border-image: linear-gradient(90deg, #0d6efd, #6f42c1) 1;
     border-width: 1.5px;
     transition: 0.25s ease;
+  }
+
+  .password-toggle-wrapper .password-toggle-input {
+    padding-right: 3rem;
+  }
+
+  .password-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
   }
 
   /* Button gradient */
@@ -237,6 +253,7 @@
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("changePasswordForm");
+    if (!form) return;
     const msg = document.getElementById("pwMessage");
 
     form.addEventListener("submit", async (e) => {
@@ -266,6 +283,23 @@
       else if (strength <= 3) msg.innerHTML = "<span class='text-warning'>🟡 Trung bình</span>";
       else msg.innerHTML = "<span class='text-success'>🟢 Mạnh</span>";
     });
+
+    document.querySelectorAll(".toggle-password").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = document.getElementById(btn.dataset.target);
+        if (!target) return;
+        target.type = target.type === "password" ? "text" : "password";
+        const isVisible = target.type === "text";
+        const icon = btn.querySelector("i");
+        if (icon) {
+          icon.classList.toggle("bi-eye", !isVisible);
+          icon.classList.toggle("bi-eye-slash", isVisible);
+        }
+        btn.setAttribute("aria-label", isVisible ? "An mat khau" : "Hien thi mat khau");
+      });
+    });
   });
 </script>
 {% endblock %}
+
+

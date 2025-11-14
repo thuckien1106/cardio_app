@@ -23,18 +23,6 @@
     </a>
   </div>
 
-  <!--Thông báo -->
-  <div class="fade-section fade-delayed-2">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    {% for cat, msg in messages %}
-    <div class="alert alert-{{ 'success' if cat == 'success' else 'danger' }} alert-dismissible fade show shadow-sm">
-      {{ msg }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% endfor %}
-    {% endif %}
-    {% endwith %}
   </div>
 
   <!-- ======================= FORM THÊM NGƯỜI DÙNG ======================= -->
@@ -154,85 +142,6 @@
             </td>
           </tr>
 
-          <!-- Modal Xem -->
-          <div class="modal fade" id="viewUserModal{{ u.ID }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content rounded-3 shadow-lg border-0">
-                <div class="modal-header bg-info text-white">
-                  <h5 class="modal-title">👁 Thông tin {{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}</h5>
-                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><b>Họ tên:</b> {{ u.HoTen }}</li>
-                    <li class="list-group-item"><b>Giới tính:</b> {{ u.GioiTinh or '—' }}</li>
-                    <li class="list-group-item"><b>Ngày sinh:</b> {{ u.NgaySinh.strftime('%d/%m/%Y') if u.NgaySinh else '—' }}</li>
-                    <li class="list-group-item"><b>Email:</b> {{ u.Email }}</li>
-                    <li class="list-group-item"><b>Điện thoại:</b> {{ u.DienThoai or '—' }}</li>
-                    <li class="list-group-item"><b>Địa chỉ:</b> {{ u.DiaChi or '—' }}</li>
-                    <li class="list-group-item"><b>Ngày tạo:</b> {{ u.NgayTao.strftime('%d/%m/%Y') if u.NgayTao else '—' }}</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Modal Sửa -->
-          <div class="modal fade" id="editUserModal{{ u.ID }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content rounded-3 shadow">
-                <form method="post">
-                  <input type="hidden" name="id" value="{{ u.ID }}" />
-                  <input type="hidden" name="edit_user" value="1" />
-                  <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">✏️ Cập nhật thông tin {{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                  </div>
-                  <div class="modal-body">
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <label class="form-label fw-semibold">Họ tên</label>
-                        <input type="text" name="ho_ten" class="form-control" value="{{ u.HoTen }}" required />
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label fw-semibold">Giới tính</label>
-                        <select name="gioi_tinh" class="form-select">
-                          <option value="Nam" {% if u.GioiTinh=='Nam' %}selected{% endif %}>Nam</option>
-                          <option value="Nữ" {% if u.GioiTinh=='Nữ' %}selected{% endif %}>Nữ</option>
-                        </select>
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label fw-semibold">Ngày sinh</label>
-                        <input type="date" name="ngay_sinh" class="form-control"
-                          value="{{ u.NgaySinh.strftime('%Y-%m-%d') if u.NgaySinh else '' }}" />
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label fw-semibold">Email</label>
-                        <input type="email" name="email" class="form-control" value="{{ u.Email }}" required />
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label fw-semibold">Mật khẩu (để trống nếu không đổi)</label>
-                        <input type="password" name="mat_khau" class="form-control" placeholder="••••••" />
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label fw-semibold">Điện thoại</label>
-                        <input type="text" name="dien_thoai" class="form-control" value="{{ u.DienThoai or '' }}" />
-                      </div>
-                      <div class="col-12">
-                        <label class="form-label fw-semibold">Địa chỉ</label>
-                        <input type="text" name="dia_chi" class="form-control" value="{{ u.DiaChi or '' }}" />
-                      </div>
-                    </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-success">💾 Lưu thay đổi</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-
           {% endfor %}
         </tbody>
       </table>
@@ -240,6 +149,86 @@
   </div>
 </div>
 
+{% for u in users %}
+<!-- Modal Xem -->
+<div class="modal fade" id="viewUserModal{{ u.ID }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-3 shadow-lg border-0">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">👁 Thông tin {{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item"><b>Họ tên:</b> {{ u.HoTen }}</li>
+          <li class="list-group-item"><b>Giới tính:</b> {{ u.GioiTinh or '—' }}</li>
+          <li class="list-group-item"><b>Ngày sinh:</b> {{ u.NgaySinh.strftime('%d/%m/%Y') if u.NgaySinh else '—' }}</li>
+          <li class="list-group-item"><b>Email:</b> {{ u.Email }}</li>
+          <li class="list-group-item"><b>Điện thoại:</b> {{ u.DienThoai or '—' }}</li>
+          <li class="list-group-item"><b>Địa chỉ:</b> {{ u.DiaChi or '—' }}</li>
+          <li class="list-group-item"><b>Ngày tạo:</b> {{ u.NgayTao.strftime('%d/%m/%Y') if u.NgayTao else '—' }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Sửa -->
+<div class="modal fade" id="editUserModal{{ u.ID }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-3 shadow">
+      <form method="post">
+        <input type="hidden" name="id" value="{{ u.ID }}" />
+        <input type="hidden" name="edit_user" value="1" />
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">✏️ Cập nhật thông tin {{ 'bác sĩ' if role_type == 'doctor' else 'bệnh nhân' }}</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Họ tên</label>
+              <input type="text" name="ho_ten" class="form-control" value="{{ u.HoTen }}" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Giới tính</label>
+              <select name="gioi_tinh" class="form-select">
+                <option value="Nam" {% if u.GioiTinh=='Nam' %}selected{% endif %}>Nam</option>
+                <option value="Nữ" {% if u.GioiTinh=='Nữ' %}selected{% endif %}>Nữ</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Ngày sinh</label>
+              <input type="date" name="ngay_sinh" class="form-control"
+                value="{{ u.NgaySinh.strftime('%Y-%m-%d') if u.NgaySinh else '' }}" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email</label>
+              <input type="email" name="email" class="form-control" value="{{ u.Email }}" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Mật khẩu (để trống nếu không đổi)</label>
+              <input type="password" name="mat_khau" class="form-control" placeholder="******" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Điện thoại</label>
+              <input type="text" name="dien_thoai" class="form-control" value="{{ u.DienThoai or '' }}" />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Địa chỉ</label>
+              <input type="text" name="dia_chi" class="form-control" value="{{ u.DiaChi or '' }}" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-success">💾 Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
 <!-- ================== CSS HIỆU ỨNG ================== -->
 <style>
   .fade-section {

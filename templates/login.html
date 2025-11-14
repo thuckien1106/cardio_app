@@ -55,6 +55,11 @@
         Đăng nhập
       </button>
     </form>
+    <div class="text-center mt-3">
+      <a href="{{ url_for('forgot_password') }}" class="text-decoration-none small">
+        Quên mật khẩu?
+      </a>
+    </div>
 
     {% if social_google_enabled %}
     <div class="mt-4 border-top pt-3">
@@ -104,3 +109,4 @@
 </script>
 
 {% endblock %}
+

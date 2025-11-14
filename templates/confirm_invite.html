@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+      <div class="card shadow-sm border-0 rounded-4 p-4">
+        <h3 class="text-center fw-bold text-primary mb-3">Xác nhận tài khoản</h3>
+        <p class="text-muted">
+          Xin chào <strong>{{ name }}</strong>, vui lòng nhập mã xác thực đã được gửi tới email
+          <strong>{{ email }}</strong> để kích hoạt tài khoản.
+        </p>
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Mã xác thực</label>
+            <input type="text" name="verification_code" class="form-control" placeholder="Nhập mã 6 chữ số" required />
+          </div>
+          <button type="submit" class="btn btn-primary w-100 rounded-pill fw-semibold">Xác nhận</button>
+        </form>
+        <p class="text-center text-muted small mt-3">
+          Nếu bạn gặp vấn đề với liên kết này, vui lòng liên hệ bác sĩ hoặc quản trị viên để gửi lại lời mời.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

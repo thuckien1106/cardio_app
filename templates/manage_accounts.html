@@ -6,17 +6,6 @@
   <p class="text-muted fade-section fade-delayed-2">Bác sĩ có thể thêm, tìm kiếm, xem, sửa hoặc xóa thông tin bệnh nhân tại đây.</p>
 
   <!-- Thông báo -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-  {% for category, msg in messages %}
-  <div class="alert alert-{{ 'success' if category=='success' else 'danger' }} alert-dismissible fade show">
-    {{ msg }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-  {% endfor %}
-  {% endif %}
-  {% endwith %}
-
   <!-- 🔹 Khu vực thêm bệnh nhân -->
   <div class="card shadow-sm border-0 rounded-4 mb-4 fade-section fade-delayed-3">
     <div class="card-body">
@@ -142,57 +131,6 @@
             {% endif %}
           </td>
 
-          <!-- Modal sửa -->
-          <div class="modal fade" id="editModal{{ p.ID }}" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content">
-                <form method="post">
-                  <input type="hidden" name="id" value="{{ p.ID }}">
-                  <input type="hidden" name="update_patient" value="1">
-
-                  <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">✏️ Cập nhật hồ sơ bệnh nhân</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                  </div>
-
-                  <div class="modal-body">
-                    <div class="mb-3">
-                      <label class="form-label">Họ tên</label>
-                      <input type="text" class="form-control" name="ho_ten" value="{{ p.HoTen }}" required>
-                    </div>
-
-                    <div class="mb-3">
-                      <label class="form-label">Giới tính</label>
-                      <select class="form-select" name="gioi_tinh">
-                        <option value="Nam" {% if p.GioiTinh=='Nam' %}selected{% endif %}>Nam</option>
-                        <option value="Nữ" {% if p.GioiTinh=='Nữ' %}selected{% endif %}>Nữ</option>
-                      </select>
-                    </div>
-
-                    <div class="mb-3">
-                      <label class="form-label">Ngày sinh</label>
-                      <input type="date" class="form-control" name="ngay_sinh" value="{{ p.NgaySinh_val }}">
-                    </div>
-
-                    <div class="mb-3">
-                      <label class="form-label">Số điện thoại</label>
-                      <input type="text" class="form-control" name="dien_thoai" value="{{ p.DienThoai or '' }}">
-                    </div>
-
-                    <div class="mb-3">
-                      <label class="form-label">Địa chỉ</label>
-                      <input type="text" class="form-control" name="dia_chi" value="{{ p.DiaChi or '' }}">
-                    </div>
-                  </div>
-
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-success">Lưu thay đổi</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
           {% endfor %}
       </tbody>
     </table>
@@ -204,6 +142,55 @@
   </div>
   {% endif %}
 </div>
+
+{% for p in patients %}
+{% if p.ID in my_patients %}
+<div class="modal fade" id="editModal{{ p.ID }}" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post">
+        <input type="hidden" name="id" value="{{ p.ID }}">
+        <input type="hidden" name="update_patient" value="1">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">✏️ Cập nhật hồ sơ bệnh nhân</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Họ tên</label>
+            <input type="text" class="form-control" name="ho_ten" value="{{ p.HoTen }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Giới tính</label>
+            <select class="form-select" name="gioi_tinh">
+              <option value="Nam" {% if p.GioiTinh=='Nam' %}selected{% endif %}>Nam</option>
+              <option value="Nữ" {% if p.GioiTinh=='Nữ' %}selected{% endif %}>Nữ</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Ngày sinh</label>
+            <input type="date" class="form-control" name="ngay_sinh" value="{{ p.NgaySinh_val }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Số điện thoại</label>
+            <input type="text" class="form-control" name="dien_thoai" value="{{ p.DienThoai or '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Địa chỉ</label>
+            <input type="text" class="form-control" name="dia_chi" value="{{ p.DiaChi or '' }}">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-success">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
 <style>
   /* 🌟 Hiệu ứng xuất hiện khi load hoặc cuộn */
   .fade-section {
