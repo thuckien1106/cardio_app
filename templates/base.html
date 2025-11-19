@@ -186,8 +186,7 @@
       </div>
       {% endfor %}
     </div>
-    {% endif %} {% endwith %} {% if session.get('user') and request.endpoint not
-    in ['login', 'register', 'verify_email', 'forgot_password'] %}
+    {% endif %} {% endwith %} {% if session.get('user') %}
     <!-- Navbar -->
     <nav
       class="navbar navbar-expand-lg navbar-dark shadow-sm fixed-top bg-dark"
@@ -800,16 +799,8 @@
     <script>
       window.addEventListener("scroll", () => {
         const navbar = document.querySelector(".navbar");
-        if (!navbar) return;
         if (window.scrollY > 30) navbar.classList.add("scrolled");
         else navbar.classList.remove("scrolled");
-      });
-    </script>
-    <script>
-      window.addEventListener("pageshow", function (event) {
-        if (event.persisted) {
-          window.location.reload();
-        }
       });
     </script>
   </body>

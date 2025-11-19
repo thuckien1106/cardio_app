@@ -1,450 +1,439 @@
 ﻿{% extends 'base.html' %}
 {% block content %}
-<div class="container mt-3 pt-3 fade-section ">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/diagnose.css') }}">
 
-    <!-- Tiêu đề -->
-    <div class="text-center mb-4 fade-section fade-delayed-1">
-        <h2 class="fw-bold text-gradient">🩺 Chẩn đoán bệnh tim mạch</h2>
-        <p class="text-muted mb-0">
-            {% if session['role'] == 'doctor' %}
-            Chọn bệnh nhân cần chẩn đoán, sau đó nhập dữ liệu hoặc tải file CSV/Excel để dự đoán nguy cơ bệnh tim mạch.
-            {% else %}
-            Nhập dữ liệu để hệ thống dự đoán nguy cơ mắc bệnh tim mạch.
-            {% endif %}
-        </p>
-    </div>
+<div class="main-content">
+    <div class="container mt-3 pt-3 fade-section">
 
-    <div class="row g-3 align-items-start">
-        <!-- ======== Form nhập liệu + kết quả ======== -->
-        <div class="col-lg-6 fade-section fade-delayed-2">
-            <div class="card shadow-sm p-4 border-0 rounded-4">
-                <h4 class="text-primary mb-3">📋 Nhập dữ liệu thủ công</h4>
 
-                <form method="post" id="predictForm">
-                    <input type="hidden" name="predict_form" value="1">
+        <!-- Tiêu đề -->
+        <div class="text-center mb-4 fade-section fade-delayed-1">
+            <h2 class="fw-bold text-gradient">🩺 Chẩn đoán bệnh tim mạch</h2>
+            <p class="text-muted mb-0">
+                {% if session['role'] == 'doctor' %}
+                Chọn bệnh nhân cần chẩn đoán, sau đó nhập dữ liệu hoặc tải file CSV/Excel để dự đoán nguy cơ bệnh tim
+                mạch.
+                {% else %}
+                Nhập dữ liệu để hệ thống dự đoán nguy cơ mắc bệnh tim mạch.
+                {% endif %}
+            </p>
+        </div>
 
-                    {% if session['role'] == 'doctor' %}
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Chọn bệnh nhân</label>
-                        <select name="benhnhan_id" class="form-select shadow-sm" required>
-                            <option value="">-- Chọn bệnh nhân --</option>
-                            {% for bn in benhnhans %}
-                            <option value="{{ bn.ID }}" {% if request.form.get('benhnhan_id')==bn.ID|string %}selected{%
-                                endif %}>
-                                {{ bn.MaBN }} - {{ bn.HoTen }}
-                            </option>
-                            {% endfor %}
-                        </select>
+        <div class="row g-3 align-items-start">
+            <!-- ======== Form nhập liệu + kết quả ======== -->
+            <div class="col-lg-6 fade-section fade-delayed-2">
+                <div class="card shadow-sm p-4 border-0 rounded-4">
+                    <h4 class="text-primary mb-3">📋 Nhập dữ liệu thủ công</h4>
+
+                    <form method="post" id="predictForm">
+                        <input type="hidden" name="predict_form" value="1">
+
+                        {% if session['role'] == 'doctor' %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Chọn bệnh nhân</label>
+                            <select name="benhnhan_id" class="form-select shadow-sm" required>
+                                <option value="">-- Chọn bệnh nhân --</option>
+                                {% for bn in benhnhans %}
+                                <option value="{{ bn.ID }}" {% if request.form.get('benhnhan_id')==bn.ID|string
+                                    %}selected{% endif %}>
+                                    {{ bn.MaBN }} - {{ bn.HoTen }}
+                                </option>
+                                {% endfor %}
+                            </select>
+
+                        </div>
+                        {% endif %}
+
+                        <!-- Ngưỡng chẩn đoán -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Ngưỡng chẩn đoán</label>
+                            <select name="threshold" id="threshold" class="form-select">
+                                <option value="0.25" {% if request.form.get('threshold','0.5')=='0.25' %}selected{%
+                                    endif %}>0.25 - Nhạy cao</option>
+                                <option value="0.5" {% if request.form.get('threshold','0.5')=='0.5' %}selected{% endif
+                                    %}>
+                                    0.5 - ⭐ Cân bằng</option>
+                                <option value="0.75" {% if request.form.get('threshold','0.5')=='0.75' %}selected{%
+                                    endif %}>0.75 - Đặc hiệu cao</option>
+                            </select>
+                        </div>
+
+                        <!-- Các trường nhập -->
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Tuổi</label>
+                                <input type="number" name="age" id="age" class="form-control" required
+                                    placeholder="VD: 45" value="{{ request.form.get('age','') }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Giới tính</label>
+                                <select name="gender" id="gender" class="form-select" required>
+                                    <option value="Nam" {% if request.form.get('gender')=='Nam' %}selected{% endif %}>
+                                        Nam
+                                    </option>
+                                    <option value="Nữ" {% if request.form.get('gender')=='Nữ' %}selected{% endif %}>Nữ
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Tập thể dục</label>
+                                <select name="exercise" id="exercise" class="form-select">
+                                    <option value="yes" {% if request.form.get('exercise')=='yes' %}selected{% endif %}>
+                                        Có
+                                    </option>
+                                    <option value="no" {% if request.form.get('exercise')=='no' %}selected{% endif %}>
+                                        Không
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Cân nặng (kg)</label>
+                                <input type="number" step="0.1" name="weight" id="weight" class="form-control" required
+                                    placeholder="VD: 50" value="{{ request.form.get('weight','') }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Chiều cao (cm)</label>
+                                <input type="number" step="0.1" name="height" id="height" class="form-control" required
+                                    placeholder="VD: 165" value="{{ request.form.get('height','') }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">BMI</label>
+                                <input type="text" id="bmi" class="form-control" readonly placeholder="Tự động tính">
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" data-bs-toggle="tooltip" data-bs-placement="top"
+                                    title="HATT (Huyết áp tâm thu): Là áp lực tối đa trong động mạch khi tim co bóp. Giá trị lý tưởng khoảng 90–119 mmHg.">
+                                    HATT (Huyết áp tâm thu)
+                                </label>
+                                <input type="number" name="systolic" id="systolic" class="form-control" required
+                                    placeholder="VD: 110" value="{{ request.form.get('systolic','') }}" />
+                                <small class="text-muted fst-italic">
+                                    Bình thường: <span class="text-success fw-semibold">90 – 119 mmHg</span>
+                                </small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" data-bs-toggle="tooltip" data-bs-placement="top"
+                                    title="HATTr (Huyết áp tâm trương): Là áp lực thấp nhất trong động mạch khi tim giãn ra giữa các nhịp. Giá trị lý tưởng khoảng 60–79 mmHg.">
+                                    HATTr (Huyết áp tâm trương)
+                                </label>
+                                <input type="number" name="diastolic" id="diastolic" class="form-control" required
+                                    placeholder="VD: 75" value="{{ request.form.get('diastolic','') }}" />
+                                <small class="text-muted fst-italic">
+                                    Bình thường: <span class="text-success fw-semibold">60 – 79 mmHg</span>
+                                </small>
+                            </div>
+                        </div>
+
+
+
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Cholesterol</label>
+                                <select name="cholesterol" id="cholesterol" class="form-select">
+                                    <option value="0" {% if request.form.get('cholesterol')=='0' %}selected{% endif %}>
+                                        Bình thường</option>
+                                    <option value="1" {% if request.form.get('cholesterol')=='1' %}selected{% endif %}>
+                                        Cao nhẹ</option>
+                                    <option value="2" {% if request.form.get('cholesterol')=='2' %}selected{% endif %}>
+                                        Cao</option>
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Đường huyết</label>
+                                <select name="glucose" id="glucose" class="form-select">
+                                    <option value="0" {% if request.form.get('glucose')=='0' %}selected{% endif %}>Bình
+                                        thường</option>
+                                    <option value="1" {% if request.form.get('glucose')=='1' %}selected{% endif %}>Cao
+                                        nhẹ</option>
+                                    <option value="2" {% if request.form.get('glucose')=='2' %}selected{% endif %}>Cao
+                                    </option>
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Hút thuốc</label>
+                                <select name="smoking" id="smoking" class="form-select">
+                                    <option value="no" {% if request.form.get('smoking')=='no' %}selected{% endif %}>
+                                        Không
+                                    </option>
+                                    <option value="yes" {% if request.form.get('smoking')=='yes' %}selected{% endif %}>
+                                        Có
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Uống rượu/bia</label>
+                                <select name="alcohol" id="alcohol" class="form-select">
+                                    <option value="no" {% if request.form.get('alcohol')=='no' %}selected{% endif %}>
+                                        Không
+                                    </option>
+                                    <option value="yes" {% if request.form.get('alcohol')=='yes' %}selected{% endif %}>
+                                        Có
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 rounded-pill mt-3">
+                            🔍 Dự đoán & Nhận lời khuyên
+                        </button>
+                    </form>
+
+                    {% if result %}
+                    <div class="mt-4 text-center">
+                        <div class="small text-secondary mb-2">
+                            <i class="bi bi-arrow-down-circle text-primary"></i> <b>Kết quả bạn vừa dự đoán</b>
+                        </div>
+                        <div
+                            class="alert {% if risk_level == 'high' %}alert-danger{% else %}alert-success{% endif %} rounded-3 shadow-sm">
+                            <strong>Kết quả:</strong>
+                            {% if risk_level == 'high' %} Nguy cơ cao - {{ risk_percent }}%
+                            {% else %} Nguy cơ thấp - {{ risk_percent }}%
+                            {% endif %}
+                            <br><small class="text-muted">Ngưỡng: {{ threshold }}</small>
+                        </div>
+                        <!-- 🔵 Biểu đồ tròn phần trăm nguy cơ -->
+                        <div class="mt-3 text-center">
+                            <h6 class="fw-semibold text-secondary mb-2">📊 Biểu đồ nguy cơ</h6>
+                            <canvas id="riskPieChart" width="230" height="230"
+                                style="max-width:260px;margin:auto;"></canvas>
+                        </div>
+
+                        <!-- ✅ Nút xuất file Excel -->
+                        <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap mt-2">
+                            <form method="post" action="{{ url_for('export_diagnosis') }}" class="d-inline">
+                                <input type="hidden" name="benhnhan_id"
+                                    value="{{ request.form.get('benhnhan_id', '') }}">
+                                <input type="hidden" name="age" value="{{ request.form.get('age') }}">
+                                <input type="hidden" name="gender" value="{{ request.form.get('gender') }}">
+                                <input type="hidden" name="bmi"
+                                    value="{{ (request.form.get('weight')|float / ((request.form.get('height')|float / 100)**2))|round(2) if request.form.get('weight') and request.form.get('height') }}">
+                                <input type="hidden" name="systolic" value="{{ request.form.get('systolic') }}">
+                                <input type="hidden" name="diastolic" value="{{ request.form.get('diastolic') }}">
+                                <input type="hidden" name="cholesterol" value="{{ request.form.get('cholesterol') }}">
+                                <input type="hidden" name="glucose" value="{{ request.form.get('glucose') }}">
+                                <input type="hidden" name="smoking" value="{{ request.form.get('smoking') }}">
+                                <input type="hidden" name="alcohol" value="{{ request.form.get('alcohol') }}">
+                                <input type="hidden" name="exercise" value="{{ request.form.get('exercise') }}">
+                                <input type="hidden" name="risk_percent" value="{{ risk_percent }}">
+                                <input type="hidden" name="risk_level" value="{{ risk_level }}">
+                                <input type="hidden" name="ai_advice" value="{{ ai_advice }}">
+                                <input type="hidden" name="shap_file" value="{{ shap_file }}">
+                                <button type="submit" class="btn btn-outline-primary rounded-pill">
+                                    📄 Xuất file báo cáo Excel
+                                </button>
+                            </form>
+
+                            <form method="post" action="{{ url_for('send_diagnosis_email') }}" class="d-inline">
+                                <input type="hidden" name="benhnhan_id"
+                                    value="{{ request.form.get('benhnhan_id', session.get('user_id')) }}">
+                                <input type="hidden" name="risk_percent" value="{{ risk_percent }}">
+                                <input type="hidden" name="risk_level" value="{{ risk_level }}">
+                                <input type="hidden" name="threshold" value="{{ threshold }}">
+                                <textarea name="ai_advice_plain"
+                                    hidden>{{ ai_advice | default('', true) | striptags }}</textarea>
+                                <button type="submit" class="btn btn-outline-secondary rounded-circle"
+                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                    title="Gửi kết quả qua email và cảm ơn khách hàng">
+                                    <i class="bi bi-envelope-paper-heart-fill"></i>
+                                </button>
+                            </form>
+                        </div>
 
                     </div>
                     {% endif %}
-
-                    <!-- Ngưỡng chẩn đoán -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Ngưỡng chẩn đoán</label>
-                        <select name="threshold" id="threshold" class="form-select">
-                            <option value="0.25" {% if request.form.get('threshold','0.5')=='0.25' %}selected{% endif
-                                %}>0.25 - Nhạy cao</option>
-                            <option value="0.5" {% if request.form.get('threshold','0.5')=='0.5' %}selected{% endif %}>
-                                0.5 - ⭐ Cân bằng</option>
-                            <option value="0.75" {% if request.form.get('threshold','0.5')=='0.75' %}selected{% endif
-                                %}>0.75 - Đặc hiệu cao</option>
-                        </select>
-                    </div>
-
-                    <!-- Các trường nhập -->
-                    <div class="row g-2">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Tuổi</label>
-                            <input type="number" name="age" id="age" class="form-control" required placeholder="VD: 45"
-                                value="{{ request.form.get('age','') }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Giới tính</label>
-                            <select name="gender" id="gender" class="form-select" required>
-                                <option value="Nam" {% if request.form.get('gender')=='Nam' %}selected{% endif %}>Nam
-                                </option>
-                                <option value="Nữ" {% if request.form.get('gender')=='Nữ' %}selected{% endif %}>Nữ
-                                </option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Tập thể dục</label>
-                            <select name="exercise" id="exercise" class="form-select">
-                                <option value="yes" {% if request.form.get('exercise')=='yes' %}selected{% endif %}>Có
-                                </option>
-                                <option value="no" {% if request.form.get('exercise')=='no' %}selected{% endif %}>Không
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mt-2">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Cân nặng (kg)</label>
-                            <input type="number" step="0.1" name="weight" id="weight" class="form-control" required
-                                placeholder="VD: 50" value="{{ request.form.get('weight','') }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Chiều cao (cm)</label>
-                            <input type="number" step="0.1" name="height" id="height" class="form-control" required
-                                placeholder="VD: 165" value="{{ request.form.get('height','') }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">BMI</label>
-                            <input type="text" id="bmi" class="form-control" readonly placeholder="Tự động tính">
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mt-2">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold" data-bs-toggle="tooltip" data-bs-placement="top"
-                                title="HATT (Huyết áp tâm thu): Là áp lực tối đa trong động mạch khi tim co bóp. Giá trị lý tưởng khoảng 90–119 mmHg.">
-                                HATT (Huyết áp tâm thu)
-                            </label>
-                            <input type="number" name="systolic" id="systolic" class="form-control" required
-                                placeholder="VD: 110" value="{{ request.form.get('systolic','') }}" />
-                            <small class="text-muted fst-italic">
-                                Bình thường: <span class="text-success fw-semibold">90 – 119 mmHg</span>
-                            </small>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold" data-bs-toggle="tooltip" data-bs-placement="top"
-                                title="HATTr (Huyết áp tâm trương): Là áp lực thấp nhất trong động mạch khi tim giãn ra giữa các nhịp. Giá trị lý tưởng khoảng 60–79 mmHg.">
-                                HATTr (Huyết áp tâm trương)
-                            </label>
-                            <input type="number" name="diastolic" id="diastolic" class="form-control" required
-                                placeholder="VD: 75" value="{{ request.form.get('diastolic','') }}" />
-                            <small class="text-muted fst-italic">
-                                Bình thường: <span class="text-success fw-semibold">60 – 79 mmHg</span>
-                            </small>
-                        </div>
-                    </div>
-
-
-
-                    <div class="row g-2 mt-2">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Cholesterol</label>
-                            <select name="cholesterol" id="cholesterol" class="form-select">
-                                <option value="0" {% if request.form.get('cholesterol')=='0' %}selected{% endif %}>
-                                    Bình thường</option>
-                                <option value="1" {% if request.form.get('cholesterol')=='1' %}selected{% endif %}>
-                                    Cao nhẹ</option>
-                                <option value="2" {% if request.form.get('cholesterol')=='2' %}selected{% endif %}>
-                                    Cao</option>
-                            </select>
-
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Đường huyết</label>
-                            <select name="glucose" id="glucose" class="form-select">
-                                <option value="0" {% if request.form.get('glucose')=='0' %}selected{% endif %}>Bình
-                                    thường</option>
-                                <option value="1" {% if request.form.get('glucose')=='1' %}selected{% endif %}>Cao
-                                    nhẹ</option>
-                                <option value="2" {% if request.form.get('glucose')=='2' %}selected{% endif %}>Cao
-                                </option>
-                            </select>
-
-                        </div>
-
-                    </div>
-
-                    <div class="row g-2 mt-2">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Hút thuốc</label>
-                            <select name="smoking" id="smoking" class="form-select">
-                                <option value="no" {% if request.form.get('smoking')=='no' %}selected{% endif %}>Không
-                                </option>
-                                <option value="yes" {% if request.form.get('smoking')=='yes' %}selected{% endif %}>Có
-                                </option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Uống rượu/bia</label>
-                            <select name="alcohol" id="alcohol" class="form-select">
-                                <option value="no" {% if request.form.get('alcohol')=='no' %}selected{% endif %}>Không
-                                </option>
-                                <option value="yes" {% if request.form.get('alcohol')=='yes' %}selected{% endif %}>Có
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-success w-100 rounded-pill mt-3">
-                        🔍 Dự đoán & Nhận lời khuyên
-                    </button>
-                </form>
-
-                {% if result %}
-                <div class="mt-4 text-center">
-                    <div class="small text-secondary mb-2">
-                        <i class="bi bi-arrow-down-circle text-primary"></i> <b>Kết quả bạn vừa dự đoán</b>
-                    </div>
-                    <div
-                        class="alert {% if risk_level == 'high' %}alert-danger{% else %}alert-success{% endif %} rounded-3 shadow-sm">
-                        <strong>Kết quả:</strong>
-                        {% if risk_level == 'high' %} Nguy cơ cao - {{ risk_percent }}%
-                        {% else %} Nguy cơ thấp - {{ risk_percent }}%
-                        {% endif %}
-                        <br><small class="text-muted">Ngưỡng: {{ threshold }}</small>
-                    </div>
-                    <!-- 🔵 Biểu đồ tròn phần trăm nguy cơ -->
-                    <div class="mt-3 text-center">
-                        <h6 class="fw-semibold text-secondary mb-2">📊 Biểu đồ nguy cơ</h6>
-                        <canvas id="riskPieChart" width="230" height="230"
-                            style="max-width:260px;margin:auto;"></canvas>
-                    </div>
-
-                    <!-- ✅ Nút xuất file Excel -->
-                    <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap mt-2">
-                        <form method="post" action="{{ url_for('export_diagnosis') }}" class="d-inline">
-                            <input type="hidden" name="benhnhan_id" value="{{ request.form.get('benhnhan_id', '') }}">
-                            <input type="hidden" name="age" value="{{ request.form.get('age') }}">
-                            <input type="hidden" name="gender" value="{{ request.form.get('gender') }}">
-                            <input type="hidden" name="bmi"
-                                value="{{ (request.form.get('weight')|float / ((request.form.get('height')|float / 100)**2))|round(2) if request.form.get('weight') and request.form.get('height') }}">
-                            <input type="hidden" name="systolic" value="{{ request.form.get('systolic') }}">
-                            <input type="hidden" name="diastolic" value="{{ request.form.get('diastolic') }}">
-                            <input type="hidden" name="cholesterol" value="{{ request.form.get('cholesterol') }}">
-                            <input type="hidden" name="glucose" value="{{ request.form.get('glucose') }}">
-                            <input type="hidden" name="smoking" value="{{ request.form.get('smoking') }}">
-                            <input type="hidden" name="alcohol" value="{{ request.form.get('alcohol') }}">
-                            <input type="hidden" name="exercise" value="{{ request.form.get('exercise') }}">
-                            <input type="hidden" name="risk_percent" value="{{ risk_percent }}">
-                            <input type="hidden" name="risk_level" value="{{ risk_level }}">
-                            <input type="hidden" name="ai_advice" value="{{ ai_advice }}">
-                            <input type="hidden" name="shap_file" value="{{ shap_file }}">
-                            <button type="submit" class="btn btn-outline-primary rounded-pill">
-                                📄 Xuất file báo cáo Excel
-                            </button>
-                        </form>
-
-                        <form method="post" action="{{ url_for('send_diagnosis_email') }}" class="d-inline">
-                            <input type="hidden" name="benhnhan_id"
-                                value="{{ request.form.get('benhnhan_id', session.get('user_id')) }}">
-                            <input type="hidden" name="risk_percent" value="{{ risk_percent }}">
-                            <input type="hidden" name="risk_level" value="{{ risk_level }}">
-                            <input type="hidden" name="threshold" value="{{ threshold }}">
-                            <textarea name="ai_advice_plain" hidden>{{ ai_advice | default('', true) | striptags }}</textarea>
-                            <button type="submit" class="btn btn-outline-secondary rounded-circle"
-                                data-bs-toggle="tooltip" data-bs-placement="top"
-                                title="Gửi kết quả qua email và cảm ơn khách hàng">
-                                <i class="bi bi-envelope-paper-heart-fill"></i>
-                            </button>
-                        </form>
-                    </div>
-
                 </div>
-                {% endif %}
             </div>
-        </div>
 
-        <!-- ======== Upload file + lời khuyên + SHAP ======== -->
-        <div class="col-lg-6 fade-section fade-delayed-3">
-            {% if session['role'] == 'doctor' %}
-            <!-- 📂 Upload file cho bác sĩ -->
-            <div class="card shadow-sm p-4 border-0 rounded-4 mb-3">
-                <h4 class="text-primary mb-3">📂 Tải file CSV/Excel</h4>
-                <form method="post" enctype="multipart/form-data" id="uploadForm">
-                    <input type="file" name="data_file" class="form-control mb-2" accept=".csv,.xlsx" required>
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill">
-                        ⬆️ Tải lên & Dự đoán
-                    </button>
-                </form>
+            <!-- ======== Upload file + lời khuyên + SHAP ======== -->
+            <div class="col-lg-6 fade-section fade-delayed-3">
+                {% if session['role'] == 'doctor' %}
+                <!-- 📂 Upload file cho bác sĩ -->
+                <div class="card shadow-sm p-4 border-0 rounded-4 mb-3">
+                    <h4 class="text-primary mb-3">📂 Tải file CSV/Excel</h4>
+                    <form method="post" enctype="multipart/form-data" id="uploadForm">
+                        <input type="file" name="data_file" class="form-control mb-2" accept=".csv,.xlsx" required>
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill">
+                            ⬆️ Tải lên & Dự đoán
+                        </button>
+                    </form>
 
-                {% if file_result %}
-                <div class="mt-4">
-                    <!-- Tiêu đề -->
-                    <div class="text-center mb-3">
-                        <div
-                            class="d-inline-flex align-items-center justify-content-center px-3 py-2 bg-light rounded-pill shadow-sm">
-                            <i class="bi bi-file-earmark-spreadsheet text-success me-2 fs-5"></i>
-                            <h5 class="fw-bold text-success mb-0">Kết quả chẩn đoán từ file dữ liệu</h5>
+                    {% if file_result %}
+                    <div class="mt-4">
+                        <!-- Tiêu đề -->
+                        <div class="text-center mb-3">
+                            <div
+                                class="d-inline-flex align-items-center justify-content-center px-3 py-2 bg-light rounded-pill shadow-sm">
+                                <i class="bi bi-file-earmark-spreadsheet text-success me-2 fs-5"></i>
+                                <h5 class="fw-bold text-success mb-0">Kết quả chẩn đoán từ file dữ liệu</h5>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Bảng kết quả -->
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                        <div class="card-body p-0">
-                            <div class="table-scroll-container table-responsive animate-fade-in"
-                                style="overflow-x:auto; overflow-y:auto; max-height:400px;">
-                                <table class="table table-hover align-middle text-center small shadow-sm rounded-3">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Tuổi</th>
-                                            <th>Giới tính</th>
-                                            <th>Huyết áp</th>
-                                            <th>Cholesterol</th>
-                                            <th>Đường huyết</th>
-                                            <th>BMI</th>
-                                            <th>Hút thuốc</th>
-                                            <th>Rượu/Bia</th>
-                                            <th>Tập thể dục</th>
-                                            <th>Nguy cơ</th>
-                                            <th>Xác suất (%)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for row in results %}
-                                        <tr
-                                            class="{% if row['Nguy cơ'] == 'Nguy cơ cao' %}table-danger{% else %}table-success{% endif %}">
-                                            <td>{{ row['Tuổi'] }}</td>
-                                            <td>{{ row['Giới tính'] }}</td>
-                                            <td>{{ row['Huyết áp'] }}</td>
-                                            <td>{{ row['Cholesterol'] }}</td>
-                                            <td>{{ row['Đường huyết'] }}</td>
-                                            <td>{{ row['BMI'] }}</td>
-                                            <td>{{ row['Hút thuốc'] }}</td>
-                                            <td>{{ row['Rượu/Bia'] }}</td>
-                                            <td>{{ row['Tập thể dục'] }}</td>
-                                            <td><strong>{{ row['Nguy cơ'] }}</strong></td>
-                                            <td class="fw-semibold text-primary">{{ row['Xác suất (%)'] }}%</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
+                        <!-- Bảng kết quả -->
+                        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                            <div class="card-body p-0">
+                                <div class="table-scroll-container table-responsive animate-fade-in"
+                                    style="overflow-x:auto; overflow-y:auto; max-height:400px;">
+                                    <table class="table table-hover align-middle text-center small shadow-sm rounded-3">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Tuổi</th>
+                                                <th>Giới tính</th>
+                                                <th>Huyết áp</th>
+                                                <th>Cholesterol</th>
+                                                <th>Đường huyết</th>
+                                                <th>BMI</th>
+                                                <th>Hút thuốc</th>
+                                                <th>Rượu/Bia</th>
+                                                <th>Tập thể dục</th>
+                                                <th>Nguy cơ</th>
+                                                <th>Xác suất (%)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for row in results %}
+                                            <tr
+                                                class="{% if row['Nguy cơ'] == 'Nguy cơ cao' %}table-danger{% else %}table-success{% endif %}">
+                                                <td>{{ row['Tuổi'] }}</td>
+                                                <td>{{ row['Giới tính'] }}</td>
+                                                <td>{{ row['Huyết áp'] }}</td>
+                                                <td>{{ row['Cholesterol'] }}</td>
+                                                <td>{{ row['Đường huyết'] }}</td>
+                                                <td>{{ row['BMI'] }}</td>
+                                                <td>{{ row['Hút thuốc'] }}</td>
+                                                <td>{{ row['Rượu/Bia'] }}</td>
+                                                <td>{{ row['Tập thể dục'] }}</td>
+                                                <td><strong>{{ row['Nguy cơ'] }}</strong></td>
+                                                <td class="fw-semibold text-primary">{{ row['Xác suất (%)'] }}%</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+
                             </div>
 
-
-                        </div>
-
-                        <!-- Gợi ý -->
-                        <div class="card-footer bg-light text-center small text-muted">
-                            <i class="bi bi-info-circle text-primary me-1"></i>
-                            Các giá trị nguy cơ được tính dựa trên mô hình học máy AI.
-                            Kết quả chỉ mang tính tham khảo, không thay thế tư vấn y khoa.
+                            <!-- Gợi ý -->
+                            <div class="card-footer bg-light text-center small text-muted">
+                                <i class="bi bi-info-circle text-primary me-1"></i>
+                                Các giá trị nguy cơ được tính dựa trên mô hình học máy AI.
+                                Kết quả chỉ mang tính tham khảo, không thay thế tư vấn y khoa.
+                            </div>
                         </div>
                     </div>
+                    {% endif %}
+
                 </div>
                 {% endif %}
 
-            </div>
-            {% endif %}
-
-            <!-- 💡 Lời khuyên & SHAP hoặc khung gợi ý mặc định -->
-            <div class="card shadow-sm border-0 rounded-4 p-4">
-                {% if ai_advice or shap_file or file_result %}
-                {% if ai_advice %}
-                <div class="card border-0 shadow-sm rounded-4 p-4 mt-3"
-                    style="background-color:#eaf4ff; border-left:5px solid #0d6efd;">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
-                            style="width:38px;height:38px;font-size:18px;">💡</div>
-                        <h5 class="fw-bold text-primary mb-0">Lời khuyên</h5>
+                <!-- 💡 Lời khuyên & SHAP hoặc khung gợi ý mặc định -->
+                <div class="card shadow-sm border-0 rounded-4 p-4">
+                    {% if ai_advice or shap_file or file_result %}
+                    {% if ai_advice %}
+                    <div class="card border-0 shadow-sm rounded-4 p-4 mt-3"
+                        style="background-color:#eaf4ff; border-left:5px solid #0d6efd;">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                                style="width:38px;height:38px;font-size:18px;">💡</div>
+                            <h5 class="fw-bold text-primary mb-0">Lời khuyên</h5>
+                        </div>
+                        <div class="ps-1 text-dark" style="white-space: pre-line; font-size:15px; line-height:1.7;">
+                            {{ ai_advice | safe }}
+                        </div>
                     </div>
-                    <div class="ps-1 text-dark" style="white-space: pre-line; font-size:15px; line-height:1.7;">
-                        {{ ai_advice | safe }}
-                    </div>
-                </div>
-                {% endif %}
+                    {% endif %}
 
-                {% if shap_file %}
-                <div class="card mt-3 shadow-sm p-3">
-                    <h6 class="fw-bold text-primary mb-1">📊 Giải thích kết quả bằng SHAP</h6>
-                    <p class="text-muted small">
-                        Biểu đồ thể hiện mức độ ảnh hưởng của từng yếu tố đến nguy cơ bệnh tim.
-                    </p>
-                    <img src="{{ url_for('static', filename='images/' + shap_file) }}" alt="SHAP Explanation"
-                        class="img-fluid rounded-3 shadow-sm">
+                    {% if shap_file %}
+                    <div class="card mt-3 shadow-sm p-3">
+                        <h6 class="fw-bold text-primary mb-1">📊 Giải thích kết quả bằng SHAP</h6>
+                        <p class="text-muted small">
+                            Biểu đồ thể hiện mức độ ảnh hưởng của từng yếu tố đến nguy cơ bệnh tim.
+                        </p>
+                        <img src="{{ url_for('static', filename='images/' + shap_file) }}" alt="SHAP Explanation"
+                            class="img-fluid rounded-3 shadow-sm">
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <!-- ✨ Hiển thị khi chưa có kết quả -->
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-activity text-primary fs-1 mb-3"></i>
+                        <h6 class="fw-semibold text-secondary">Chưa có dữ liệu chẩn đoán</h6>
+                        <p class="small mb-0">
+                            💬 Hãy nhập thông tin sức khỏe bên trái rồi nhấn
+                            <b>“Dự đoán & Nhận lời khuyên”</b><br>
+                            để xem kết quả, lời khuyên và biểu đồ phân tích SHAP.
+                        </p>
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
-                {% else %}
-                <!-- ✨ Hiển thị khi chưa có kết quả -->
-                <div class="text-center py-5 text-muted">
-                    <i class="bi bi-activity text-primary fs-1 mb-3"></i>
-                    <h6 class="fw-semibold text-secondary">Chưa có dữ liệu chẩn đoán</h6>
-                    <p class="small mb-0">
-                        💬 Hãy nhập thông tin sức khỏe bên trái rồi nhấn
-                        <b>“Dự đoán & Nhận lời khuyên”</b><br>
-                        để xem kết quả, lời khuyên và biểu đồ phân tích SHAP.
-                    </p>
-                </div>
-                {% endif %}
             </div>
         </div>
-
     </div>
 </div>
-<style>
-    /* Thanh cuộn cho bảng kết quả */
-    .table-scroll-container {
-        max-height: 360px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: #adb5bd #f8f9fa;
-    }
 
-    .table-scroll-container::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .table-scroll-container::-webkit-scrollbar-track {
-        background: #f8f9fa;
-        border-radius: 8px;
-    }
-
-    .table-scroll-container::-webkit-scrollbar-thumb {
-        background-color: #adb5bd;
-        border-radius: 8px;
-    }
-
-    .table-scroll-container::-webkit-scrollbar-thumb:hover {
-        background-color: #868e96;
-    }
-</style>
 <script type="application/json" id="pageState">
   {{ {"hasResult": has_result} | tojson }}
 </script>
 <script>
-  const state = JSON.parse(document.getElementById("pageState").textContent);
-  const hasResult = !!state.hasResult;   
+    const state = JSON.parse(document.getElementById("pageState").textContent);
+    const hasResult = !!state.hasResult;
 
-  const weight = document.getElementById('weight');
-  const height = document.getElementById('height');
-  const uploadForm = document.getElementById('uploadForm');
-  const inputs = document.querySelectorAll('#predictForm input, #predictForm select');
-  const resultElements = document.querySelectorAll('.alert, .card.mt-3');
+    const weight = document.getElementById('weight');
+    const height = document.getElementById('height');
+    const uploadForm = document.getElementById('uploadForm');
+    const inputs = document.querySelectorAll('#predictForm input, #predictForm select');
+    const resultElements = document.querySelectorAll('.alert, .card.mt-3');
 
-  function calcBMI() {
-    const w = parseFloat(weight.value);
-    const h = parseFloat(height.value);
-    document.getElementById('bmi').value = (w > 0 && h > 0) ? (w / ((h / 100) ** 2)).toFixed(2) : '';
-  }
+    function calcBMI() {
+        const w = parseFloat(weight.value);
+        const h = parseFloat(height.value);
+        document.getElementById('bmi').value = (w > 0 && h > 0) ? (w / ((h / 100) ** 2)).toFixed(2) : '';
+    }
 
-  function hideResults() {
-    // Chỉ show thông báo khi ĐÃ có kết quả trước đó
-    if (!hasResult) return;
+    function hideResults() {
+        // Chỉ show thông báo khi ĐÃ có kết quả trước đó
+        if (!hasResult) return;
 
-    const adviceCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.border-0.shadow-sm.rounded-4.p-4.mt-3');
-    const shapCard   = document.querySelector('.col-lg-6:nth-of-type(2) .card.mt-3.shadow-sm.p-3');
-    if (adviceCard) adviceCard.remove();
-    if (shapCard)   shapCard.remove();
+        const adviceCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.border-0.shadow-sm.rounded-4.p-4.mt-3');
+        const shapCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.mt-3.shadow-sm.p-3');
+        if (adviceCard) adviceCard.remove();
+        if (shapCard) shapCard.remove();
 
-    const oldNotice = document.querySelector('.col-lg-6:nth-of-type(2) .data-changed-notice');
-    if (oldNotice) oldNotice.remove();
+        const oldNotice = document.querySelector('.col-lg-6:nth-of-type(2) .data-changed-notice');
+        if (oldNotice) oldNotice.remove();
 
-    const rightCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.shadow-sm.border-0.rounded-4.p-4');
-    if (rightCard) {
-      const notice = document.createElement('div');
-      notice.className = 'data-changed-notice text-center py-5 text-muted fade-in';
-      notice.innerHTML = `
+        const rightCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.shadow-sm.border-0.rounded-4.p-4');
+        if (rightCard) {
+            const notice = document.createElement('div');
+            notice.className = 'data-changed-notice text-center py-5 text-muted fade-in';
+            notice.innerHTML = `
         <i class="bi bi-info-circle text-primary fs-1 mb-3"></i>
         <h6 class="fw-semibold text-secondary">Dữ liệu đã thay đổi</h6>
         <p class="small mb-0">
           🔄 Vui lòng nhấn <b>“Dự đoán & Nhận lời khuyên”</b><br>
           để cập nhật lại kết quả, lời khuyên và biểu đồ mới.
         </p>`;
-      rightCard.appendChild(notice);
+            rightCard.appendChild(notice);
+        }
     }
-  }
 
-  inputs.forEach(i => i.addEventListener('input', () => { calcBMI(); hideResults(); }));
-  if (uploadForm) uploadForm.addEventListener('submit', hideResults);
-  calcBMI();
+    inputs.forEach(i => i.addEventListener('input', () => { calcBMI(); hideResults(); }));
+    if (uploadForm) uploadForm.addEventListener('submit', hideResults);
+    calcBMI();
 </script>
 
 <!-- Biểu đồ tròn phần trăm nguy cơ -->
@@ -493,98 +482,6 @@
 </script>
 {% endif %}
 <!-- ================= LOADING OVERLAY ================= -->
-<style>
-    #loadingOverlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(255, 255, 255, 0.8);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        z-index: 2000;
-        backdrop-filter: blur(3px);
-    }
-
-    .spinner-border {
-        width: 3rem;
-        height: 3rem;
-        color: #007bff;
-    }
-
-    .loading-text {
-        margin-top: 1rem;
-        font-weight: 600;
-        color: #0d6efd;
-        font-size: 1.1rem;
-    }
-
-    /* Hiệu ứng xuất hiện mượt */
-    .animate-fade-in {
-        animation: fadeIn 0.7s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* Tùy chỉnh bảng kết quả */
-    .table.table-hover th {
-        background-color: #f8f9fa;
-        color: #333;
-        font-weight: 600;
-        border-bottom: 2px solid #dee2e6;
-    }
-
-    .table.table-hover td {
-        vertical-align: middle;
-    }
-
-    .table.table-hover tr:hover {
-        background-color: rgba(13, 110, 253, 0.05);
-        transition: background-color 0.2s ease;
-    }
-
-    /* Viền + bóng bảng */
-    .card.shadow-sm {
-        border-radius: 1rem !important;
-    }
-    /* 🌟 Hiệu ứng xuất hiện khi load trang */
-    .fade-section {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.8s ease-out;
-    will-change: opacity, transform;
-    }
-
-    .fade-section.show {
-    opacity: 1;
-    transform: translateY(0);
-    }
-
-    /* 💫 Các hiệu ứng riêng */
-    .fade-delayed-1 {
-    transition-delay: 0.1s;
-    }
-    .fade-delayed-2 {
-    transition-delay: 0.2s;
-    }
-    .fade-delayed-3 {
-    transition-delay: 0.3s;
-    }
-
-</style>
 
 <div id="loadingOverlay">
     <div class="spinner-border" role="status"></div>
@@ -593,73 +490,73 @@
 
 <!-- Script hiển thị overlay khi gửi form -->
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  // 1️⃣ Loading overlay
-  const predictForm = document.getElementById("predictForm");
-  const uploadForm = document.getElementById("uploadForm");
-  const overlay = document.getElementById("loadingOverlay");
-  const showOverlay = () => (overlay.style.display = "flex");
-  if (predictForm) predictForm.addEventListener("submit", showOverlay);
-  if (uploadForm) uploadForm.addEventListener("submit", showOverlay);
+    document.addEventListener("DOMContentLoaded", () => {
+        // 1️⃣ Loading overlay
+        const predictForm = document.getElementById("predictForm");
+        const uploadForm = document.getElementById("uploadForm");
+        const overlay = document.getElementById("loadingOverlay");
+        const showOverlay = () => (overlay.style.display = "flex");
+        if (predictForm) predictForm.addEventListener("submit", showOverlay);
+        if (uploadForm) uploadForm.addEventListener("submit", showOverlay);
 
-  // 2️⃣ Fetch thông tin bệnh nhân
-  const selectPatient = document.querySelector('select[name="benhnhan_id"]');
-  const inputAge = document.getElementById("age");
-  const selectGender = document.getElementById("gender");
-  if (selectPatient) {
-    selectPatient.addEventListener("change", async () => {
-      const benhnhanId = selectPatient.value;
-      if (!benhnhanId) return;
-      try {
-        const res = await fetch(`/get_patient_info/${benhnhanId}`);
-        const data = await res.json();
-        if (data.tuoi) inputAge.value = data.tuoi;
-        if (data.gioitinh) selectGender.value = data.gioitinh;
-        [inputAge, selectGender].forEach(el => {
-          el.classList.add("border-success", "bg-light");
-          setTimeout(() => el.classList.remove("border-success", "bg-light"), 1200);
-        });
-      } catch (err) {
-        console.error("⚠️ Lỗi khi lấy thông tin bệnh nhân:", err);
-      }
+        // 2️⃣ Fetch thông tin bệnh nhân
+        const selectPatient = document.querySelector('select[name="benhnhan_id"]');
+        const inputAge = document.getElementById("age");
+        const selectGender = document.getElementById("gender");
+        if (selectPatient) {
+            selectPatient.addEventListener("change", async () => {
+                const benhnhanId = selectPatient.value;
+                if (!benhnhanId) return;
+                try {
+                    const res = await fetch(`/get_patient_info/${benhnhanId}`);
+                    const data = await res.json();
+                    if (data.tuoi) inputAge.value = data.tuoi;
+                    if (data.gioitinh) selectGender.value = data.gioitinh;
+                    [inputAge, selectGender].forEach(el => {
+                        el.classList.add("border-success", "bg-light");
+                        setTimeout(() => el.classList.remove("border-success", "bg-light"), 1200);
+                    });
+                } catch (err) {
+                    console.error("⚠️ Lỗi khi lấy thông tin bệnh nhân:", err);
+                }
+            });
+        }
+
+        // 3️⃣ Tooltip Bootstrap
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(el => new bootstrap.Tooltip(el, { trigger: 'hover focus', delay: { show: 200, hide: 100 } }));
+
+        // 4️⃣ Hiệu ứng xuất hiện (fade-section)
+        const fadeEls = document.querySelectorAll(".fade-section");
+        const revealOnScroll = () => {
+            const triggerBottom = window.innerHeight * 0.85;
+            fadeEls.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < triggerBottom) el.classList.add("show");
+            });
+        };
+        window.addEventListener("scroll", revealOnScroll);
+        revealOnScroll();
     });
-  }
-
-  // 3️⃣ Tooltip Bootstrap
-  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-  tooltipTriggerList.map(el => new bootstrap.Tooltip(el, { trigger: 'hover focus', delay: { show: 200, hide: 100 } }));
-
-  // 4️⃣ Hiệu ứng xuất hiện (fade-section)
-  const fadeEls = document.querySelectorAll(".fade-section");
-  const revealOnScroll = () => {
-    const triggerBottom = window.innerHeight * 0.85;
-    fadeEls.forEach(el => {
-      const rect = el.getBoundingClientRect();
-      if (rect.top < triggerBottom) el.classList.add("show");
-    });
-  };
-  window.addEventListener("scroll", revealOnScroll);
-  revealOnScroll();
-});
 </script>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const fadeEls = document.querySelectorAll(".fade-section");
+    document.addEventListener("DOMContentLoaded", () => {
+        const fadeEls = document.querySelectorAll(".fade-section");
 
-    function revealOnScroll() {
-      const triggerBottom = window.innerHeight * 0.85;
-      fadeEls.forEach(el => {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < triggerBottom) {
-          el.classList.add("show");
+        function revealOnScroll() {
+            const triggerBottom = window.innerHeight * 0.85;
+            fadeEls.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < triggerBottom) {
+                    el.classList.add("show");
+                }
+            });
         }
-      });
-    }
 
-    window.addEventListener("scroll", revealOnScroll);
-    revealOnScroll(); // chạy ngay khi load
-  });
+        window.addEventListener("scroll", revealOnScroll);
+        revealOnScroll(); // chạy ngay khi load
+    });
 </script>
 
 {% endblock %}

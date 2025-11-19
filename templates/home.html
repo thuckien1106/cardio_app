@@ -1,4 +1,8 @@
 {% extends 'base.html' %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/home.css') }}"
+/>
 
 <!-- TIÊU ĐỀ TRANG -->
 <section class="text-center mb-3 pt-3">
@@ -12,6 +16,7 @@
 <!-- GIỚI THIỆU -->
 <section class="container mb-5 position-relative overflow-hidden">
   <div class="soft-bg"></div>
+
   <div
     class="row align-items-center rounded-4 shadow-sm bg-white p-4 intro-card"
     data-aos="fade-up"
@@ -24,20 +29,25 @@
         loading="lazy"
       />
     </div>
+
+    <!-- Nội dung -->
     <div class="col-lg-6 ps-lg-4">
       <h4 class="fw-semibold text-primary mb-3">
         💡 Vì sao nên theo dõi sức khỏe tim mạch?
       </h4>
+
       <p class="text-secondary text-justify mb-3">
         Bệnh tim mạch là nguyên nhân tử vong hàng đầu trên toàn cầu. Việc phát
-        hiện sớm <b>huyết áp cao</b>, <b>rối loạn mỡ máu</b>,
-        <b>thừa cân</b> hay <b>thói quen xấu</b> giúp ngăn ngừa biến chứng nguy
-        hiểm như đột quỵ hoặc suy tim.
+        hiện sớm
+        <b>huyết áp cao</b>, <b>rối loạn mỡ máu</b>, <b>thừa cân</b> hay
+        <b>thói quen xấu</b>
+        giúp ngăn ngừa biến chứng nguy hiểm như đột quỵ hoặc suy tim.
       </p>
+
       <p class="text-secondary text-justify mb-4">
-        Ứng dụng <b>CVD-App</b> sử dụng công nghệ <b>AI – Machine Learning</b>
-        để phân tích dữ liệu sức khỏe, cung cấp kết quả dự đoán nguy cơ và lời
-        khuyên y khoa phù hợp từng người.
+        Ứng dụng <b>CVD-App</b> sử dụng công nghệ
+        <b>AI – Machine Learning</b> để phân tích dữ liệu sức khỏe, cung cấp kết
+        quả dự đoán nguy cơ và lời khuyên y khoa phù hợp từng người.
       </p>
 
       <a
@@ -125,6 +135,44 @@
     >
       <span class="carousel-control-next-icon"></span>
     </button>
+  </div>
+</section>
+<!-- CHỨC NĂNG CHÍNH -->
+<section class="container my-5" data-aos="fade-up">
+  <h4 class="fw-bold text-center mb-4 text-gradient">
+    ⚙️ Chức năng chính của CVD-App
+  </h4>
+
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="feature-card p-4 shadow-sm rounded-4 text-center">
+        <i class="bi bi-heart-pulse-fill fs-1 text-danger mb-3"></i>
+        <h6 class="fw-semibold">🩺 Chẩn đoán nguy cơ tim mạch</h6>
+        <p class="text-muted small">
+          Phân tích các chỉ số sức khỏe và dự đoán nguy cơ mắc bệnh tim bằng AI.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="feature-card p-4 shadow-sm rounded-4 text-center">
+        <i class="bi bi-bar-chart-line-fill fs-1 text-primary mb-3"></i>
+        <h6 class="fw-semibold">📊 Lưu & xem lịch sử chẩn đoán</h6>
+        <p class="text-muted small">
+          Theo dõi tiến trình sức khỏe và so sánh kết quả theo thời gian.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="feature-card p-4 shadow-sm rounded-4 text-center">
+        <i class="bi bi-robot fs-1 text-success mb-3"></i>
+        <h6 class="fw-semibold">🤖 Tư vấn bằng AI</h6>
+        <p class="text-muted small">
+          Hỗ trợ giải thích kết quả và đưa ra lời khuyên y khoa phù hợp.
+        </p>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -229,129 +277,6 @@
     </div>
   </div>
 </section>
-
-<!-- STYLE -->
-<style>
-  body {
-    background-color: #f8faff;
-    font-family: "Poppins", sans-serif;
-    color: #333;
-    line-height: 1.7;
-  }
-
-  .text-gradient {
-    background: linear-gradient(45deg, #d6336c, #6f42c1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .soft-bg {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-        circle at top left,
-        rgba(255, 107, 107, 0.08),
-        transparent 60%
-      ),
-      radial-gradient(
-        circle at bottom right,
-        rgba(111, 66, 193, 0.08),
-        transparent 60%
-      );
-    z-index: 0;
-  }
-
-  .intro-card {
-    border-left: 4px solid #d6336c;
-    background: #fff;
-    position: relative;
-    z-index: 1;
-  }
-
-  .intro-img {
-    max-height: 360px;
-    transition: transform 0.4s ease;
-  }
-
-  .intro-img:hover {
-    transform: scale(1.04);
-  }
-
-  .btn-gradient {
-    background: linear-gradient(90deg, #ff6b6b, #d6336c);
-    border: none;
-    color: #fff;
-    font-weight: 500;
-    border-radius: 30px;
-    transition: all 0.3s ease-in-out;
-  }
-
-  .btn-gradient:hover {
-    background: linear-gradient(45deg, #d6336c, #6f42c1);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(214, 51, 108, 0.3);
-  }
-
-  .news-card {
-    transition: all 0.3s ease;
-  }
-
-  .news-card img {
-    height: 220px;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-  }
-
-  .news-card:hover img {
-    transform: scale(1.08);
-  }
-
-  .news-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
-  }
-
-  .carousel-caption {
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 900px;
-    white-space: normal;
-    text-align: center;
-  }
-
-  .hero-img {
-    height: 450px;
-    object-fit: cover;
-    opacity: 0.98;
-  }
-
-  @media (max-width: 768px) {
-    .hero-img {
-      height: 320px;
-    }
-    .intro-card {
-      text-align: center;
-    }
-    .carousel-caption {
-      top: 45%;
-      white-space: normal;
-    }
-  }
-
-  .partner-card img {
-    max-height: 50px;
-    opacity: 0.9;
-    transition: transform 0.3s ease;
-  }
-
-  .partner-card:hover img {
-    transform: scale(1.1);
-    opacity: 1;
-  }
-</style>
 
 <!-- (hiệu ứng cuộn nhẹ) -->
 <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />

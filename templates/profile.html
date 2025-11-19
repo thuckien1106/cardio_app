@@ -115,8 +115,10 @@
           <div class="mb-3">
             <label class="form-label fw-semibold">Mật khẩu cũ</label>
             <div class="password-toggle-wrapper position-relative">
-              <input type="password" id="oldPassword" name="old_password" class="form-control rounded-pill shadow-sm password-toggle-input" required>
-              <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password" data-target="oldPassword" aria-label="Hien thi mat khau">
+              <input type="password" id="oldPassword" name="old_password"
+                class="form-control rounded-pill shadow-sm password-toggle-input" required>
+              <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password"
+                data-target="oldPassword" aria-label="Hien thi mat khau">
                 <i class="bi bi-eye"></i>
               </button>
             </div>
@@ -124,8 +126,10 @@
           <div class="mb-3">
             <label class="form-label fw-semibold">Mật khẩu mới</label>
             <div class="password-toggle-wrapper position-relative">
-              <input type="password" id="newPassword" name="new_password" class="form-control rounded-pill shadow-sm password-toggle-input" required>
-              <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password" data-target="newPassword" aria-label="Hien thi mat khau moi">
+              <input type="password" id="newPassword" name="new_password"
+                class="form-control rounded-pill shadow-sm password-toggle-input" required>
+              <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password"
+                data-target="newPassword" aria-label="Hien thi mat khau moi">
                 <i class="bi bi-eye"></i>
               </button>
             </div>
@@ -133,8 +137,10 @@
           <div class="mb-3">
             <label class="form-label fw-semibold">Xác nhận lại mật khẩu mới</label>
             <div class="password-toggle-wrapper position-relative">
-              <input type="password" id="confirmPassword" name="confirm_password" class="form-control rounded-pill shadow-sm password-toggle-input" required>
-              <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password" data-target="confirmPassword" aria-label="Hien thi lai mat khau">
+              <input type="password" id="confirmPassword" name="confirm_password"
+                class="form-control rounded-pill shadow-sm password-toggle-input" required>
+              <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password"
+                data-target="confirmPassword" aria-label="Hien thi lai mat khau">
                 <i class="bi bi-eye"></i>
               </button>
             </div>
@@ -274,15 +280,29 @@
     const newPw = form.querySelector("input[name='new_password']");
     newPw.addEventListener("input", () => {
       const val = newPw.value;
-      let strength = 0;
-      if (val.length >= 8) strength++;
-      if (/[A-Z]/.test(val)) strength++;
-      if (/\d/.test(val)) strength++;
-      if (/[@$!%*?&]/.test(val)) strength++;
-      if (strength <= 1) msg.innerHTML = "<span class='text-danger'>🔴 Mật khẩu yếu</span>";
-      else if (strength <= 3) msg.innerHTML = "<span class='text-warning'>🟡 Trung bình</span>";
-      else msg.innerHTML = "<span class='text-success'>🟢 Mạnh</span>";
+
+      const longEnough = val.length >= 8;               // ≥ 8 ký tự
+      const hasUpper = /[A-Z]/.test(val);               // Có chữ hoa
+      const hasDigit = /\d/.test(val);                  // Có số
+      const hasSpecial = /[@$!%*?&._\-#]/.test(val);     // Ít nhất 1 ký tự đặc biệt
+
+      let strengthScore = 0;
+      if (longEnough) strengthScore++;
+      if (hasUpper) strengthScore++;
+      if (hasDigit) strengthScore++;
+      if (hasSpecial) strengthScore++;  // Chỉ cần 1 ký tự đặc biệt
+
+      if (strengthScore <= 1) {
+        msg.innerHTML = "<span class='text-danger'>🔴 Mật khẩu yếu</span>";
+      }
+      else if (strengthScore <= 3) {
+        msg.innerHTML = "<span class='text-warning'>🟡 Trung bình</span>";
+      }
+      else {
+        msg.innerHTML = "<span class='text-success'>🟢 Mật khẩu mạnh</span>";
+      }
     });
+
 
     document.querySelectorAll(".toggle-password").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -301,5 +321,3 @@
   });
 </script>
 {% endblock %}
-
-

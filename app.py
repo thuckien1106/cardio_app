@@ -1394,7 +1394,9 @@ def change_password():
         return jsonify({"success": False, "message": "Mật khẩu xác nhận không khớp."})
 
     # 🧹 Kiểm tra độ mạnh mật khẩu (ít nhất 8 ký tự, có hoa, số, đặc biệt)
-    if not re.match(r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', new_pw):
+    pattern = r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._\-#]).{8,}$'
+
+    if not re.match(pattern, new_pw):
         return jsonify({
             "success": False,
             "message": "Mật khẩu phải ≥8 ký tự, chứa ít nhất 1 chữ hoa, 1 số và 1 ký tự đặc biệt."
