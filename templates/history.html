@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/history.css') }}">
+
 
 <div class="container mt-3 pt-3">
 
@@ -9,7 +9,8 @@
     <h2 class="fw-bold text-gradient">📜 Lịch sử chẩn đoán</h2>
     <p class="text-muted mb-0">
       {% if session['role'] == 'doctor' %}
-      Danh sách kết quả chẩn đoán của bệnh nhân do bạn phụ trách. Nhấn <b>“Xem chi tiết”</b> để mở hoặc đóng thông tin đầy đủ.
+      Danh sách kết quả chẩn đoán của bệnh nhân do bạn phụ trách. Nhấn <b>“Xem chi tiết”</b> để mở hoặc đóng thông tin
+      đầy đủ.
       {% elif session['role'] == 'admin' %}
       Quản trị viên có thể xem toàn bộ lịch sử chẩn đoán trong hệ thống.
       {% else %}
@@ -19,84 +20,85 @@
   </div>
 
   <!-- Bộ lọc -->
-<form method="get" class="card p-3 shadow-sm border-0 mb-4 rounded-4">
-  <div class="row g-3 align-items-end">
+  <form method="get" class="card p-3 shadow-sm border-0 mb-4 rounded-4">
+    <div class="row g-3 align-items-end">
 
-    <div class="col-md-3">
-      <label class="form-label fw-semibold">Từ ngày</label>
-      <input type="date" name="start_date" class="form-control shadow-sm" value="{{ start_date }}">
-    </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Từ ngày</label>
+        <input type="date" name="start_date" class="form-control shadow-sm" value="{{ start_date }}">
+      </div>
 
-    <div class="col-md-3">
-      <label class="form-label fw-semibold">Đến ngày</label>
-      <input type="date" name="end_date" class="form-control shadow-sm" value="{{ end_date }}">
-    </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Đến ngày</label>
+        <input type="date" name="end_date" class="form-control shadow-sm" value="{{ end_date }}">
+      </div>
 
-    {% if session['role'] == 'doctor' %}
-    <div class="col-md-3">
-      <label class="form-label fw-semibold">Bệnh nhân</label>
-      <select name="patient_id" class="form-select shadow-sm">
-        <option value="">Tất cả</option>
-        {% for p in patients %}
-        <option value="{{ p.ID }}" {% if patient_id==p.ID|string %}selected{% endif %}>{{ p.HoTen }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    {% elif session['role'] == 'admin' %}
-    <div class="col-md-3">
-      <label class="form-label fw-semibold">Bác sĩ</label>
-      <select name="doctor_id" class="form-select shadow-sm">
-        <option value="">Tất cả</option>
-        {% for d in doctors %}
-        <option value="{{ d.ID }}" {% if doctor_id==d.ID|string %}selected{% endif %}>{{ d.HoTen }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label fw-semibold">Bệnh nhân</label>
-      <select name="patient_id" class="form-select shadow-sm">
-        <option value="">Tất cả</option>
-        {% for p in patients %}
-        <option value="{{ p.ID }}" {% if patient_id==p.ID|string %}selected{% endif %}>{{ p.HoTen }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    {% endif %}
+      {% if session['role'] == 'doctor' %}
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Bệnh nhân</label>
+        <select name="patient_id" class="form-select shadow-sm">
+          <option value="">Tất cả</option>
+          {% for p in patients %}
+          <option value="{{ p.ID }}" {% if patient_id==p.ID|string %}selected{% endif %}>{{ p.HoTen }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% elif session['role'] == 'admin' %}
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Bác sĩ</label>
+        <select name="doctor_id" class="form-select shadow-sm">
+          <option value="">Tất cả</option>
+          {% for d in doctors %}
+          <option value="{{ d.ID }}" {% if doctor_id==d.ID|string %}selected{% endif %}>{{ d.HoTen }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Bệnh nhân</label>
+        <select name="patient_id" class="form-select shadow-sm">
+          <option value="">Tất cả</option>
+          {% for p in patients %}
+          <option value="{{ p.ID }}" {% if patient_id==p.ID|string %}selected{% endif %}>{{ p.HoTen }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
 
-    <div class="col-md-2">
-      <label class="form-label fw-semibold">Nguy cơ</label>
-      <select name="risk_filter" class="form-select shadow-sm">
-        <option value="">Tất cả</option>
-        <option value="high" {% if risk_filter=='high' %}selected{% endif %}>Cao</option>
-        <option value="low" {% if risk_filter=='low' %}selected{% endif %}>Thấp</option>
-      </select>
-    </div>
+      <div class="col-md-2">
+        <label class="form-label fw-semibold">Nguy cơ</label>
+        <select name="risk_filter" class="form-select shadow-sm">
+          <option value="">Tất cả</option>
+          <option value="high" {% if risk_filter=='high' %}selected{% endif %}>Cao</option>
+          <option value="low" {% if risk_filter=='low' %}selected{% endif %}>Thấp</option>
+        </select>
+      </div>
 
-    <div class="col-md-2">
-      <label class="form-label fw-semibold">Sắp xếp</label>
-      <select name="sort" class="form-select shadow-sm">
-        <option value="desc" {% if sort_order=='desc' %}selected{% endif %}>Mới nhất</option>
-        <option value="asc" {% if sort_order=='asc' %}selected{% endif %}>Cũ nhất</option>
-      </select>
-    </div>
+      <div class="col-md-2">
+        <label class="form-label fw-semibold">Sắp xếp</label>
+        <select name="sort" class="form-select shadow-sm">
+          <option value="desc" {% if sort_order=='desc' %}selected{% endif %}>Mới nhất</option>
+          <option value="asc" {% if sort_order=='asc' %}selected{% endif %}>Cũ nhất</option>
+        </select>
+      </div>
 
-    <div class="col-md-12 d-flex justify-content-end mt-3">
-      <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
-          🔍 Lọc dữ liệu
-        </button>
-        <a href="{{ url_for('history') }}" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm">
-          🔄 Làm mới
-        </a>
+      <div class="col-md-12 d-flex justify-content-end mt-3">
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            🔍 Lọc dữ liệu
+          </button>
+          <a href="{{ url_for('history') }}" class="btn btn-outline-secondary rounded-pill px-4 shadow-sm">
+            🔄 Làm mới
+          </a>
+        </div>
       </div>
     </div>
-  </div>
-</form>
+  </form>
 
 
   <!-- Tổng số kết quả -->
   {% if records and records|length > 0 %}
-  <div class="alert alert-secondary d-flex justify-content-between align-items-center shadow-sm rounded-pill py-2 px-4 mb-3">
+  <div
+    class="alert alert-secondary d-flex justify-content-between align-items-center shadow-sm rounded-pill py-2 px-4 mb-3">
     <span><i class="bi bi-bar-chart-line me-2"></i><b>Tổng số kết quả:</b> {{ total_records }}</span>
     {% if start_date or end_date or risk_filter or doctor_id %}
     <span class="text-muted small fst-italic">Đang hiển thị dữ liệu đã lọc</span>
@@ -106,11 +108,11 @@
   </div>
 
   <!-- Bảng -->
-<div class="table-responsive shadow-sm rounded-4">
-  <table class="table table-hover align-middle mb-0">
-    <thead class="table-primary text-center">
-      <tr>
-        {% if session['role'] == 'doctor' %}
+  <div class="table-responsive shadow-sm rounded-4">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-primary text-center">
+        <tr>
+          {% if session['role'] == 'doctor' %}
           <th>Mã BN</th>
           <th>Bệnh nhân</th>
           <th>Tuổi</th>
@@ -118,7 +120,7 @@
           <th>Nguy cơ</th>
           <th>Ngày chẩn đoán</th>
           <th></th>
-        {% elif session['role'] == 'admin' %}
+          {% elif session['role'] == 'admin' %}
           <th>Mã BN</th>
           <th>Bệnh nhân</th>
           <th>Tuổi</th>
@@ -127,143 +129,147 @@
           <th>Bác sĩ</th>
           <th>Ngày chẩn đoán</th>
           <th></th>
-        {% else %}
+          {% else %}
           <th>Tuổi</th>
           <th>Giới tính</th>
           <th>Nguy cơ</th>
           <th>Bác sĩ</th>
           <th>Ngày chẩn đoán</th>
           <th></th>
-        {% endif %}
-      </tr>
-    </thead>
+          {% endif %}
+        </tr>
+      </thead>
 
-    <tbody>
-      {% for r in records %}
-      <tr class="align-middle">
-        {% if session['role'] == 'doctor' or session['role'] == 'admin' %}
+      <tbody>
+        {% for r in records %}
+        <tr class="align-middle">
+          {% if session['role'] == 'doctor' or session['role'] == 'admin' %}
           <td class="text-center fw-semibold">
             {{ 'BN' + '%03d'|format(r.BenhNhanID) }}
           </td>
           <td class="fw-semibold">{{ r.TenBenhNhan }}</td>
-        {% endif %}
-
-        <td class="text-center">{{ r.Tuoi or '-' }}</td>
-        <td class="text-center">{{ r.GioiTinh or '-' }}</td>
-        <td class="text-center">
-          {% if 'cao' in r.NguyCo|lower %}
-            <span class="badge bg-danger px-3 py-2">{{ r.NguyCo }}</span>
-          {% else %}
-            <span class="badge bg-success px-3 py-2">{{ r.NguyCo }}</span>
           {% endif %}
-        </td>
 
-        {% if session['role'] == 'admin' or session['role'] == 'patient' %}
+          <td class="text-center">{{ r.Tuoi or '-' }}</td>
+          <td class="text-center">{{ r.GioiTinh or '-' }}</td>
           <td class="text-center">
-            {% if r.TenBacSi %}
-              {{ r.TenBacSi }}
+            {% if 'cao' in r.NguyCo|lower %}
+            <span class="badge bg-danger px-3 py-2">{{ r.NguyCo }}</span>
             {% else %}
-              <span class="text-muted fst-italic">Bệnh nhân tự chẩn đoán</span>
+            <span class="badge bg-success px-3 py-2">{{ r.NguyCo }}</span>
             {% endif %}
           </td>
-        {% endif %}
 
-        <td class="text-center">
-          {{ r.NgayChanDoan.strftime('%d/%m/%Y') if r.NgayChanDoan else '—' }}
-        </td>
+          {% if session['role'] == 'admin' or session['role'] == 'patient' %}
+          <td class="text-center">
+            {% if r.TenBacSi %}
+            {{ r.TenBacSi }}
+            {% else %}
+            <span class="text-muted fst-italic">Bệnh nhân tự chẩn đoán</span>
+            {% endif %}
+          </td>
+          {% endif %}
 
-        <td class="text-center">
-          <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 toggle-detail"
-            data-target="#detail{{ r.ChanDoanID }}">
-            🔍 Xem chi tiết
-          </button>
-        </td>
-      </tr>
+          <td class="text-center">
+            {{ r.NgayChanDoan.strftime('%d/%m/%Y') if r.NgayChanDoan else '—' }}
+          </td>
 
-      <!-- Hàng chi tiết -->
-      <tr id="detail{{ r.ChanDoanID }}" class="collapse bg-light detail-row">
-        <td colspan="8" class="p-3">
-          <div class="row g-3 small">
-            <div class="col-md-3"><b>BMI:</b> {{ r.BMI }}</div>
-            <div class="col-md-3"><b>HATT:</b> {{ r.HuyetApTamThu }}</div>
-            <div class="col-md-3"><b>HATTr:</b> {{ r.HuyetApTamTruong }}</div>
-            <div class="col-md-3"><b>Cholesterol:</b> {{ r.Cholesterol }}</div>
+          <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 toggle-detail"
+              data-target="#detail{{ r.ChanDoanID }}">
+              🔍 Xem chi tiết
+            </button>
+          </td>
+        </tr>
 
-            <div class="col-md-3"><b>Đường huyết:</b> {{ r.DuongHuyet }}</div>
-            <div class="col-md-3"><b>Hút thuốc:</b> {{ 'Có' if r.HutThuoc else 'Không' }}</div>
-            <div class="col-md-3"><b>Rượu/Bia:</b> {{ 'Có' if r.UongCon else 'Không' }}</div>
-            <div class="col-md-3"><b>Tập thể dục:</b> {{ 'Có' if r.TapTheDuc else 'Không' }}</div>
+        <!-- Hàng chi tiết -->
+        <tr id="detail{{ r.ChanDoanID }}" class="bg-light detail-row">
+          <td {% if session['role']=='doctor' %} colspan="7" {% elif session['role']=='admin' %} colspan="8" {% else %}
+            colspan="6" {% endif %} class="p-3">
 
-            <div class="col-12 mt-2">
-              {% if r.LoiKhuyen %}
-              <div class="card border-0 shadow-sm rounded-4 p-3" style="background-color:#eaf4ff;">
-                <div class="d-flex align-items-center mb-2">
-                  <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
-                    style="width:30px;height:30px;font-size:16px;">💡</div>
-                  <h6 class="fw-bold text-primary mb-0">Lời khuyên</h6>
+            <div class="row g-3 small">
+              <div class="col-md-3"><b>BMI:</b> {{ r.BMI }}</div>
+              <div class="col-md-3"><b>HATT:</b> {{ r.HuyetApTamThu }}</div>
+              <div class="col-md-3"><b>HATTr:</b> {{ r.HuyetApTamTruong }}</div>
+              <div class="col-md-3"><b>Cholesterol:</b> {{ r.Cholesterol }}</div>
+
+              <div class="col-md-3"><b>Đường huyết:</b> {{ r.DuongHuyet }}</div>
+              <div class="col-md-3"><b>Hút thuốc:</b> {{ 'Có' if r.HutThuoc else 'Không' }}</div>
+              <div class="col-md-3"><b>Rượu/Bia:</b> {{ 'Có' if r.UongCon else 'Không' }}</div>
+              <div class="col-md-3"><b>Tập thể dục:</b> {{ 'Có' if r.TapTheDuc else 'Không' }}</div>
+
+              <div class="col-12 mt-2">
+                {% if r.LoiKhuyen %}
+                <div class="card border-0 shadow-sm rounded-4 p-3" style="background-color:#eaf4ff;">
+                  <div class="d-flex align-items-center mb-2">
+                    <div
+                      class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                      style="width:30px;height:30px;font-size:16px;">💡</div>
+                    <h6 class="fw-bold text-primary mb-0">Lời khuyên</h6>
+                  </div>
+                  <div class="ps-2 text-dark" style="font-size:15px; line-height:1.7; white-space:pre-line;">
+                    {{ r.LoiKhuyen | safe }}
+                    {% if session['role'] == 'doctor' %}
+                    <button class="btn btn-link p-0 ms-2 text-warning small" data-bs-toggle="modal"
+                      data-bs-target="#editAdviceModal{{ r.ChanDoanID }}">
+                      ✏️ Sửa
+                    </button>
+                    {% endif %}
+                  </div>
                 </div>
-                <div class="ps-2 text-dark" style="font-size:15px; line-height:1.7; white-space:pre-line;">
-                  {{ r.LoiKhuyen | safe }}
-                  {% if session['role'] == 'doctor' %}
-                  <button class="btn btn-link p-0 ms-2 text-warning small" data-bs-toggle="modal"
-                    data-bs-target="#editAdviceModal{{ r.ChanDoanID }}">
-                    ✏️ Sửa
-                  </button>
-                  {% endif %}
-                </div>
+                {% else %}
+                {% if session['role'] == 'doctor' %}
+                <button class="btn btn-sm btn-outline-success rounded-pill" data-bs-toggle="modal"
+                  data-bs-target="#editAdviceModal{{ r.ChanDoanID }}">
+                  ➕ Thêm lời khuyên
+                </button>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+                {% endif %}
               </div>
-              {% else %}
-              {% if session['role'] == 'doctor' %}
-              <button class="btn btn-sm btn-outline-success rounded-pill" data-bs-toggle="modal"
-                data-bs-target="#editAdviceModal{{ r.ChanDoanID }}">
-                ➕ Thêm lời khuyên
-              </button>
-              {% else %}
-              <span class="text-muted">—</span>
-              {% endif %}
+
+              {% if session['role'] in ['doctor', 'admin', 'patient'] %}
+              <div class="col-12 text-end">
+                <form method="post" action="{{ url_for('delete_history', id=r.ChanDoanID) }}"
+                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa chẩn đoán này không?');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-4 mt-2">
+                    🗑 Xóa bản ghi này
+                  </button>
+                </form>
+              </div>
               {% endif %}
             </div>
+          </td>
+        </tr>
 
-            {% if session['role'] == 'doctor','admin','patient' %}
-            <div class="col-12 text-end">
-              <form method="post" action="{{ url_for('delete_history', id=r.ChanDoanID) }}"
-                onsubmit="return confirm('Bạn có chắc chắn muốn xóa chẩn đoán này không?');">
-                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-4 mt-2">
-                  🗑 Xóa bản ghi này
-                </button>
+        <!-- Modal chỉnh sửa lời khuyên -->
+        {% if session['role'] == 'doctor' %}
+        <div class="modal fade" id="editAdviceModal{{ r.ChanDoanID }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-3 shadow">
+              <form method="post" action="{{ url_for('edit_advice', id=r.ChanDoanID) }}">
+                <div class="modal-header bg-warning text-dark">
+                  <h5 class="modal-title">✏️ Chỉnh sửa lời khuyên</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <textarea name="loi_khuyen" class="form-control"
+                    rows="6">{{ r.LoiKhuyen | striptags | safe }}</textarea>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                  <button type="submit" class="btn btn-success">Lưu</button>
+                </div>
               </form>
             </div>
-            {% endif %}
-          </div>
-        </td>
-      </tr>
-
-      <!-- Modal chỉnh sửa lời khuyên -->
-      {% if session['role'] == 'doctor' %}
-      <div class="modal fade" id="editAdviceModal{{ r.ChanDoanID }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content rounded-3 shadow">
-            <form method="post" action="{{ url_for('edit_advice', id=r.ChanDoanID) }}">
-              <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title">✏️ Chỉnh sửa lời khuyên</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body">
-                <textarea name="loi_khuyen" class="form-control" rows="6">{{ r.LoiKhuyen | striptags | safe }}</textarea>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="submit" class="btn btn-success">Lưu</button>
-              </div>
-            </form>
           </div>
         </div>
-      </div>
-      {% endif %}
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
   {% else %}
   <div class="alert alert-info mt-4 text-center rounded-4 shadow-sm">
@@ -271,53 +277,48 @@
   </div>
   {% endif %}
 </div>
-
-
-<!-- JS toggle hàng chi tiết (accordion ổn định) -->
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/history.css') }}">
+{% endblock %}
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // Ẩn tất cả hàng chi tiết
-    document.querySelectorAll(".detail-row").forEach(r => {
-      r.style.display = "none";
-      r.style.opacity = "0";
-      r.style.transition = "all 0.3s ease";
-    });
+document.addEventListener("DOMContentLoaded", () => {
+  const buttons = document.querySelectorAll(".toggle-detail");
+  let openRow = null;
+  let openBtn = null;
 
-    const buttons = document.querySelectorAll(".toggle-detail");
-    let openRow = null;
-    let openBtn = null;
+  // Ẩn toàn bộ dòng chi tiết khi load
+  document.querySelectorAll(".detail-row").forEach(r => {
+    r.style.display = "none";
+  });
 
-    buttons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const target = document.querySelector(btn.dataset.target);
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = document.querySelector(btn.dataset.target);
 
-        // Nếu có dòng đang mở và không phải dòng hiện tại
-        if (openRow && openRow !== target) {
-          openRow.style.opacity = "0";
-          setTimeout(() => (openRow.style.display = "none"), 200);
-          if (openBtn) openBtn.innerHTML = "🔍 Xem chi tiết";
-          openRow = null;
-          openBtn = null;
-        }
+      // Nếu dòng khác đang mở → đóng dòng cũ
+      if (openRow && openRow !== target) {
+        openRow.style.display = "none";
+        openBtn.innerHTML = "🔍 Xem chi tiết";
+        openRow = null;
+        openBtn = null;
+      }
 
-        const isOpen = target.style.display === "table-row";
-        if (isOpen) {
-          target.style.opacity = "0";
-          setTimeout(() => (target.style.display = "none"), 200);
-          btn.innerHTML = "🔍 Xem chi tiết";
-          openRow = null;
-          openBtn = null;
-        } else {
-          target.style.display = "table-row";
-          setTimeout(() => (target.style.opacity = "1"), 50);
-          btn.innerHTML = "⬆️ Thu gọn";
-          openRow = target;
-          openBtn = btn;
-        }
-      });
+      // Nếu dòng hiện tại đang mở → đóng lại
+      if (target.style.display === "table-row") {
+        target.style.display = "none";
+        btn.innerHTML = "🔍 Xem chi tiết";
+      } 
+      // Nếu đang đóng → mở
+      else {
+        target.style.display = "table-row";
+        btn.innerHTML = "⬆️ Thu gọn";
+
+        openRow = target;
+        openBtn = btn;
+      }
     });
   });
+});
 </script>
-
 
 {% endblock %}

@@ -1,0 +1,256 @@
+.fade-section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s ease-out;
+}
+.fade-section.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fade-delayed-1 {
+  transition-delay: 0.1s;
+}
+.fade-delayed-2 {
+  transition-delay: 0.2s;
+}
+.fade-delayed-3 {
+  transition-delay: 0.3s;
+}
+
+/* Bảng xuất hiện từ dưới lên */
+.fade-up-section {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 1s ease-out;
+  will-change: opacity, transform;
+}
+.fade-up-section.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Căn chỉnh nút hành động */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+}
+.action-buttons .btn {
+  white-space: nowrap;
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  transition: all 0.15s ease;
+}
+.action-buttons .btn:hover {
+  transform: translateY(-1px);
+}
+@media (max-width: 992px) {
+  .container {
+    padding: 0 12px;
+  }
+
+  /* 🌈 Tiêu đề và mô tả */
+  h2.fw-bold.text-gradient {
+    font-size: 1.5rem;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  p.text-muted {
+    text-align: center;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+
+  /* 🔹 Nút chuyển đổi quản lý */
+  .mb-3.fade-section a.btn {
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+    padding: 0.45rem 1.1rem;
+  }
+
+  /* 🔹 Form thêm người dùng */
+  .card .row.g-3 > div {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .card .form-label {
+    font-size: 0.9rem;
+  }
+
+  .card .form-control,
+  .card .form-select {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.9rem;
+  }
+
+  .btn.rounded-pill,
+  .btn {
+    font-size: 0.9rem;
+    padding: 0.45rem 1rem;
+  }
+
+  /* 🔹 Bảng người dùng */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+  }
+
+  .table th,
+  .table td {
+    font-size: 0.85rem;
+    padding: 0.55rem 0.6rem;
+    white-space: nowrap;
+  }
+
+  /* 🔹 Nhóm nút hành động */
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .action-buttons .btn {
+    width: 100%;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.9rem;
+  }
+
+  /* 🔹 Modal hiển thị full khung trên mobile */
+  .modal-dialog {
+    max-width: 95%;
+    margin: 0.8rem auto;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .modal-body .form-control,
+  .modal-body .form-select {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.8rem;
+  }
+
+  .modal-header h5 {
+    font-size: 1rem;
+  }
+
+  .modal-footer .btn {
+    font-size: 0.9rem;
+    padding: 0.4rem 1rem;
+  }
+
+  /* 🔹 Alert và bảng */
+  .alert {
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+  }
+
+  /* 🔹 Giảm animation trên thiết bị nhỏ để mượt */
+  .fade-section,
+  .fade-up-section {
+    transition-duration: 0.6s;
+  }
+}
+
+/* 📱 Dưới 576px (điện thoại dọc) */
+@media (max-width: 576px) {
+  /* Tiêu đề nhỏ hơn */
+  h2.fw-bold.text-gradient {
+    font-size: 1.3rem;
+  }
+
+  .btn {
+    font-size: 0.85rem;
+    border-radius: 25px;
+  }
+
+  /* Form thêm co lại */
+  .card-body {
+    padding: 1rem;
+  }
+
+  .form-label,
+  .table th,
+  .table td {
+    font-size: 0.8rem;
+  }
+
+  /* Modal */
+  .modal-dialog {
+    max-width: 98%;
+  }
+
+  .modal-body .form-label {
+    font-size: 0.85rem;
+  }
+
+  .modal-body .form-control {
+    font-size: 0.85rem;
+  }
+
+  /* Ẩn icon emoji nếu quá nhỏ */
+  h2.fw-bold.text-gradient::before {
+    content: none;
+  }
+}
+/* ======================== BO CONG TINH TẾ ======================== */
+
+/* Input – Select */
+.form-control,
+.form-select {
+  border-radius: 12px !important; /* mềm hơn, không quá tròn */
+}
+
+/* Button */
+.btn,
+.btn-sm,
+.btn.rounded-pill {
+  border-radius: 14px !important; /* mềm vừa đủ, không ảnh hưởng layout */
+}
+
+/* Card */
+.card {
+  border-radius: 16px !important;
+}
+.card-header {
+  border-radius: 16px 16px 0 0 !important;
+}
+.card-body {
+  border-radius: 0 0 16px 16px !important; /* giữ nguyên form */
+}
+
+/* Modal */
+.modal-content {
+  border-radius: 16px !important;
+}
+.modal-header {
+  border-radius: 16px 16px 0 0 !important;
+}
+
+/* Table */
+.table {
+  border-radius: 14px !important;
+  overflow: hidden; /* giữ bo cong */
+}
+
+.table th {
+  border-radius: 6px !important; /* rất nhẹ, đủ mềm */
+}
+
+.table td {
+  border-radius: 4px !important; /* bo rất nhẹ, tự nhiên */
+}
+
+/* Search input (nếu có) */
+input.form-control.rounded-pill {
+  border-radius: 30px !important; /* giữ kiểu tròn hiện tại */
+}
+
+/* Nút hành động */
+.action-buttons .btn {
+  border-radius: 14px !important; /* đồng bộ với btn chung */
+}

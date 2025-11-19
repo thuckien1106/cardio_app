@@ -229,7 +229,8 @@
                             <input type="hidden" name="risk_percent" value="{{ risk_percent }}">
                             <input type="hidden" name="risk_level" value="{{ risk_level }}">
                             <input type="hidden" name="threshold" value="{{ threshold }}">
-                            <textarea name="ai_advice_plain" hidden>{{ ai_advice | default('', true) | striptags }}</textarea>
+                            <textarea name="ai_advice_plain"
+                                hidden>{{ ai_advice | default('', true) | striptags }}</textarea>
                             <button type="submit" class="btn btn-outline-secondary rounded-circle"
                                 data-bs-toggle="tooltip" data-bs-placement="top"
                                 title="Gửi kết quả qua email và cảm ơn khách hàng">
@@ -400,51 +401,51 @@
   {{ {"hasResult": has_result} | tojson }}
 </script>
 <script>
-  const state = JSON.parse(document.getElementById("pageState").textContent);
-  const hasResult = !!state.hasResult;   
+    const state = JSON.parse(document.getElementById("pageState").textContent);
+    const hasResult = !!state.hasResult;
 
-  const weight = document.getElementById('weight');
-  const height = document.getElementById('height');
-  const uploadForm = document.getElementById('uploadForm');
-  const inputs = document.querySelectorAll('#predictForm input, #predictForm select');
-  const resultElements = document.querySelectorAll('.alert, .card.mt-3');
+    const weight = document.getElementById('weight');
+    const height = document.getElementById('height');
+    const uploadForm = document.getElementById('uploadForm');
+    const inputs = document.querySelectorAll('#predictForm input, #predictForm select');
+    const resultElements = document.querySelectorAll('.alert, .card.mt-3');
 
-  function calcBMI() {
-    const w = parseFloat(weight.value);
-    const h = parseFloat(height.value);
-    document.getElementById('bmi').value = (w > 0 && h > 0) ? (w / ((h / 100) ** 2)).toFixed(2) : '';
-  }
+    function calcBMI() {
+        const w = parseFloat(weight.value);
+        const h = parseFloat(height.value);
+        document.getElementById('bmi').value = (w > 0 && h > 0) ? (w / ((h / 100) ** 2)).toFixed(2) : '';
+    }
 
-  function hideResults() {
-    // Chỉ show thông báo khi ĐÃ có kết quả trước đó
-    if (!hasResult) return;
+    function hideResults() {
+        // Chỉ show thông báo khi ĐÃ có kết quả trước đó
+        if (!hasResult) return;
 
-    const adviceCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.border-0.shadow-sm.rounded-4.p-4.mt-3');
-    const shapCard   = document.querySelector('.col-lg-6:nth-of-type(2) .card.mt-3.shadow-sm.p-3');
-    if (adviceCard) adviceCard.remove();
-    if (shapCard)   shapCard.remove();
+        const adviceCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.border-0.shadow-sm.rounded-4.p-4.mt-3');
+        const shapCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.mt-3.shadow-sm.p-3');
+        if (adviceCard) adviceCard.remove();
+        if (shapCard) shapCard.remove();
 
-    const oldNotice = document.querySelector('.col-lg-6:nth-of-type(2) .data-changed-notice');
-    if (oldNotice) oldNotice.remove();
+        const oldNotice = document.querySelector('.col-lg-6:nth-of-type(2) .data-changed-notice');
+        if (oldNotice) oldNotice.remove();
 
-    const rightCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.shadow-sm.border-0.rounded-4.p-4');
-    if (rightCard) {
-      const notice = document.createElement('div');
-      notice.className = 'data-changed-notice text-center py-5 text-muted fade-in';
-      notice.innerHTML = `
+        const rightCard = document.querySelector('.col-lg-6:nth-of-type(2) .card.shadow-sm.border-0.rounded-4.p-4');
+        if (rightCard) {
+            const notice = document.createElement('div');
+            notice.className = 'data-changed-notice text-center py-5 text-muted fade-in';
+            notice.innerHTML = `
         <i class="bi bi-info-circle text-primary fs-1 mb-3"></i>
         <h6 class="fw-semibold text-secondary">Dữ liệu đã thay đổi</h6>
         <p class="small mb-0">
           🔄 Vui lòng nhấn <b>“Dự đoán & Nhận lời khuyên”</b><br>
           để cập nhật lại kết quả, lời khuyên và biểu đồ mới.
         </p>`;
-      rightCard.appendChild(notice);
+            rightCard.appendChild(notice);
+        }
     }
-  }
 
-  inputs.forEach(i => i.addEventListener('input', () => { calcBMI(); hideResults(); }));
-  if (uploadForm) uploadForm.addEventListener('submit', hideResults);
-  calcBMI();
+    inputs.forEach(i => i.addEventListener('input', () => { calcBMI(); hideResults(); }));
+    if (uploadForm) uploadForm.addEventListener('submit', hideResults);
+    calcBMI();
 </script>
 
 <!-- Biểu đồ tròn phần trăm nguy cơ -->
@@ -560,30 +561,174 @@
     .card.shadow-sm {
         border-radius: 1rem !important;
     }
+
     /* 🌟 Hiệu ứng xuất hiện khi load trang */
     .fade-section {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.8s ease-out;
-    will-change: opacity, transform;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.8s ease-out;
+        will-change: opacity, transform;
     }
 
     .fade-section.show {
-    opacity: 1;
-    transform: translateY(0);
+        opacity: 1;
+        transform: translateY(0);
     }
 
     /* 💫 Các hiệu ứng riêng */
     .fade-delayed-1 {
-    transition-delay: 0.1s;
-    }
-    .fade-delayed-2 {
-    transition-delay: 0.2s;
-    }
-    .fade-delayed-3 {
-    transition-delay: 0.3s;
+        transition-delay: 0.1s;
     }
 
+    .fade-delayed-2 {
+        transition-delay: 0.2s;
+    }
+
+    .fade-delayed-3 {
+        transition-delay: 0.3s;
+    }
+
+    /* ====================== INPUT & SELECT STYLE ====================== */
+    .form-control,
+    .form-select {
+        border-radius: 14px !important;
+        /* Bo tròn mềm */
+        padding: 0.55rem 0.9rem !important;
+        border: 1.6px solid #d0d7e1 !important;
+        background-color: #fafbfd !important;
+        transition: all 0.25s ease;
+        font-size: 15px;
+    }
+
+    /* Hover */
+    .form-control:hover,
+    .form-select:hover {
+        border-color: #6ea8fe !important;
+        background-color: #f4f8ff !important;
+    }
+
+    /* Focus */
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #0d6efd !important;
+        background-color: #eef5ff !important;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15) !important;
+    }
+
+    /* Disabled */
+    .form-control:disabled,
+    .form-select:disabled {
+        background-color: #eceff4 !important;
+        opacity: 0.8;
+    }
+
+    /* Placeholder mềm hơn */
+    .form-control::placeholder {
+        color: #9ba7b6;
+        opacity: 0.85;
+    }
+
+
+    /* ====================== CARD STYLE ====================== */
+    .card {
+        border-radius: 18px !important;
+        border: none !important;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    /* Nhấn mạnh card quan trọng */
+    .card.shadow-sm.p-4 {
+        background: #ffffff;
+        border: 1px solid #eef1f5 !important;
+    }
+
+    /* ====================== BUTTON STYLE ====================== */
+    .btn {
+        padding: 0.55rem 1rem !important;
+        border-radius: 50px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.3px;
+        transition: all 0.25s ease;
+    }
+
+    /* Button xanh */
+    .btn-success {
+        background: linear-gradient(135deg, #1bbd6a, #16a357) !important;
+        border: none !important;
+    }
+
+    .btn-success:hover {
+        background: linear-gradient(135deg, #17a25d, #128a4b) !important;
+        transform: translateY(-1px);
+    }
+
+    /* Button outline đẹp hơn */
+    .btn-outline-primary {
+        border-width: 2px !important;
+        border-radius: 50px !important;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #e7f1ff;
+        border-color: #0d6efd !important;
+    }
+
+    /* Nút icon email */
+    .btn-outline-secondary {
+        border-width: 2px !important;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #f1f3f5 !important;
+    }
+
+
+    /* ====================== TABLE STYLE ====================== */
+    .table-hover tr {
+        transition: 0.25s ease;
+    }
+
+    .table-success {
+        background-color: #e8f8ef !important;
+    }
+
+    .table-danger {
+        background-color: #fdeaea !important;
+    }
+
+    .table-hover tr:hover {
+        background-color: #e9f3ff !important;
+    }
+
+    .table-scroll-container {
+        border-radius: 14px !important;
+        border: 1px solid #e4e8f1 !important;
+    }
+
+
+    /* ====================== SHAP Card ====================== */
+    .card.mt-3.shadow-sm.p-3 {
+        border-radius: 16px !important;
+        background: linear-gradient(135deg, #f9fbff, #eef4ff) !important;
+        border: 1px solid #d8e2f3 !important;
+    }
+
+
+    /* ====================== Fade animation mượt hơn ====================== */
+    .fade-section.show {
+        transition: 0.85s cubic-bezier(0.16, 0.8, 0.45, 1);
+    }
+
+    /* ====================== Tooltip đẹp ====================== */
+    .tooltip-inner {
+        background-color: #0d6efd !important;
+        padding: 6px 10px !important;
+        font-size: 13px;
+    }
+
+    .tooltip.bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before {
+        border-top-color: #0d6efd !important;
+    }
 </style>
 
 <div id="loadingOverlay">
@@ -593,73 +738,73 @@
 
 <!-- Script hiển thị overlay khi gửi form -->
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  // 1️⃣ Loading overlay
-  const predictForm = document.getElementById("predictForm");
-  const uploadForm = document.getElementById("uploadForm");
-  const overlay = document.getElementById("loadingOverlay");
-  const showOverlay = () => (overlay.style.display = "flex");
-  if (predictForm) predictForm.addEventListener("submit", showOverlay);
-  if (uploadForm) uploadForm.addEventListener("submit", showOverlay);
+    document.addEventListener("DOMContentLoaded", () => {
+        // 1️⃣ Loading overlay
+        const predictForm = document.getElementById("predictForm");
+        const uploadForm = document.getElementById("uploadForm");
+        const overlay = document.getElementById("loadingOverlay");
+        const showOverlay = () => (overlay.style.display = "flex");
+        if (predictForm) predictForm.addEventListener("submit", showOverlay);
+        if (uploadForm) uploadForm.addEventListener("submit", showOverlay);
 
-  // 2️⃣ Fetch thông tin bệnh nhân
-  const selectPatient = document.querySelector('select[name="benhnhan_id"]');
-  const inputAge = document.getElementById("age");
-  const selectGender = document.getElementById("gender");
-  if (selectPatient) {
-    selectPatient.addEventListener("change", async () => {
-      const benhnhanId = selectPatient.value;
-      if (!benhnhanId) return;
-      try {
-        const res = await fetch(`/get_patient_info/${benhnhanId}`);
-        const data = await res.json();
-        if (data.tuoi) inputAge.value = data.tuoi;
-        if (data.gioitinh) selectGender.value = data.gioitinh;
-        [inputAge, selectGender].forEach(el => {
-          el.classList.add("border-success", "bg-light");
-          setTimeout(() => el.classList.remove("border-success", "bg-light"), 1200);
-        });
-      } catch (err) {
-        console.error("⚠️ Lỗi khi lấy thông tin bệnh nhân:", err);
-      }
+        // 2️⃣ Fetch thông tin bệnh nhân
+        const selectPatient = document.querySelector('select[name="benhnhan_id"]');
+        const inputAge = document.getElementById("age");
+        const selectGender = document.getElementById("gender");
+        if (selectPatient) {
+            selectPatient.addEventListener("change", async () => {
+                const benhnhanId = selectPatient.value;
+                if (!benhnhanId) return;
+                try {
+                    const res = await fetch(`/get_patient_info/${benhnhanId}`);
+                    const data = await res.json();
+                    if (data.tuoi) inputAge.value = data.tuoi;
+                    if (data.gioitinh) selectGender.value = data.gioitinh;
+                    [inputAge, selectGender].forEach(el => {
+                        el.classList.add("border-success", "bg-light");
+                        setTimeout(() => el.classList.remove("border-success", "bg-light"), 1200);
+                    });
+                } catch (err) {
+                    console.error("⚠️ Lỗi khi lấy thông tin bệnh nhân:", err);
+                }
+            });
+        }
+
+        // 3️⃣ Tooltip Bootstrap
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(el => new bootstrap.Tooltip(el, { trigger: 'hover focus', delay: { show: 200, hide: 100 } }));
+
+        // 4️⃣ Hiệu ứng xuất hiện (fade-section)
+        const fadeEls = document.querySelectorAll(".fade-section");
+        const revealOnScroll = () => {
+            const triggerBottom = window.innerHeight * 0.85;
+            fadeEls.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < triggerBottom) el.classList.add("show");
+            });
+        };
+        window.addEventListener("scroll", revealOnScroll);
+        revealOnScroll();
     });
-  }
-
-  // 3️⃣ Tooltip Bootstrap
-  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-  tooltipTriggerList.map(el => new bootstrap.Tooltip(el, { trigger: 'hover focus', delay: { show: 200, hide: 100 } }));
-
-  // 4️⃣ Hiệu ứng xuất hiện (fade-section)
-  const fadeEls = document.querySelectorAll(".fade-section");
-  const revealOnScroll = () => {
-    const triggerBottom = window.innerHeight * 0.85;
-    fadeEls.forEach(el => {
-      const rect = el.getBoundingClientRect();
-      if (rect.top < triggerBottom) el.classList.add("show");
-    });
-  };
-  window.addEventListener("scroll", revealOnScroll);
-  revealOnScroll();
-});
 </script>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const fadeEls = document.querySelectorAll(".fade-section");
+    document.addEventListener("DOMContentLoaded", () => {
+        const fadeEls = document.querySelectorAll(".fade-section");
 
-    function revealOnScroll() {
-      const triggerBottom = window.innerHeight * 0.85;
-      fadeEls.forEach(el => {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < triggerBottom) {
-          el.classList.add("show");
+        function revealOnScroll() {
+            const triggerBottom = window.innerHeight * 0.85;
+            fadeEls.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < triggerBottom) {
+                    el.classList.add("show");
+                }
+            });
         }
-      });
-    }
 
-    window.addEventListener("scroll", revealOnScroll);
-    revealOnScroll(); // chạy ngay khi load
-  });
+        window.addEventListener("scroll", revealOnScroll);
+        revealOnScroll(); // chạy ngay khi load
+    });
 </script>
 
 {% endblock %}

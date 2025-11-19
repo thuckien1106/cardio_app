@@ -52,116 +52,108 @@
     />
 
     <style>
-      body {
-        font-family: "Poppins", sans-serif;
-      }
-
+      /* NAVBAR — SÁT TRÊN + BO CONG 2 GÓC DƯỚI */
       .navbar {
-        background: linear-gradient(90deg, #1e63c6, #453baf);
-        background-size: 200% 200%;
-        animation: navFlow 10s ease infinite;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-        white-space: nowrap;
-      }
-      @keyframes navFlow {
-        0% {
-          background-position: 0% 50%;
-        }
-        50% {
-          background-position: 100% 50%;
-        }
-        100% {
-          background-position: 0% 50%;
-        }
-      }
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
 
-      .navbar-nav {
-        display: flex;
-        align-items: center;
-        flex-wrap: nowrap;
-        gap: 4px;
-      }
+        padding: 9px 0;
 
-      .navbar-nav .nav-link {
-        color: #fff !important;
-        font-weight: 500;
-        padding: 6px 10px;
-        border-radius: 20px;
+        /* ⭐ Chỉ bo cong góc dưới */
+        border-radius: 0 0 15px 15px;
+
+        background: linear-gradient(120deg, #0143ad, #0853cc);
+
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+
+        z-index: 2000;
         transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        font-size: 0.95rem;
       }
 
+      .navbar.scrolled {
+        background: linear-gradient(120deg, #013a96, #0649bd);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      }
+
+      /* CHỮ */
+      .navbar-brand {
+        color: #ffffff !important;
+        font-weight: 700;
+        font-size: 1.3rem;
+      }
+
+      /* LINK */
+      .navbar-nav .nav-link {
+        color: #ffffff !important;
+        font-weight: 500;
+        padding: 8px 14px;
+        border-radius: 18px;
+        transition: 0.25s;
+      }
       .navbar-nav .nav-link:hover {
-        background: rgba(255, 255, 255, 0.12);
-        color: #ffc107 !important;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(255, 193, 7, 0.25);
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffe082 !important;
       }
 
+      /* TEXT CHÀO USER */
+      .navbar-text.user-name {
+        color: #fff;
+        opacity: 0.9;
+      }
+
+      /* MOBILE */
+      @media (max-width: 992px) {
+        .navbar {
+          border-radius: 0; /* Mobile giữ dạng full-width */
+        }
+      }
+
+      /* MAIN CONTENT OFFSET */
+      .main-content {
+        margin-top: 85px; /* đẩy xuống để không che nội dung */
+      }
+      /* ⭐ NAV-LINK đang active (đang ở trang đó) */
       .navbar-nav .nav-link.active {
-        color: #ffc107 !important;
         font-weight: 600;
+
+        /* Gradient chữ vàng–hồng nổi bật */
         background-image: linear-gradient(to right, #ffc107, #ff80ab);
         background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+
+        position: relative;
       }
 
-      .navbar-nav .logout-link {
-        color: #ffc107 !important;
-        font-weight: 600;
-        transition: all 0.3s ease;
+      /* ⭐ Gạch chân mềm dưới link đang active */
+      .navbar-nav .nav-link.active::after {
+        content: "";
+        position: absolute;
+        bottom: -4px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40%;
+        height: 3px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, #ffc107, #ff80ab);
+        box-shadow: 0 0 6px rgba(255, 193, 7, 0.5);
+        animation: activeGlow 1.5s ease-in-out infinite;
       }
 
-      .navbar-nav .logout-link:hover {
-        background: rgba(255, 193, 7, 0.12);
-        color: #ffe082 !important;
-      }
-
-      .navbar-text.user-name {
-        color: #fff;
-        font-weight: 500;
-        margin-left: 10px;
-        display: flex;
-        align-items: center;
-        opacity: 0.9;
-        white-space: nowrap;
-      }
-
-      .main-content {
-        margin-top: 80px;
-        min-height: calc(100vh - 160px);
-      }
-
-      footer.footer {
-        background: #212529;
-        color: #fff;
-      }
-      footer.footer a {
-        color: #ffc107;
-        text-decoration: underline;
-      }
-      footer.footer a:hover {
-        color: #ffe082;
-      }
-
-      @media (max-width: 1200px) {
-        .navbar-nav .nav-link {
-          padding: 5px 8px;
-          font-size: 0.9rem;
-          margin: 0 2px;
+      /* Hiệu ứng nhấp nháy nhẹ tinh tế */
+      @keyframes activeGlow {
+        0% {
+          opacity: 0.6;
         }
-      }
-      @media (max-width: 992px) {
-        .navbar-nav {
-          flex-wrap: wrap;
-          gap: 2px;
+        50% {
+          opacity: 1;
         }
-        .navbar-nav .nav-link {
-          padding: 5px 10px;
-          font-size: 0.9rem;
+        100% {
+          opacity: 0.6;
         }
       }
     </style>
@@ -188,9 +180,7 @@
     </div>
     {% endif %} {% endwith %} {% if session.get('user') %}
     <!-- Navbar -->
-    <nav
-      class="navbar navbar-expand-lg navbar-dark shadow-sm fixed-top bg-dark"
-    >
+    <nav class="navbar navbar-expand-lg shadow-sm fixed-top">
       <div class="container">
         <a
           class="navbar-brand fw-bold d-flex align-items-center"

@@ -1,0 +1,305 @@
+/* 🌟 Fade-in effect */
+.fade-section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s ease-out;
+  will-change: opacity, transform;
+}
+
+.fade-section.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-delayed-1 {
+  transition-delay: 0.1s;
+}
+
+.fade-delayed-2 {
+  transition-delay: 0.2s;
+}
+
+.fade-delayed-3 {
+  transition-delay: 0.3s;
+}
+
+/* ======================= 📱 Tablet (≤ 992px) ======================= */
+@media (max-width: 992px) {
+  .container {
+    padding: 0 12px;
+  }
+
+  h2.fw-bold.text-gradient,
+  p.text-muted {
+    text-align: center;
+  }
+
+  h2.fw-bold.text-gradient {
+    font-size: 1.4rem;
+  }
+
+  p.text-muted {
+    font-size: 0.95rem;
+  }
+
+  /* Form trong card */
+  .card-body .row.g-3 > div {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .card-body .form-label {
+    font-size: 0.9rem;
+  }
+
+  .card-body .form-control,
+  .card-body .form-select {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  /* Buttons */
+  .btn,
+  .btn.rounded-pill {
+    padding: 0.45rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* Search form */
+  form.row.mb-4.align-items-center {
+    text-align: center;
+  }
+
+  form.row.mb-4.align-items-center > div {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .form-control.rounded-pill {
+    font-size: 0.9rem;
+  }
+
+  /* Table */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .table .btn {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .table .text-muted.small {
+    font-size: 0.75rem;
+  }
+
+  /* Modal */
+  .modal-dialog {
+    max-width: 95%;
+    margin: 0.8rem auto;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .modal-body .form-control,
+  .modal-body .form-select {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.8rem;
+  }
+
+  .modal-header h5 {
+    font-size: 1rem;
+  }
+
+  .modal-footer .btn {
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .alert {
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Fade nhanh hơn trên mobile */
+  .fade-section {
+    transition-duration: 0.6s;
+  }
+}
+
+/* ======================= 📱 Mobile (≤ 576px) ======================= */
+@media (max-width: 576px) {
+  .card-body {
+    padding: 1rem;
+  }
+
+  .form-label,
+  .table th,
+  .table td {
+    font-size: 0.8rem;
+  }
+
+  .btn {
+    font-size: 0.85rem;
+    border-radius: 25px;
+  }
+
+  /* Ẩn icon trước tiêu đề nếu quá nhỏ */
+  h2.fw-bold.text-gradient::before {
+    content: none;
+  }
+}
+
+/* ===================== INPUT + SELECT (BO CONG TINH TẾ) ===================== */
+.form-control,
+.form-select {
+  border-radius: 14px !important;
+  /* 💠 Bo cong mềm */
+  padding: 0.55rem 0.9rem !important;
+  background: #fbfcff !important;
+  border: 1.6px solid #d5dce7 !important;
+  transition: all 0.25s ease !important;
+  font-size: 15px;
+}
+
+/* Hover */
+.form-control:hover,
+.form-select:hover {
+  border-color: #76a9ff !important;
+  background-color: #f3f7ff !important;
+}
+
+/* Focus tinh tế */
+.form-control:focus,
+.form-select:focus {
+  border-color: #0d6efd !important;
+  box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.18) !important;
+  background-color: #eef4ff !important;
+}
+
+/* Placeholder nhạt đẹp */
+.form-control::placeholder {
+  color: #9aa8b9 !important;
+  opacity: 0.85 !important;
+}
+
+/* ===================== CARD – BO CONG 18PX ===================== */
+.card {
+  border-radius: 18px !important;
+  /* 🌟 Card mềm như iOS */
+  border: none !important;
+  background: #ffffff !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ===================== SEARCH INPUT – BO TRÒN 40PX ===================== */
+input.form-control.rounded-pill {
+  border-radius: 40px !important;
+  padding-left: 1.2rem !important;
+  background: #fafbfd !important;
+  border: 1.6px solid #cad4e1 !important;
+  transition: 0.25s ease;
+}
+
+input.form-control.rounded-pill:focus {
+  border-color: #0d6efd !important;
+  background: #eaf1ff !important;
+}
+
+/* ===================== BUTTON ===================== */
+.btn {
+  border-radius: 50px !important;
+  padding: 0.55rem 1.1rem !important;
+  font-weight: 600 !important;
+  transition: all 0.25s ease !important;
+}
+
+/* ===================== MODAL ===================== */
+.modal-content {
+  border-radius: 18px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.modal-header {
+  border-radius: 18px 18px 0 0 !important;
+}
+
+/* ===================== TABLE ===================== */
+.table-responsive {
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+
+.table th {
+  background: #e8f1ff !important;
+  border: none !important;
+}
+
+.table td,
+.table th {
+  padding: 0.75rem 1rem !important;
+  font-size: 0.95rem !important;
+}
+
+/* Hover tinh tế */
+.table-hover tbody tr:hover {
+  background-color: #f0f6ff !important;
+  transition: 0.2s ease;
+}
+
+/* Màu hàng */
+.table-success {
+  background-color: #eafbf3 !important;
+}
+
+.table-danger {
+  background-color: #ffecec !important;
+}
+
+/* ===================== COLLAPSE FORM ===================== */
+#addPatientForm {
+  border-radius: 16px !important;
+  background: #f8fbff !important;
+  border: 1px solid #e2e7f0 !important;
+  padding: 1rem !important;
+}
+/* ==================== GIỮ BUTTON SỬA / XÓA THẲNG HÀNG ==================== */
+
+/* Cột hành động: rộng vừa đủ để 2 nút không xuống dòng */
+.table td.text-center {
+  min-width: 160px;
+  white-space: nowrap;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Nút mini trong bảng – đều kích thước, bo cong */
+.table td.text-center .btn {
+  padding: 0.35rem 0.75rem !important;
+  font-size: 0.8rem !important;
+  border-radius: 50px !important;
+}
+
+/* Khoảng cách giữa nút Sửa và nút Xóa */
+.table td.text-center .btn + form {
+  margin-left: 6px;
+}
+
+/* Responsive – màn nhỏ vẫn giữ 2 nút trên 1 hàng nếu có thể */
+@media (max-width: 576px) {
+  .table td.text-center {
+    min-width: 140px;
+  }
+}
