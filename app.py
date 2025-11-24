@@ -104,23 +104,23 @@ def send_email(to_email: str, subject: str, html_body: str):
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
     service.users().messages().send(userId="me", body={"raw": raw}).execute()
 
-def get_connection():
-    return pyodbc.connect(
-        "DRIVER={ODBC Driver 18 for SQL Server};"
-        "SERVER=PC1\\LNTUANDAT;"
-        "DATABASE=CVD_App;"
-        "Trusted_Connection=yes;"
-        "Encrypt=yes;"
-        "TrustServerCertificate=yes;"
-    )
 # def get_connection():
 #     return pyodbc.connect(
-#         "DRIVER={SQL Server};"
-#         "SERVER=HKT;"
+#         "DRIVER={ODBC Driver 18 for SQL Server};"
+#         "SERVER=PC1\\LNTUANDAT;"
 #         "DATABASE=CVD_App;"
-#         "UID=sa;"
-#         "PWD=123"
+#         "Trusted_Connection=yes;"
+#         "Encrypt=yes;"
+#         "TrustServerCertificate=yes;"
 #     )
+def get_connection():
+    return pyodbc.connect(
+        "DRIVER={SQL Server};"
+        "SERVER=HKT;"
+        "DATABASE=CVD_App;"
+        "UID=sa;"
+        "PWD=123"
+    )
 @app.context_processor
 def inject_social_flags():
     return {
