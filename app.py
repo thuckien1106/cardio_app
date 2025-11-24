@@ -1,6 +1,7 @@
 ﻿from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
 import pandas as pd
 import os
+import pickle
 from werkzeug.utils import secure_filename
 import pyodbc
 import datetime
@@ -103,23 +104,23 @@ def send_email(to_email: str, subject: str, html_body: str):
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
     service.users().messages().send(userId="me", body={"raw": raw}).execute()
 
-# def get_connection():
-#     return pyodbc.connect(
-#         "DRIVER={ODBC Driver 18 for SQL Server};"
-#         "SERVER=PC1\\LNTUANDAT;"
-#         "DATABASE=CVD_App;"
-#         "Trusted_Connection=yes;"
-#         "Encrypt=yes;"
-#         "TrustServerCertificate=yes;"
-#     )
 def get_connection():
     return pyodbc.connect(
-        "DRIVER={SQL Server};"
-        "SERVER=HKT;"
+        "DRIVER={ODBC Driver 18 for SQL Server};"
+        "SERVER=PC1\\LNTUANDAT;"
         "DATABASE=CVD_App;"
-        "UID=sa;"
-        "PWD=123"
+        "Trusted_Connection=yes;"
+        "Encrypt=yes;"
+        "TrustServerCertificate=yes;"
     )
+# def get_connection():
+#     return pyodbc.connect(
+#         "DRIVER={SQL Server};"
+#         "SERVER=HKT;"
+#         "DATABASE=CVD_App;"
+#         "UID=sa;"
+#         "PWD=123"
+#     )
 @app.context_processor
 def inject_social_flags():
     return {
@@ -145,15 +146,25 @@ def get_ai_advice_cached(prompt: str) -> str:
 # Load mô hình XGBoost
 # ==========================================
 xgb_model = None
+XGB_FEATURE_ORDER = [
+    "age", "gender", "height", "weight",
+    "ap_hi", "ap_lo", "cholesterol", "gluc",
+    "smoke", "alco", "active", "bmi",
+]
 try:
     import xgboost as xgb
-    MODEL_PATH = "xgb_p4.json"
+    MODEL_PATH = "xgb_final_model.pkl"
     if os.path.exists(MODEL_PATH):
-        xgb_model = xgb.XGBClassifier()
-        xgb_model.load_model(MODEL_PATH)
-        print("Mô hình XGBoost đã load thành công.")
+        with open(MODEL_PATH, "rb") as f:
+            xgb_model = pickle.load(f)
+        fresh_params = xgb.XGBClassifier().get_params()
+        for attr, value in fresh_params.items():
+            if not hasattr(xgb_model, attr):
+                setattr(xgb_model, attr, value)
+        setattr(xgb_model, "use_label_encoder", False)
+        print("Mô hình XGBoost (.pkl) đã load thành công.")
     else:
-        print("Không tìm thấy file mô hình, sẽ dùng heuristic.")
+        print("Không tìm thấy file mô hình (.pkl), sẽ dùng heuristic.")
 except Exception as e:
     print(f"Không thể load mô hình XGBoost: {e}")
     xgb_model = None
@@ -165,7 +176,7 @@ def warmup_model():
     if not getattr(app, "_model_warmed", False):
         try:
             import numpy as np, shap
-            dummy = np.array([[50,1,120,80,2,1,0,0,1,25]])
+            dummy = np.array([[50, 1, 170, 70, 120, 80, 2, 1, 0, 0, 1, 24.2]])
             _ = xgb_model.predict_proba(dummy)
             shap.TreeExplainer(xgb_model)
             print("Warm-up hoàn tất, model & SHAP đã cache.")
@@ -698,9 +709,10 @@ def diagnose():
 
             # --- Dự đoán bằng mô hình ---
             if xgb_model:
-                X = np.array([[age, gender, systolic, diastolic,
-                                chol, glucose, smoking, alcohol, exercise, bmi]],
-                                dtype=float)
+                X = np.array([[
+                    age, gender, height, weight, systolic, diastolic,
+                    chol, glucose, smoking, alcohol, exercise, bmi
+                ]], dtype=float)
                 prob = float(xgb_model.predict_proba(X)[0, 1])
                 risk_percent = round(prob * 100, 1)
                 risk_level = 'high' if prob >= threshold else 'low'
@@ -751,8 +763,8 @@ def diagnose():
                     shap.summary_plot(
                         shap_values, X,
                         feature_names=[
-                            'Tuổi', 'Giới tính', 'HATT', 'HATTr', 'Cholesterol',
-                            'Đường huyết', 'Hút thuốc', 'Rượu bia', 'Tập thể dục', 'BMI'
+                            'Tuổi', 'Giới tính', 'Chiều cao', 'Cân nặng', 'HATT', 'HATTr',
+                            'Cholesterol', 'Đường huyết', 'Hút thuốc', 'Rượu bia', 'Tập thể dục', 'BMI'
                         ],
                         show=False
                     )
@@ -824,6 +836,8 @@ def diagnose():
                 age = int(row['age'])
                 gender_raw = row['gender']
                 gender = 1 if str(gender_raw).strip().lower() in ['nam', 'male', '1'] else 0
+                height = float(row['height'])
+                weight = float(row['weight'])
                 systolic = float(row['ap_hi'])
                 diastolic = float(row['ap_lo'])
                 chol = int(row['cholesterol'])
@@ -835,8 +849,10 @@ def diagnose():
 
                 # Dự đoán
                 if xgb_model:
-                    X = np.array([[age, gender, systolic, diastolic,
-                                    chol, gluc, smoking, alcohol, exercise, bmi]], dtype=float)
+                    X = np.array([[
+                        age, gender, height, weight, systolic, diastolic,
+                        chol, gluc, smoking, alcohol, exercise, bmi
+                    ]], dtype=float)
                     prob = float(xgb_model.predict_proba(X)[0, 1])
                 else:
                     prob = 0.5
