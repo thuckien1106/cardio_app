@@ -90,7 +90,7 @@
       .navbar-nav .nav-link {
         color: #ffffff !important;
         font-weight: 500;
-        padding: 8px 14px;
+        padding: 8px 20px;
         border-radius: 18px;
         transition: 0.25s;
       }
@@ -98,7 +98,9 @@
         background: rgba(255, 255, 255, 0.15);
         color: #ffe082 !important;
       }
-
+      .navbar-nav .nav-item {
+        margin-right: 6px;
+      }
       /* TEXT CHÀO USER */
       .navbar-text.user-name {
         color: #fff;
@@ -164,8 +166,8 @@
     messages %}
     <div
       id="flashContainer"
-      class="position-fixed top-0 start-50 translate-middle-x mt-3"
-      style="z-index: 2000; width: auto; max-width: 600px"
+      class="position-fixed start-50 translate-middle-x"
+      style="top: 75px; z-index: 2500; width: auto; max-width: 600px"
     >
       {% for category, msg in messages %}
       <div
