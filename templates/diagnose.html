@@ -43,12 +43,12 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Ngưỡng chẩn đoán</label>
                         <select name="threshold" id="threshold" class="form-select">
-                            <option value="0.25" {% if request.form.get('threshold','0.5')=='0.25' %}selected{% endif
-                                %}>0.25 - Nhạy cao</option>
+                            <option value="0.4" {% if request.form.get('threshold','0.5')=='0.4' %}selected{% endif
+                                %}>0.4 - Nhạy cao</option>
                             <option value="0.5" {% if request.form.get('threshold','0.5')=='0.5' %}selected{% endif %}>
                                 0.5 - ⭐ Cân bằng</option>
-                            <option value="0.75" {% if request.form.get('threshold','0.5')=='0.75' %}selected{% endif
-                                %}>0.75 - Đặc hiệu cao</option>
+                            <option value="0.6" {% if request.form.get('threshold','0.5')=='0.6' %}selected{% endif
+                                %}>0.6 - Đặc hiệu cao</option>
                         </select>
                     </div>
 
