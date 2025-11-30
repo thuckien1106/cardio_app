@@ -149,7 +149,7 @@ xgb_model = None
 XGB_FEATURE_ORDER = [
     "age", "gender", "height", "weight",
     "ap_hi", "ap_lo", "cholesterol", "gluc",
-    "smoke", "alco", "active", "bmi",
+    "smoke", "alco", "active",
 ]
 try:
     import xgboost as xgb
@@ -176,7 +176,7 @@ def warmup_model():
     if not getattr(app, "_model_warmed", False):
         try:
             import numpy as np, shap
-            dummy = np.array([[50, 1, 170, 70, 120, 80, 2, 1, 0, 0, 1, 24.2]])
+            dummy = np.array([[50, 1, 170, 70, 120, 80, 2, 1, 0, 0, 1]])
             _ = xgb_model.predict_proba(dummy)
             shap.TreeExplainer(xgb_model)
             print("Warm-up hoàn tất, model & SHAP đã cache.")
@@ -711,7 +711,7 @@ def diagnose():
             if xgb_model:
                 X = np.array([[
                     age, gender, height, weight, systolic, diastolic,
-                    chol, glucose, smoking, alcohol, exercise, bmi
+                    chol, glucose, smoking, alcohol, exercise
                 ]], dtype=float)
                 prob = float(xgb_model.predict_proba(X)[0, 1])
                 risk_percent = round(prob * 100, 1)
@@ -764,7 +764,7 @@ def diagnose():
                         shap_values, X,
                         feature_names=[
                             'Tuổi', 'Giới tính', 'Chiều cao', 'Cân nặng', 'HATT', 'HATTr',
-                            'Cholesterol', 'Đường huyết', 'Hút thuốc', 'Rượu bia', 'Tập thể dục', 'BMI'
+                            'Cholesterol', 'Đường huyết', 'Hút thuốc', 'Rượu bia', 'Tập thể dục'
                         ],
                         show=False
                     )
@@ -851,7 +851,7 @@ def diagnose():
                 if xgb_model:
                     X = np.array([[
                         age, gender, height, weight, systolic, diastolic,
-                        chol, gluc, smoking, alcohol, exercise, bmi
+                        chol, gluc, smoking, alcohol, exercise
                     ]], dtype=float)
                     prob = float(xgb_model.predict_proba(X)[0, 1])
                 else:
