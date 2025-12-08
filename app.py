@@ -452,8 +452,20 @@ def forgot_password():
 
     return render_template('forgot_password.html')
 
+def _redirect_by_role(role: str | None):
+    if role == 'admin':
+        return redirect(url_for('history'))
+    return redirect(url_for('home'))
+
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
+    user_id = session.get('user_id')
+    if session.get('user') and user_id:
+        return _redirect_by_role(session.get('role'))
+    if session.get('user') and not user_id:
+        session.clear()
+
     if request.method == 'POST':
         email = request.form.get('username', '').strip().lower()
         pw = request.form.get('password', '').strip()
@@ -479,12 +491,7 @@ def login():
             flash(f"🎉 Chào mừng {user.HoTen} đăng nhập thành công!", "success")
 
             # ✅ Điều hướng theo vai trò
-            if user.Role == 'admin':
-                return redirect(url_for('history'))
-            elif user.Role == 'doctor':
-                return redirect(url_for('home'))  
-            else:
-                return redirect(url_for('home'))
+            return _redirect_by_role(user.Role)
 
         else:
             # ❌ Sai mật khẩu → hiển thị ngay
@@ -1444,7 +1451,9 @@ def change_password():
 # ==========================================
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
-    if 'user' not in session:
+    user_id = session.get('user_id')
+    if not session.get('user') or not user_id:
+        session.clear()
         return redirect(url_for('login'))
 
     conn = get_connection()
@@ -1462,7 +1471,7 @@ def profile():
             request.form.get('ngay_sinh'),
             request.form.get('gioi_tinh'),
             request.form.get('dia_chi'),
-            session['user_id']
+            user_id
         ))
         conn.commit()
 
@@ -1479,7 +1488,7 @@ def profile():
     cur.execute("""
         SELECT HoTen, Email, Role, DienThoai, NgaySinh, GioiTinh, DiaChi, MatKhau, NgayTao
         FROM NguoiDung WHERE ID=?
-    """, (session['user_id'],))
+    """, (user_id,))
     user_info = cur.fetchone()
     can_change_password = False
     if user_info:
