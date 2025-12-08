@@ -561,8 +561,8 @@ def oauth_callback(provider):
         has_password = bool((user.MatKhau or "").strip())
     else:
         cur.execute("""
-            INSERT INTO NguoiDung (HoTen, GioiTinh, NgaySinh, Email, MatKhau, Role)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO NguoiDung (HoTen, GioiTinh, NgaySinh, Email, MatKhau, Role, NgayTao)
+            VALUES (?, ?, ?, ?, ?, ?, GETDATE())
         """, (full_name, 'Nam', None, email, DEFAULT_SOCIAL_PASSWORD, 'patient'))
         conn.commit()
         cur.execute("SELECT ID, HoTen, Role, MatKhau FROM NguoiDung WHERE Email = ?", (email,))
@@ -1459,7 +1459,7 @@ def profile():
     conn = get_connection()
     cur = conn.cursor()
 
-    # --- Khi người dùng cập nhật hồ sơ ---
+    # ============== UPDATE PROFILE ==============
     if request.method == 'POST':
         cur.execute("""
             UPDATE NguoiDung
@@ -1475,37 +1475,44 @@ def profile():
         ))
         conn.commit()
 
-        # Lưu thời gian cập nhật tạm vào session
+        # timeline luôn là list
         from datetime import datetime
         update_time = datetime.now().strftime("%d/%m/%Y %H:%M")
-        if 'timeline' not in session:
-            session['timeline'] = []
-        session['timeline'].insert(0, f"Cập nhật hồ sơ - {update_time}")
 
+        if not isinstance(session.get('timeline'), list):
+            session['timeline'] = []
+
+        session['timeline'].insert(0, f"Cập nhật hồ sơ - {update_time}")
         flash("Cập nhật hồ sơ thành công!", "success")
 
-    # --- Lấy thông tin người dùng (bao gồm ngày tạo tài khoản) ---
+    # ============== LẤY USER INFO ==============
     cur.execute("""
         SELECT HoTen, Email, Role, DienThoai, NgaySinh, GioiTinh, DiaChi, MatKhau, NgayTao
         FROM NguoiDung WHERE ID=?
     """, (user_id,))
     user_info = cur.fetchone()
-    can_change_password = False
-    if user_info:
-        mat_khau_val = getattr(user_info, 'MatKhau', None)
-        if isinstance(mat_khau_val, str):
-            mat_khau_val = mat_khau_val.strip()
-        can_change_password = bool(mat_khau_val)
     conn.close()
 
-    # --- Chuẩn bị timeline hiển thị ---
+    if not user_info:
+        flash("Không tìm thấy thông tin người dùng.", "danger")
+        return redirect(url_for('login'))
+
+    # ============== XỬ LÝ NGAYTAO ==============
+    ngay_tao = user_info[8] if len(user_info) > 8 else None
     timeline = []
-    if user_info and user_info[-1]:
-        # user_info[-1] = NgayTao
-        created_at = user_info[-1].strftime("%d/%m/%Y %H:%M")
+
+    if ngay_tao and hasattr(ngay_tao, "strftime"):
+        created_at = ngay_tao.strftime("%d/%m/%Y %H:%M")
         timeline.append(f"Tạo tài khoản - {created_at}")
-    if 'timeline' in session:
+    else:
+        timeline.append("Tạo tài khoản - Không có dữ liệu")
+
+    # Merge timeline session
+    if isinstance(session.get('timeline'), list):
         timeline = session['timeline'] + timeline
+
+    # kiểm tra user có mật khẩu không
+    can_change_password = bool(user_info[7] and str(user_info[7]).strip())
 
     return render_template(
         'profile.html',
