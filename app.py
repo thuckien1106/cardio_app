@@ -245,7 +245,7 @@ def register():
             flash("Vui lòng nhập ngày sinh.", "warning")
             return render_template('register.html', today=today)
 
-        if not re.match(r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', mat_khau):
+        if not re.match(r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$', mat_khau):
             flash('Mật khẩu cần ít nhất 8 ký tự, gồm chữ hoa, số và ký tự đặc biệt.', 'warning')
             return render_template('register.html', today=today)
 
@@ -2356,5 +2356,6 @@ def chat_ai_history():
 # ==========================================
 # Main
 # ==========================================
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+
