@@ -281,44 +281,44 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/history.css') }}">
 {% endblock %}
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const buttons = document.querySelectorAll(".toggle-detail");
-  let openRow = null;
-  let openBtn = null;
+  document.addEventListener("DOMContentLoaded", () => {
+    const buttons = document.querySelectorAll(".toggle-detail");
+    let openRow = null;
+    let openBtn = null;
 
-  // Ẩn toàn bộ dòng chi tiết khi load
-  document.querySelectorAll(".detail-row").forEach(r => {
-    r.style.display = "none";
-  });
+    // Ẩn toàn bộ dòng chi tiết khi load
+    document.querySelectorAll(".detail-row").forEach(r => {
+      r.style.display = "none";
+    });
 
-  buttons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const target = document.querySelector(btn.dataset.target);
+    buttons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = document.querySelector(btn.dataset.target);
 
-      // Nếu dòng khác đang mở → đóng dòng cũ
-      if (openRow && openRow !== target) {
-        openRow.style.display = "none";
-        openBtn.innerHTML = "🔍 Xem chi tiết";
-        openRow = null;
-        openBtn = null;
-      }
+        // Nếu dòng khác đang mở → đóng dòng cũ
+        if (openRow && openRow !== target) {
+          openRow.style.display = "none";
+          openBtn.innerHTML = "🔍 Xem chi tiết";
+          openRow = null;
+          openBtn = null;
+        }
 
-      // Nếu dòng hiện tại đang mở → đóng lại
-      if (target.style.display === "table-row") {
-        target.style.display = "none";
-        btn.innerHTML = "🔍 Xem chi tiết";
-      } 
-      // Nếu đang đóng → mở
-      else {
-        target.style.display = "table-row";
-        btn.innerHTML = "⬆️ Thu gọn";
+        // Nếu dòng hiện tại đang mở → đóng lại
+        if (target.style.display === "table-row") {
+          target.style.display = "none";
+          btn.innerHTML = "🔍 Xem chi tiết";
+        }
+        // Nếu đang đóng → mở
+        else {
+          target.style.display = "table-row";
+          btn.innerHTML = "⬆️ Thu gọn";
 
-        openRow = target;
-        openBtn = btn;
-      }
+          openRow = target;
+          openBtn = btn;
+        }
+      });
     });
   });
-});
 </script>
 
 {% endblock %}
