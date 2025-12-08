@@ -866,6 +866,11 @@ def diagnose():
                     "Huyết áp": f"{systolic}/{diastolic}",
                     "Cholesterol": chol,
                     "Đường huyết": gluc,
+
+                    # 🆕 THÊM 2 DÒNG NÀY
+                    "Cân nặng (kg)": weight,
+                    "Chiều cao (cm)": height,
+
                     "BMI": bmi,
                     "Hút thuốc": "Có" if smoking else "Không",
                     "Rượu/Bia": "Có" if alcohol else "Không",
@@ -873,6 +878,7 @@ def diagnose():
                     "Nguy cơ": risk_level,
                     "Xác suất (%)": risk_percent
                 })
+
 
             file_result = pd.DataFrame(results).to_html(
                 index=False,

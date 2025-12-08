@@ -43,12 +43,13 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Ngưỡng chẩn đoán</label>
                         <select name="threshold" id="threshold" class="form-select">
-                            <option value="0.4" {% if request.form.get('threshold','0.5')=='0.4' %}selected{% endif
-                                %}>0.4 - Nhạy cao</option>
+                            <option value="0.4" {% if request.form.get('threshold','0.5')=='0.4' %}selected{% endif %}>
+                            </option>
+                            0.4 - Nhạy cao</option>
                             <option value="0.5" {% if request.form.get('threshold','0.5')=='0.5' %}selected{% endif %}>
                                 0.5 - ⭐ Cân bằng</option>
-                            <option value="0.6" {% if request.form.get('threshold','0.5')=='0.6' %}selected{% endif
-                                %}>0.6 - Đặc hiệu cao</option>
+                            <option value="0.6" {% if request.form.get('threshold','0.5')=='0.6' %}selected{% endif %}>
+                                0.6 - Đặc hiệu cao</option>
                         </select>
                     </div>
 
@@ -311,6 +312,13 @@
                             </div>
 
 
+                        </div>
+                        <!-- Nút xem chi tiết -->
+                        <div class="text-center my-3">
+                            <button class="btn btn-outline-primary rounded-pill" data-bs-toggle="modal"
+                                data-bs-target="#detailResultModal">
+                                📄 Xem chi tiết toàn bộ bảng kết quả
+                            </button>
                         </div>
 
                         <!-- Gợi ý -->
@@ -806,5 +814,89 @@
         revealOnScroll(); // chạy ngay khi load
     });
 </script>
+<!-- ===================== MODAL CHI TIẾT ĐẸP HƠN ===================== -->
+<div class="modal fade" id="detailResultModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content shadow-lg rounded-4" style="border: none; overflow: hidden;">
+
+            <!-- Header -->
+            <div class="modal-header bg-white border-0 p-3">
+                <h5 class="modal-title fw-bold text-primary">
+                    📊 Chi tiết bảng kết quả chẩn đoán
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body" style="padding: 1rem 1.5rem 1.5rem 1.5rem;">
+
+                <div class="table-responsive"
+                    style="max-height: 70vh; overflow-y:auto; border-radius:14px; border:1px solid #e5e7eb;">
+                    <table class="table table-hover align-middle text-center small mb-0">
+                        <thead class="table-light sticky-top" style="top: 0; z-index: 10;">
+                            <tr>
+                                <th>Tuổi</th>
+                                <th>Giới tính</th>
+                                <th>Huyết áp</th>
+                                <th>Cholesterol</th>
+                                <th>Đường huyết</th>
+                                <th>Cân nặng (kg)</th>
+                                <th>Chiều cao (cm)</th>
+                                <th>BMI</th>
+                                <th>Hút thuốc</th>
+                                <th>Rượu/Bia</th>
+                                <th>Tập thể dục</th>
+                                <th>Nguy cơ</th>
+                                <th>Xác suất (%)</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for row in results %}
+                            <tr
+                                class="{% if row['Nguy cơ']=='Nguy cơ cao' %}table-danger{% else %}table-success{% endif %}">
+
+                                <td>{{ row['Tuổi'] }}</td>
+                                <td>{{ row['Giới tính'] }}</td>
+                                <td>{{ row['Huyết áp'] }}</td>
+                                <td>{{ row['Cholesterol'] }}</td>
+                                <td>{{ row['Đường huyết'] }}</td>
+
+                                <!-- 🆕 Cân nặng & Chiều cao -->
+                                <td>{{ row['Cân nặng (kg)'] }}</td>
+                                <td>{{ row['Chiều cao (cm)'] }}</td>
+
+                                <td>{{ row['BMI'] }}</td>
+                                <td>{{ row['Hút thuốc'] }}</td>
+                                <td>{{ row['Rượu/Bia'] }}</td>
+                                <td>{{ row['Tập thể dục'] }}</td>
+                                <td><strong>{{ row['Nguy cơ'] }}</strong></td>
+                                <td class="fw-semibold text-primary">{{ row['Xác suất (%)'] }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer bg-white border-0 p-3">
+                <button class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                    Đóng
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+<style>
+    .modal-dialog {
+        display: flex;
+        align-items: flex-start;
+        margin-top: 12vh !important;
+    }
+</style>
 
 {% endblock %}
