@@ -119,7 +119,7 @@
                 class="form-control rounded-pill shadow-sm password-toggle-input" required>
               <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password"
                 data-target="oldPassword" aria-label="Hien thi mat khau">
-                <i class="bi bi-eye"></i>
+                <i class="bi bi-eye-slash"></i>
               </button>
             </div>
           </div>
@@ -130,7 +130,7 @@
                 class="form-control rounded-pill shadow-sm password-toggle-input" required>
               <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password"
                 data-target="newPassword" aria-label="Hien thi mat khau moi">
-                <i class="bi bi-eye"></i>
+                <i class="bi bi-eye-slash"></i>
               </button>
             </div>
           </div>
@@ -141,7 +141,7 @@
                 class="form-control rounded-pill shadow-sm password-toggle-input" required>
               <button type="button" class="btn btn-sm btn-outline-secondary password-toggle-btn toggle-password"
                 data-target="confirmPassword" aria-label="Hien thi lai mat khau">
-                <i class="bi bi-eye"></i>
+                <i class="bi bi-eye-slash"></i>
               </button>
             </div>
           </div>
@@ -306,16 +306,22 @@
 
     document.querySelectorAll(".toggle-password").forEach(btn => {
       btn.addEventListener("click", () => {
-        const target = document.getElementById(btn.dataset.target);
-        if (!target) return;
-        target.type = target.type === "password" ? "text" : "password";
-        const isVisible = target.type === "text";
+        const input = document.getElementById(btn.dataset.target);
         const icon = btn.querySelector("i");
-        if (icon) {
-          icon.classList.toggle("bi-eye", !isVisible);
-          icon.classList.toggle("bi-eye-slash", isVisible);
+
+        if (!input || !icon) return;
+
+        if (input.type === "password") {
+          // Hiện mật khẩu
+          input.type = "text";
+          icon.classList.remove("bi-eye-slash");
+          icon.classList.add("bi-eye");
+        } else {
+          // Ẩn mật khẩu
+          input.type = "password";
+          icon.classList.remove("bi-eye");
+          icon.classList.add("bi-eye-slash");
         }
-        btn.setAttribute("aria-label", isVisible ? "An mat khau" : "Hien thi mat khau");
       });
     });
   });
